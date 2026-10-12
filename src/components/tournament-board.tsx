@@ -126,7 +126,7 @@ export function TournamentBoard({
                   placeholder={isTeam ? "Nom de l'équipe" : "Nom du joueur"}
                   className="rounded-md border border-input bg-background px-3 py-2 text-sm"
                 />
-                <button className="inline-flex items-center gap-1 rounded-md border border-border px-3 py-2 text-sm hover:border-primary">
+                <button type="submit" className="btn-ember px-3 py-2 text-sm">
                   <Plus className="h-4 w-4" /> Ajouter
                 </button>
               </form>
@@ -134,7 +134,7 @@ export function TournamentBoard({
             <button
               disabled={!full || busy}
               onClick={() => run(() => startTournament({ data: { id: tournamentId } }), "Tournoi lancé !")}
-              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40"
+              className="btn-ember px-4 py-2 text-sm"
               title={full ? "" : "Le tournoi doit être complet"}
             >
               <Play className="h-4 w-4" /> Commencer le tournoi
@@ -191,7 +191,7 @@ export function TournamentBoard({
             <button
               disabled={busy}
               onClick={() => run(() => generateFinals({ data: { id: tournamentId } }), "Phase finale générée.")}
-              className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+              className="btn-ember mt-4 px-4 py-2 text-sm"
             >
               Générer la phase finale (2 premiers de chaque poule)
             </button>
@@ -243,27 +243,43 @@ function MatchRow({
 }) {
   const editable = admin && !!m.team_a && !!m.team_b;
   const [picked, setPicked] = useState<string | null>(m.winner);
-  const loserId = picked === m.team_a ? m.team_b : m.team_a;
   const loserScore = picked === m.team_a ? m.score_b : m.score_a;
   const [remaining, setRemaining] = useState(loserScore && loserScore > 0 ? loserScore.toString() : "");
 
   const side = (id: string | null, score: number | null) => {
     const isWinner = m.winner ? m.winner === id : picked === id;
+    const content = (
+      <>
+        {editable && (
+          <span
+            aria-hidden
+            className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
+              picked === id ? "border-primary bg-primary" : "border-input"
+            }`}
+          >
+            {picked === id && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
+          </span>
+        )}
+        <span className="truncate">{name(id)}</span>
+      </>
+    );
     return (
-      <div className={`flex items-center justify-between gap-2 ${isWinner ? "font-semibold text-primary" : ""}`}>
+      <div className={`flex items-center justify-between gap-2 rounded-md px-1.5 py-1 ${isWinner ? "text-primary" : ""}`}>
         {editable ? (
           <button
             type="button"
             onClick={() => setPicked(id)}
-            className={`truncate rounded px-1 py-0.5 text-left ${picked === id ? "text-primary underline decoration-2 underline-offset-2" : "hover:text-primary"}`}
             title="Cliquer pour désigner le gagnant"
+            className={`flex min-w-0 items-center gap-2 text-left transition-colors ${
+              picked === id ? "font-semibold" : "hover:text-primary"
+            }`}
           >
-            {name(id)}
+            {content}
           </button>
         ) : (
-          <span className="truncate">{name(id)}</span>
+          <span className="flex min-w-0 items-center gap-2">{content}</span>
         )}
-        <span>
+        <span className={`shrink-0 text-sm tabular-nums ${isWinner ? "font-semibold" : "text-muted-foreground"}`}>
           {m.winner ? (m.winner === id ? "0" : (score ?? "")) : editable && picked === id ? "0" : ""}
         </span>
       </div>
@@ -288,20 +304,31 @@ function MatchRow({
       {side(m.team_a, m.score_a)}
       {side(m.team_b, m.score_b)}
       {editable && (
-        <div className="mt-1.5 flex items-center gap-2">
-          <input
-            type="number"
-            min={1}
-            value={remaining}
-            onChange={(e) => setRemaining(e.target.value)}
-            placeholder="Reste au perdant"
-            className="w-32 rounded border border-input bg-background px-2 py-1 text-xs"
-            aria-label="Points restants du perdant"
-          />
-          <button onClick={save} className="text-xs text-primary hover:underline">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            save();
+          }}
+          className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-2"
+        >
+          <label className="flex items-center gap-2 text-[11px] text-muted-foreground">
+            <span>Reste au perdant</span>
+            <input
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              value={remaining}
+              onChange={(e) => setRemaining(e.target.value.replace(/\D/g, "").slice(0, 3))}
+              placeholder="—"
+              className="w-16 rounded-md border border-input bg-background px-2 py-1.5 text-center text-sm tabular-nums outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-primary"
+              aria-label="Points restants du perdant"
+            />
+          </label>
+          <button type="submit" className="btn-ember px-3 py-1.5 text-xs">
+            {m.winner ? <PencilLine className="h-3.5 w-3.5" /> : <Check className="h-3.5 w-3.5" />}
             {m.winner ? "Corriger" : "Valider"}
           </button>
-        </div>
+        </form>
       )}
     </div>
   );
