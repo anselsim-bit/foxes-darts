@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Plus, Trash2, Upload } from "lucide-react";
+import { Check, Pencil, Plus, Trash2, Upload, Users, X } from "lucide-react";
+import { getTournamentBoard, adminAddTeam, adminDeleteTeam, adminRenameTeam } from "@/lib/tournament.functions";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { listTournaments, listPhotos, listStandings, listHighlights } from "@/lib/public.functions";
@@ -142,6 +143,41 @@ function TournamentsTab() {
   const [form, setForm] = useState(emptyForm);
   const [imagePath, setImagePath] = useState("");
   const [busy, setBusy] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [teamsFor, setTeamsFor] = useState<string | null>(null);
+
+  const resetForm = () => {
+    setForm(emptyForm);
+    setImagePath("");
+    setEditId(null);
+  };
+
+  const startEdit = (t: (typeof tournaments)[number]) => {
+    // location is stored as "venue, street, CP city"
+    const parts = (t.location ?? "").split(",").map((s) => s.trim());
+    const last = parts.length >= 3 ? parts.slice(2).join(", ") : "";
+    const m = last.match(/^(\d{4,5})\s+(.*)$/);
+    setForm({
+      title: t.title,
+      event_date: t.event_date,
+      start_time: t.start_time?.slice(0, 5) ?? "",
+      end_time: t.end_time?.slice(0, 5) ?? "",
+      format: t.format === "equipe" ? "equipe" : "solo",
+      max_participants: t.max_participants ? String(t.max_participants) : "",
+      team_size: String(Math.max(2, t.team_size ?? 2)),
+      with_pools: (t.pool_count ?? 0) > 0,
+      pool_count: String(t.pool_count || 4),
+      venue: parts[0] ?? "",
+      street: parts[1] ?? "",
+      postal_code: m ? m[1]! : "",
+      city: m ? m[2]! : last,
+      description: t.description ?? "",
+      helloasso_url: t.helloasso_url ?? "",
+    });
+    setImagePath("");
+    setEditId(t.id);
+    document.getElementById("tournament-form")?.scrollIntoView({ behavior: "smooth" });
+  };
 
   const uploadImage = async (file: File) => {
     const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -165,6 +201,7 @@ function TournamentsTab() {
       const location = [form.venue, form.street, cityLine].map((v) => v.trim()).filter(Boolean).join(", ");
       await adminUpsertTournament({
         data: {
+          id: editId ?? undefined,
           title: form.title,
           event_date: form.event_date,
           start_time: form.start_time || undefined,
@@ -179,9 +216,8 @@ function TournamentsTab() {
           image_url: imagePath || undefined,
         },
       });
-      toast.success("Tournoi enregistré.");
-      setForm(emptyForm);
-      setImagePath("");
+      toast.success(editId ? "Tournoi mis à jour." : "Tournoi enregistré.");
+      resetForm();
       queryClient.invalidateQueries({ queryKey: ["tournaments"] });
       queryClient.invalidateQueries({ queryKey: ["home"] });
     } catch (err) {
@@ -194,15 +230,24 @@ function TournamentsTab() {
   const remove = async (id: string) => {
     await adminDeleteTournament({ data: { id } });
     toast.success("Tournoi supprimé.");
+    if (editId === id) resetForm();
     queryClient.invalidateQueries({ queryKey: ["tournaments"] });
     queryClient.invalidateQueries({ queryKey: ["home"] });
   };
 
   return (
     <div className="grid gap-10 lg:grid-cols-2">
-      <form onSubmit={submit} className="space-y-4 rounded-xl border border-border bg-card p-6">
+      <form id="tournament-form" onSubmit={submit} className="space-y-4 rounded-xl border border-border bg-card p-6">
         <h2 className="flex items-center gap-2 text-xl">
-          <Plus className="h-5 w-5 text-primary" /> Nouveau tournoi
+          {editId ? (
+            <>
+              <Pencil className="h-5 w-5 text-primary" /> Modifier le tournoi
+            </>
+          ) : (
+            <>
+              <Plus className="h-5 w-5 text-primary" /> Nouveau tournoi
+            </>
+          )}
         </h2>
         <div>
           <label className="mb-1 block text-sm font-medium">Nom du tournoi</label>
@@ -373,34 +418,152 @@ function TournamentsTab() {
             />
           </label>
         </div>
-        <button type="submit" className={btnPrimary} disabled={busy}>
-          {busy ? "..." : "Publier le tournoi"}
-        </button>
+        <div className="flex gap-2">
+          <button type="submit" className={btnPrimary} disabled={busy}>
+            {busy ? "..." : editId ? "Enregistrer les modifications" : "Publier le tournoi"}
+          </button>
+          {editId && (
+            <button type="button" className={btnDanger} onClick={resetForm}>
+              Annuler
+            </button>
+          )}
+        </div>
       </form>
 
       <div>
         <h2 className="text-xl">Tournois existants</h2>
         <ul className="mt-4 space-y-2">
           {tournaments.map((t) => (
-            <li
-              key={t.id}
-              className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3"
-            >
-              <div>
-                <p className="font-medium">{t.title}</p>
-                <p className="text-xs text-muted-foreground">
-                  {t.event_date}
-                  {t.start_time ? ` · ${t.start_time.slice(0, 5)}` : ""}
-                  {t.end_time ? `–${t.end_time.slice(0, 5)}` : ""}
-                </p>
+            <li key={t.id} className="rounded-lg border border-border bg-card px-4 py-3">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="font-medium">{t.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {t.event_date}
+                    {t.start_time ? ` · ${t.start_time.slice(0, 5)}` : ""}
+                    {t.end_time ? `–${t.end_time.slice(0, 5)}` : ""}
+                    {` · ${t.registrations_count}${t.max_participants ? `/${t.max_participants}` : ""} inscrits`}
+                  </p>
+                </div>
+                <div className="flex flex-wrap justify-end gap-2">
+                  <button onClick={() => startEdit(t)} className={btnDanger.replace("hover:border-destructive hover:text-destructive", "hover:border-primary hover:text-primary")}>
+                    <Pencil className="h-3.5 w-3.5" /> Modifier
+                  </button>
+                  <button
+                    onClick={() => setTeamsFor(teamsFor === t.id ? null : t.id)}
+                    className={btnDanger.replace("hover:border-destructive hover:text-destructive", "hover:border-primary hover:text-primary")}
+                  >
+                    <Users className="h-3.5 w-3.5" /> Participants
+                  </button>
+                  <button
+                    onClick={() => confirm(`Supprimer « ${t.title} » ?`) && remove(t.id)}
+                    className={btnDanger}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" /> Supprimer
+                  </button>
+                </div>
               </div>
-              <button onClick={() => remove(t.id)} className={btnDanger}>
-                <Trash2 className="h-3.5 w-3.5" /> Supprimer
-              </button>
+              {teamsFor === t.id && <TeamsManager tournamentId={t.id} isTeam={t.format === "equipe"} />}
             </li>
           ))}
         </ul>
       </div>
+    </div>
+  );
+}
+
+function TeamsManager({ tournamentId, isTeam }: { tournamentId: string; isTeam: boolean }) {
+  const queryClient = useQueryClient();
+  const { data } = useQuery({
+    queryKey: ["board", tournamentId],
+    queryFn: () => getTournamentBoard({ data: { id: tournamentId } }),
+  });
+  const [newName, setNewName] = useState("");
+  const [editing, setEditing] = useState<{ id: string; name: string } | null>(null);
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["board", tournamentId] });
+    queryClient.invalidateQueries({ queryKey: ["tournaments"] });
+    queryClient.invalidateQueries({ queryKey: ["home"] });
+  };
+  const run = async (fn: () => Promise<unknown>, ok: string) => {
+    try {
+      await fn();
+      toast.success(ok);
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur");
+    }
+  };
+  const teams = data?.teams ?? [];
+  return (
+    <div className="mt-3 border-t border-border pt-3">
+      <form
+        className="flex gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!newName.trim()) return;
+          void run(() => adminAddTeam({ data: { tournamentId, name: newName } }), "Participant ajouté.").then(() =>
+            setNewName(""),
+          );
+        }}
+      >
+        <input
+          className={inputCls}
+          placeholder={isTeam ? "Nom de l'équipe" : "Nom du participant"}
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+        />
+        <button type="submit" className={btnPrimary}>
+          <Plus className="h-4 w-4" /> Ajouter
+        </button>
+      </form>
+      {teams.length === 0 ? (
+        <p className="mt-3 text-sm text-muted-foreground">Aucun participant.</p>
+      ) : (
+        <ul className="mt-3 space-y-1">
+          {teams.map((tm) => (
+            <li key={tm.id} className="flex items-center gap-2 text-sm">
+              {editing?.id === tm.id ? (
+                <>
+                  <input
+                    className={inputCls}
+                    value={editing.name}
+                    autoFocus
+                    onChange={(e) => setEditing({ id: tm.id, name: e.target.value })}
+                  />
+                  <button
+                    className={btnPrimary}
+                    onClick={() =>
+                      void run(() => adminRenameTeam({ data: editing }), "Nom modifié.").then(() => setEditing(null))
+                    }
+                  >
+                    <Check className="h-4 w-4" />
+                  </button>
+                  <button className={btnDanger} onClick={() => setEditing(null)}>
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span className="flex-1">{tm.name}</span>
+                  <button className={btnDanger} onClick={() => setEditing({ id: tm.id, name: tm.name })}>
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    className={btnDanger}
+                    onClick={() =>
+                      confirm(`Retirer « ${tm.name} » ?`) &&
+                      void run(() => adminDeleteTeam({ data: { id: tm.id } }), "Participant retiré.")
+                    }
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
