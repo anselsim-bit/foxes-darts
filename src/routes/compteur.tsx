@@ -186,6 +186,7 @@ function CompteurPage() {
         canSave={!!userId}
         tournamentId={tournamentId || null}
         match={match}
+        accessCode={accessCode}
         onExit={() => setPlaying(false)}
         onRestart={() => {
           setPlayers((prev) => [...prev].reverse());
@@ -443,10 +444,12 @@ function Game({
   canSave,
   tournamentId,
   match,
+  accessCode,
   onExit,
   onRestart,
 }: {
   match: { id: string; teamA: string; teamB: string } | null;
+  accessCode: string | null;
   players: Player[];
   start: number;
   doubleOut: boolean;
@@ -465,7 +468,7 @@ function Game({
     if (winner === null || !match) return;
     const aWon = players[winner]!.name === match.teamA;
     try {
-      await reportMatch({ data: { matchId: match.id, scoreA: aWon ? 1 : 0, scoreB: aWon ? 0 : 1 } });
+      await reportMatch({ data: { matchId: match.id, scoreA: aWon ? 1 : 0, scoreB: aWon ? 0 : 1, code: accessCode ?? undefined } });
       setReported(true);
       toast.success("Résultat envoyé au tableau du tournoi.");
     } catch (e) {
