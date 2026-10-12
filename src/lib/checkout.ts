@@ -55,12 +55,13 @@ export function suggestNextDarts(score: number, dartsLeft: number, doubleOut: bo
   if (finish) return { darts: finish.map((t) => t.label), note: "Sortie possible !" };
   if (score > 60 * dartsLeft + 50) return { darts: ["T20"], note: "Marquez un maximum de points." };
   // Not finishable this visit: leave a comfortable double (40 = D20, 32 = D16) for next time.
-  for (const target of doubleOut ? [40, 32, 36, 24, 16] : [60, 50, 40]) {
-    const need = score - target;
-    const t =
-      THROWS.find((x) => x.value === need && (x.label.startsWith("S") || x.label === "25")) ??
-      THROWS.find((x) => x.value === need && x.label.startsWith("T"));
-    if (t) return { darts: [t.label], note: `Laissez ${target} pour la prochaine volée.` };
+  const targets = doubleOut ? [40, 32, 36, 24, 16] : [60, 50, 40];
+  const easy = (x: Throw) => x.label.startsWith("S") || x.label === "25";
+  for (const kind of [easy, (x: Throw) => x.label.startsWith("T")]) {
+    for (const target of targets) {
+      const t = THROWS.find((x) => x.value === score - target && kind(x));
+      if (t) return { darts: [t.label], note: `Laissez ${target} pour la prochaine volée.` };
+    }
   }
   return { darts: ["T20"], note: "Marquez un maximum de points." };
 }
