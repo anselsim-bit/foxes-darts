@@ -194,8 +194,8 @@ export const listPlayableMatches = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { tournamentId: string }) => input)
   .handler(async ({ data, context }) => {
-    const [{ data: teams }, { data: matches }] = await Promise.all([
-      context.supabase.from("tournament_teams").select("id, name").eq("tournament_id", data.tournamentId),
+    const [{ data: teams }, { data: matches }, { data: t }] = await Promise.all([
+      context.supabase.from("tournament_teams").select("id, name, name_locked").eq("tournament_id", data.tournamentId),
       context.supabase
         .from("tournament_matches")
         .select("id, stage, pool_index, round, team_a, team_b, winner")
@@ -204,14 +204,59 @@ export const listPlayableMatches = createServerFn({ method: "GET" })
         .not("team_a", "is", null)
         .not("team_b", "is", null)
         .order("round"),
+      context.supabase.from("tournaments").select("team_size").eq("id", data.tournamentId).maybeSingle(),
     ]);
+    const isTeam = (t?.team_size ?? 1) > 1;
     const name = new Map((teams ?? []).map((t) => [t.id, t.name]));
+    const locked = new Map((teams ?? []).map((t) => [t.id, t.name_locked]));
     return (matches ?? []).map((m) => ({
       id: m.id,
       label: `${m.stage === "pool" ? `Poule ${String.fromCharCode(65 + (m.pool_index ?? 0))}` : `Tour ${m.round}`} — ${name.get(m.team_a!)} vs ${name.get(m.team_b!)}`,
       teamA: name.get(m.team_a!) ?? "Équipe A",
       teamB: name.get(m.team_b!) ?? "Équipe B",
+      teamAId: m.team_a!,
+      teamBId: m.team_b!,
+      canNameA: isTeam && !locked.get(m.team_a!),
+      canNameB: isTeam && !locked.get(m.team_b!),
     }));
+  });
+
+/** Choix définitif du nom d'équipe (tournoi par équipe, code d'accès actif, une seule fois). */
+export const setTeamNameWithCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { teamId: string; name: string; code: string }) => {
+    const name = String(input.name ?? "").trim().slice(0, 40);
+    if (name.length < 2) throw new Error("Le nom d'équipe doit contenir au moins 2 caractères.");
+    return { teamId: String(input.teamId), code: String(input.code ?? ""), name };
+  })
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: team } = await supabaseAdmin
+      .from("tournament_teams")
+      .select("id, tournament_id, name_locked")
+      .eq("id", data.teamId)
+      .maybeSingle();
+    if (!team) throw new Error("Équipe introuvable.");
+    if (team.name_locked) throw new Error("Le nom de cette équipe est déjà définitif.");
+    const { data: t } = await supabaseAdmin.from("tournaments").select("team_size").eq("id", team.tournament_id).single();
+    if ((t?.team_size ?? 1) <= 1) throw new Error("Ce tournoi ne se joue pas en équipe.");
+    if (!(await hasValidCode(team.tournament_id, data.code))) throw new Error("Code d'accès invalide ou inactif.");
+    const { data: dup } = await supabaseAdmin
+      .from("tournament_teams")
+      .select("id")
+      .eq("tournament_id", team.tournament_id)
+      .ilike("name", data.name)
+      .neq("id", team.id)
+      .limit(1);
+    if (dup && dup.length) throw new Error("Ce nom est déjà pris par une autre équipe.");
+    const { data: upd } = await supabaseAdmin
+      .from("tournament_teams")
+      .update({ name: data.name, name_locked: true })
+      .eq("id", team.id)
+      .eq("name_locked", false)
+      .select("id");
+    if (!upd || !upd.length) throw new Error("Le nom de cette équipe est déjà définitif.");
+    return { name: data.name };
   });
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
