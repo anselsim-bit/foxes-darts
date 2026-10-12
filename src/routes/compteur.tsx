@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { suggestNextDarts } from "@/lib/checkout";
 import {
-  listMembersForGame,
+  findMemberForGame,
   saveGameResult,
   confirmMemberIdentity,
   listTournamentsForGame,
