@@ -8,6 +8,13 @@
       "when": 1791811554606,
       "tag": "0000_foxes_darts_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791811584494,
+      "tag": "0001_player_accounts_registrations",
+      "breakpoints": true
     }
   ]
 }
