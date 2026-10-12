@@ -200,7 +200,9 @@ function TournamentDetail() {
             </>
           ) : (
             <button
-              onClick={() => navigate({ to: "/auth" })}
+              onClick={() =>
+                navigate({ to: "/auth", search: { redirect: `/tournois/${tournament.id}` } })
+              }
               className="rounded-md bg-primary px-6 py-3 font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
             >
               Connectez-vous pour vous inscrire
