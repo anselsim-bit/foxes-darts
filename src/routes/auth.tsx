@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>): { redirect?: string } => {
-    const r = search.redirect;
+    const r = search["redirect"];
     return typeof r === "string" && r.startsWith("/") && !r.startsWith("//")
       ? { redirect: r }
       : {};
