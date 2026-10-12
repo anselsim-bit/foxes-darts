@@ -24,3 +24,4 @@
 - [x] Accueil : carrousel prochains tournois / en cours / terminés ; onglet Tournois : trois sections successives.
 - [x] Vérifier les règles et les deux pages.
 - [x] Corriger l’erreur du carrousel et vérifier la navigation après rechargement.
+- [x] Carte de tournoi entièrement cliquable vers sa fiche (accueil + Tournois), les boutons HelloAsso / inscription gardés au-dessus.
