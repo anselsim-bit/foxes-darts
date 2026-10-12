@@ -334,7 +334,13 @@ export const adminSendAccessCodes = createServerFn({ method: "POST" })
       }
       try {
         const res = await sendTemplateEmail("tournament-access-code", email, {
-          templateData: { participantName: name, tournamentTitle: t.title, tournamentDate: eventDate, code },
+          templateData: {
+            participantName: name,
+            tournamentTitle: t.title,
+            tournamentDate: eventDate,
+            code,
+            playUrl: `https://foxesdarts.com/tournois/${data.tournamentId}/jouer`,
+          },
           idempotencyKey: `access-code-${data.tournamentId}-${email}`,
         });
         if (res.sent) sent++;

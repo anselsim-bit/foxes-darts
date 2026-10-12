@@ -57,6 +57,7 @@ export const template = {
     tournamentTitle: 'Tournoi test — Doublettes',
     tournamentDate: '12/10/2026',
     code: 'K7P2XQ',
+    playUrl: 'https://foxesdarts.com/tournois/exemple/jouer',
   },
 } satisfies TemplateEntry
 
@@ -77,5 +78,15 @@ const codeText = {
   fontWeight: 'bold',
   letterSpacing: '6px',
   margin: '0',
+}
+const buttonWrap = { textAlign: 'center' as const, margin: '8px 0 18px' }
+const button = {
+  backgroundColor: '#e85d3a',
+  color: '#ffffff',
+  fontSize: '15px',
+  fontWeight: 'bold',
+  textDecoration: 'none',
+  padding: '12px 28px',
+  borderRadius: '8px',
 }
 const muted = { color: '#6b7280', fontSize: '13px', lineHeight: '19px' }
