@@ -408,11 +408,32 @@ function Game({
         </div>
       ) : (
         <div className="mt-8">
-          <div className="mb-3 flex items-center justify-between text-sm">
+          <div className="mb-3 flex items-center justify-between gap-3 text-sm">
             <span>
               Au tour de <strong>{players[playerIdx]!.name}</strong> — fléchette {current.length + 1}/3
             </span>
-            <span className="text-muted-foreground">{current.map((d) => d.label).join(" · ")}</span>
+            <div className="flex gap-2">
+              {[0, 1, 2].map((i) => {
+                const d = current[i];
+                return (
+                  <div
+                    key={i}
+                    className={`flex h-14 w-16 flex-col items-center justify-center rounded-md border ${
+                      d ? "border-primary bg-primary/10" : "border-border bg-card"
+                    }`}
+                  >
+                    {d ? (
+                      <>
+                        <span className="font-display text-lg leading-none">{d.label}</span>
+                        <span className="mt-1 text-[10px] text-muted-foreground">{d.value} pts</span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
           {(() => {
             const tip = suggestNextDarts(remaining, 3 - current.length, doubleOut);
