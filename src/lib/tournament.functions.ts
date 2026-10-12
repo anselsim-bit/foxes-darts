@@ -118,7 +118,8 @@ export const reportMatch = createServerFn({ method: "POST" })
     const a = Math.max(0, Math.floor(data.scoreA));
     const b = Math.max(0, Math.floor(data.scoreB));
     if (a === b) throw new Error("Il faut un vainqueur (scores différents).");
-    const winner = a > b ? m.team_a : m.team_b;
+    // Aux fléchettes, le vainqueur est celui qui a le moins de points restants (0).
+    const winner = a < b ? m.team_a : m.team_b;
     await supabaseAdmin.from("tournament_matches").update({ score_a: a, score_b: b, winner }).eq("id", m.id);
     if (m.stage === "bracket") {
       const s = nextSlot(m.round, m.position);
