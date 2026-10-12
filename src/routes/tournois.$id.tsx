@@ -11,7 +11,7 @@ import {
 } from "@/lib/player.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { TournamentBoard } from "@/components/tournament-board";
-import { TournamentPlay } from "@/components/tournament-play";
+import { TournamentPlayButton } from "@/components/tournament-play";
 
 const tournamentQuery = (id: string) =>
   queryOptions({
@@ -212,7 +212,7 @@ function TournamentDetail() {
         </div>
       )}
 
-      {tournament.status === "started" && <TournamentPlay tournamentId={id} signedIn={signedIn} />}
+      {tournament.status === "started" && <TournamentPlayButton tournamentId={id} />}
       <TournamentBoard
         key={tournament.status}
         tournamentId={id}
