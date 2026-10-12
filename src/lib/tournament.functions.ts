@@ -1,0 +1,194 @@
+import { createServerFn } from "@tanstack/react-start";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Database } from "@/integrations/supabase/types";
+import {
+  buildBracket,
+  distributePools,
+  nextSlot,
+  poolStandings,
+  qualifiersFromPools,
+  roundRobin,
+  shuffle,
+  type MatchDraft,
+} from "@/lib/bracket";
+import { publicClient } from "@/lib/public.functions";
+
+type Ctx = { supabase: SupabaseClient<Database>; userId: string };
+
+async function isAdmin(ctx: Ctx) {
+  const { data } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
+  return !!data;
+}
+async function requireAdmin(ctx: Ctx) {
+  if (!(await isAdmin(ctx))) throw new Error("Accès réservé aux administrateurs.");
+}
+
+export const getTournamentBoard = createServerFn({ method: "GET" })
+  .inputValidator((input: { id: string }) => input)
+  .handler(async ({ data }) => {
+    const sb = publicClient();
+    const [{ data: teams }, { data: matches }] = await Promise.all([
+      sb.from("tournament_teams").select("id, name, captain_id").eq("tournament_id", data.id).order("created_at"),
+      sb
+        .from("tournament_matches")
+        .select("id, stage, pool_index, round, position, team_a, team_b, score_a, score_b, winner")
+        .eq("tournament_id", data.id)
+        .order("round")
+        .order("position"),
+    ]);
+    return { teams: teams ?? [], matches: matches ?? [] };
+  });
+
+const toRow = (tournamentId: string) => (m: MatchDraft) => ({ ...m, tournament_id: tournamentId });
+
+export const startTournament = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: string }) => input)
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const { data: t, error } = await context.supabase
+      .from("tournaments")
+      .select("status, max_participants, pool_count")
+      .eq("id", data.id)
+      .single();
+    if (error) throw new Error(error.message);
+    if (t.status !== "open") throw new Error("Le tournoi a déjà commencé.");
+    const { data: teams } = await context.supabase.from("tournament_teams").select("id").eq("tournament_id", data.id);
+    const ids = shuffle((teams ?? []).map((x) => x.id));
+    if (t.max_participants && ids.length < t.max_participants)
+      throw new Error("Le tournoi n'est pas encore complet.");
+    if (ids.length < 2) throw new Error("Il faut au moins 2 participants.");
+    let drafts: MatchDraft[];
+    if (t.pool_count > 0) {
+      if (ids.length < t.pool_count * 2) throw new Error("Pas assez de participants pour ce nombre de poules.");
+      drafts = distributePools(ids, t.pool_count).flatMap((p, i) => roundRobin(p, i));
+    } else {
+      drafts = buildBracket(ids);
+    }
+    const { error: e2 } = await context.supabase.from("tournament_matches").insert(drafts.map(toRow(data.id)));
+    if (e2) throw new Error(e2.message);
+    await context.supabase.from("tournaments").update({ status: "started" }).eq("id", data.id);
+    return { ok: true };
+  });
+
+export const generateFinals = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: string }) => input)
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const { data: t } = await context.supabase.from("tournaments").select("pool_count").eq("id", data.id).single();
+    const { data: matches } = await context.supabase
+      .from("tournament_matches")
+      .select("stage, pool_index, team_a, team_b, score_a, score_b, winner")
+      .eq("tournament_id", data.id);
+    const all = matches ?? [];
+    if (all.some((m) => m.stage === "bracket")) throw new Error("La phase finale existe déjà.");
+    const pool = all.filter((m) => m.stage === "pool");
+    if (pool.some((m) => !m.winner)) throw new Error("Tous les matchs de poule ne sont pas terminés.");
+    const standings = Array.from({ length: t?.pool_count ?? 0 }, (_, i) => {
+      const ms = pool.filter((m) => m.pool_index === i);
+      const teams = [...new Set(ms.flatMap((m) => [m.team_a!, m.team_b!]))];
+      return poolStandings(teams, ms);
+    });
+    const drafts = buildBracket(qualifiersFromPools(standings, 2));
+    const { error } = await context.supabase.from("tournament_matches").insert(drafts.map(toRow(data.id)));
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** Enregistre le résultat d'un match. Admin, ou capitaine d'une des deux équipes. */
+export const reportMatch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { matchId: string; scoreA: number; scoreB: number }) => input)
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: m, error } = await supabaseAdmin
+      .from("tournament_matches")
+      .select("id, tournament_id, stage, round, position, team_a, team_b")
+      .eq("id", data.matchId)
+      .single();
+    if (error || !m) throw new Error("Match introuvable.");
+    if (!m.team_a || !m.team_b) throw new Error("Les deux adversaires ne sont pas encore connus.");
+    if (!(await isAdmin(context))) {
+      const { data: caps } = await supabaseAdmin.from("tournament_teams").select("captain_id").in("id", [m.team_a, m.team_b]);
+      if (!(caps ?? []).some((c) => c.captain_id === context.userId))
+        throw new Error("Seul un administrateur ou un joueur du match peut saisir le résultat.");
+    }
+    const a = Math.max(0, Math.floor(data.scoreA));
+    const b = Math.max(0, Math.floor(data.scoreB));
+    if (a === b) throw new Error("Il faut un vainqueur (scores différents).");
+    const winner = a > b ? m.team_a : m.team_b;
+    await supabaseAdmin.from("tournament_matches").update({ score_a: a, score_b: b, winner }).eq("id", m.id);
+    if (m.stage === "bracket") {
+      const s = nextSlot(m.round, m.position);
+      const { data: next } = await supabaseAdmin
+        .from("tournament_matches")
+        .select("id")
+        .eq("tournament_id", m.tournament_id)
+        .eq("stage", "bracket")
+        .eq("round", s.round)
+        .eq("position", s.position)
+        .maybeSingle();
+      if (next) await supabaseAdmin.from("tournament_matches").update(s.side === "team_a" ? { team_a: winner } : { team_b: winner }).eq("id", next.id);
+      else await supabaseAdmin.from("tournaments").update({ status: "finished" }).eq("id", m.tournament_id);
+    }
+    return { ok: true };
+  });
+
+export const amIAdmin = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => ({ admin: await isAdmin(context), userId: context.userId }));
+
+export const adminAddTeam = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { tournamentId: string; name: string }) => input)
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const name = data.name.trim();
+    if (!name) throw new Error("Nom requis.");
+    const { error } = await context.supabase.from("tournament_teams").insert({ tournament_id: data.tournamentId, name });
+    if (error) throw new Error(friendly(error.message));
+    return { ok: true };
+  });
+
+export const adminDeleteTeam = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: string }) => input)
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const { error } = await context.supabase.from("tournament_teams").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** Matchs jouables (adversaires connus, sans résultat) pour le compteur. */
+export const listPlayableMatches = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { tournamentId: string }) => input)
+  .handler(async ({ data, context }) => {
+    const [{ data: teams }, { data: matches }] = await Promise.all([
+      context.supabase.from("tournament_teams").select("id, name").eq("tournament_id", data.tournamentId),
+      context.supabase
+        .from("tournament_matches")
+        .select("id, stage, pool_index, round, team_a, team_b, winner")
+        .eq("tournament_id", data.tournamentId)
+        .is("winner", null)
+        .not("team_a", "is", null)
+        .not("team_b", "is", null)
+        .order("round"),
+    ]);
+    const name = new Map((teams ?? []).map((t) => [t.id, t.name]));
+    return (matches ?? []).map((m) => ({
+      id: m.id,
+      label: `${m.stage === "pool" ? `Poule ${String.fromCharCode(65 + (m.pool_index ?? 0))}` : `Tour ${m.round}`} — ${name.get(m.team_a!)} vs ${name.get(m.team_b!)}`,
+      teamA: name.get(m.team_a!) ?? "Équipe A",
+      teamB: name.get(m.team_b!) ?? "Équipe B",
+    }));
+  });
+
+export function friendly(msg: string) {
+  if (msg.includes("TOURNAMENT_FULL")) return "Le tournoi est complet.";
+  if (msg.includes("TOURNAMENT_STARTED")) return "Le tournoi a déjà commencé, les inscriptions sont closes.";
+  return msg;
+}

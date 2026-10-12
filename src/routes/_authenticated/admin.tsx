@@ -127,6 +127,9 @@ function TournamentsTab() {
     end_time: "",
     format: "solo" as "solo" | "equipe",
     max_participants: "",
+    team_size: "2",
+    with_pools: false,
+    pool_count: "4",
     venue: DEFAULT_VENUE.venue,
     street: DEFAULT_VENUE.street,
     postal_code: DEFAULT_VENUE.postal_code,
@@ -166,6 +169,8 @@ function TournamentsTab() {
           end_time: form.end_time || undefined,
           format: form.format,
           max_participants: form.max_participants ? Math.max(1, parseInt(form.max_participants, 10)) : undefined,
+          team_size: form.format === "equipe" ? Math.max(2, parseInt(form.team_size, 10) || 2) : 1,
+          pool_count: form.with_pools ? Math.max(1, parseInt(form.pool_count, 10) || 1) : 0,
           location: location || undefined,
           description: form.description,
           helloasso_url: form.helloasso_url,
@@ -260,6 +265,40 @@ function TournamentsTab() {
               value={form.max_participants}
               onChange={(e) => setForm({ ...form, max_participants: e.target.value })}
             />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {form.format === "equipe" && (
+            <div>
+              <label className="mb-1 block text-sm font-medium">Joueurs par équipe</label>
+              <input
+                type="number"
+                min={2}
+                className={inputCls}
+                value={form.team_size}
+                onChange={(e) => setForm({ ...form, team_size: e.target.value })}
+              />
+            </div>
+          )}
+          <div>
+            <label className="mb-1 flex items-center gap-2 text-sm font-medium">
+              <input
+                type="checkbox"
+                checked={form.with_pools}
+                onChange={(e) => setForm({ ...form, with_pools: e.target.checked })}
+              />
+              Phase de poules
+            </label>
+            {form.with_pools && (
+              <input
+                type="number"
+                min={1}
+                className={inputCls}
+                aria-label="Nombre de poules"
+                value={form.pool_count}
+                onChange={(e) => setForm({ ...form, pool_count: e.target.value })}
+              />
+            )}
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">

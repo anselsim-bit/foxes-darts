@@ -8,7 +8,7 @@ const tournamentsQuery = queryOptions({
   queryFn: () => listTournaments(),
 });
 
-export const Route = createFileRoute("/tournois")({
+export const Route = createFileRoute("/tournois/")({
   loader: ({ context }) => context.queryClient.ensureQueryData(tournamentsQuery),
   head: () => ({
     meta: [

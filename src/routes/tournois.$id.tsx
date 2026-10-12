@@ -10,6 +10,7 @@ import {
   getMyRegistrationIds,
 } from "@/lib/player.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { TournamentBoard } from "@/components/tournament-board";
 
 const tournamentQuery = (id: string) =>
   queryOptions({
@@ -51,6 +52,7 @@ function TournamentDetail() {
   const [signedIn, setSignedIn] = useState(false);
   const [registered, setRegistered] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [teamName, setTeamName] = useState("");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -72,6 +74,7 @@ function TournamentDetail() {
     };
   }, [id]);
 
+  const isFull = !!tournament.max_participants && tournament.registrations_count >= tournament.max_participants;
   const isPast = tournament.event_date < new Date().toISOString().slice(0, 10);
 
   const toggleRegistration = async () => {
@@ -82,7 +85,7 @@ function TournamentDetail() {
         setRegistered(false);
         toast.success("Inscription annulée.");
       } else {
-        const res = await registerForTournament({ data: { tournamentId: id } });
+        const res = await registerForTournament({ data: { tournamentId: id, teamName: teamName || undefined } });
         if (res.ok) {
           setRegistered(true);
           toast.success(res.message);
@@ -91,6 +94,7 @@ function TournamentDetail() {
         }
       }
       queryClient.invalidateQueries({ queryKey: ["tournament", id] });
+      queryClient.invalidateQueries({ queryKey: ["board", id] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Une erreur est survenue.");
     } finally {
@@ -136,8 +140,9 @@ function TournamentDetail() {
           </span>
         )}
         <span className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-primary" /> {tournament.registrations_count} inscrit
-          {tournament.registrations_count > 1 ? "s" : ""}
+          <Users className="h-4 w-4 text-primary" /> {tournament.registrations_count}
+          {tournament.max_participants ? ` / ${tournament.max_participants}` : ""}{" "}
+          {tournament.format === "equipe" ? `équipe${tournament.registrations_count > 1 ? "s" : ""} de ${tournament.team_size}` : `inscrit${tournament.registrations_count > 1 ? "s" : ""}`}
         </span>
       </div>
 
@@ -147,7 +152,20 @@ function TournamentDetail() {
 
       {!isPast && (
         <div className="mt-8 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-5">
-          {signedIn ? (
+          {tournament.status !== "open" ? (
+            <span className="font-medium text-muted-foreground">Le tournoi a commencé — inscriptions closes.</span>
+          ) : isFull && !registered ? (
+            <span className="rounded-md border border-border px-6 py-3 font-semibold text-muted-foreground">Complet</span>
+          ) : signedIn ? (
+            <>
+            {tournament.format === "equipe" && !registered && (
+              <input
+                value={teamName}
+                onChange={(e) => setTeamName(e.target.value)}
+                placeholder="Nom de votre équipe"
+                className="rounded-md border border-input bg-background px-3 py-3 text-sm"
+              />
+            )}
             <button
               onClick={toggleRegistration}
               disabled={busy}
@@ -157,8 +175,9 @@ function TournamentDetail() {
                   : "rounded-md bg-primary px-6 py-3 font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
               }
             >
-              {busy ? "..." : registered ? "Annuler mon inscription" : "Je m'inscris"}
+              {busy ? "..." : registered ? "Annuler mon inscription" : tournament.format === "equipe" ? "Inscrire mon équipe" : "Je m'inscris"}
             </button>
+            </>
           ) : (
             <button
               onClick={() => navigate({ to: "/auth" })}
@@ -179,6 +198,15 @@ function TournamentDetail() {
           )}
         </div>
       )}
+
+      <TournamentBoard
+        key={tournament.status}
+        tournamentId={id}
+        status={tournament.status}
+        poolCount={tournament.pool_count}
+        maxParticipants={tournament.max_participants}
+        isTeam={tournament.format === "equipe"}
+      />
     </div>
   );
 }
