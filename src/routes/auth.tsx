@@ -42,7 +42,7 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Bienvenue !");
-        navigate({ to: "/mon-espace" });
+        goBack();
       } else {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -57,7 +57,7 @@ function AuthPage() {
           setConfirmEmail(true);
         } else {
           toast.success("Compte créé, bienvenue !");
-          navigate({ to: "/mon-espace" });
+          goBack();
         }
       }
     } catch (err) {
