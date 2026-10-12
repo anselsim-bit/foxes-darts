@@ -156,6 +156,26 @@ function TournamentDetail() {
             <span className="font-medium text-muted-foreground">Le tournoi a commencé — inscriptions closes.</span>
           ) : isFull && !registered ? (
             <span className="rounded-md border border-border px-6 py-3 font-semibold text-muted-foreground">Complet</span>
+          ) : tournament.helloasso_url ? (
+            <>
+              {signedIn && registered && (
+                <button
+                  onClick={toggleRegistration}
+                  disabled={busy}
+                  className="rounded-md border border-border px-6 py-3 font-medium transition-colors hover:border-destructive hover:text-destructive"
+                >
+                  {busy ? "..." : "Annuler mon inscription"}
+                </button>
+              )}
+              <a
+                href={tournament.helloasso_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                <Ticket className="h-4 w-4" /> Billetterie HelloAsso
+              </a>
+            </>
           ) : signedIn ? (
             <>
             {tournament.format === "equipe" && !registered && (
@@ -186,18 +206,9 @@ function TournamentDetail() {
               Connectez-vous pour vous inscrire
             </button>
           )}
-          {tournament.helloasso_url && (
-            <a
-              href={tournament.helloasso_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-md border border-border px-6 py-3 font-medium transition-colors hover:border-primary"
-            >
-              <Ticket className="h-4 w-4" /> Billetterie HelloAsso
-            </a>
-          )}
         </div>
       )}
+
 
       <TournamentBoard
         key={tournament.status}
