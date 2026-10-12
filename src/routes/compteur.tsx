@@ -3,11 +3,7 @@ import { useEffect, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  findMemberForGame,
-  confirmMemberIdentity,
-  listTournamentsForGame,
-} from "@/lib/darts.functions";
+import { findMemberForGame, confirmMemberIdentity } from "@/lib/darts.functions";
 import { Game, type Player } from "@/components/dart-game";
 
 export const Route = createFileRoute("/compteur")({
@@ -39,8 +35,6 @@ function CompteurPage() {
   const [start, setStart] = useState(501);
   const [doubleOut, setDoubleOut] = useState(true);
   const [playing, setPlaying] = useState(false);
-  const [tournaments, setTournaments] = useState<{ id: string; title: string; event_date: string }[]>([]);
-  const [tournamentId, setTournamentId] = useState("");
   const [password, setPassword] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [gameKey, setGameKey] = useState(0);
@@ -50,11 +44,6 @@ function CompteurPage() {
       const id = data.user?.id ?? null;
       setUserId(id);
       if (id) {
-        try {
-          setTournaments(await listTournamentsForGame());
-        } catch {
-          /* liste indisponible */
-        }
         const { data: profile } = await supabase
           .from("profiles")
           .select("display_name")
@@ -137,7 +126,7 @@ function CompteurPage() {
         start={start}
         doubleOut={doubleOut}
         canSave={!!userId}
-        tournamentId={tournamentId || null}
+        tournamentId={null}
         match={null}
         accessCode={null}
         onExit={() => setPlaying(false)}
@@ -265,8 +254,7 @@ function CompteurPage() {
             </div>
           ) : (
             <p className="mt-3 text-xs text-muted-foreground">
-              <Link to="/auth" search={{ redirect: "/compteur" }} className="text-primary underline">Connectez-vous</Link> pour ajouter des membres,
-              associer la partie à un tournoi et enregistrer les statistiques.
+              <Link to="/auth" search={{ redirect: "/compteur" }} className="text-primary underline">Connectez-vous</Link> pour ajouter des membres et enregistrer les statistiques.
             </p>
           )}
         </div>
@@ -275,23 +263,6 @@ function CompteurPage() {
           <p className="-mt-2 text-xs text-muted-foreground">
             Chaque membre choisi (autre que vous) confirme son identité avec son mot de passe. Vous pouvez aussi jouer seul.
           </p>
-        )}
-        {userId && tournaments.length > 0 && (
-          <div>
-            <p className="mb-2 text-sm font-medium">Associer à un tournoi (facultatif)</p>
-            <select
-              value={tournamentId}
-              onChange={(e) => setTournamentId(e.target.value)}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              <option value="">Partie libre</option>
-              {tournaments.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.title} — {t.event_date}
-                </option>
-              ))}
-            </select>
-          </div>
         )}
 
         {players.length > 0 && (
