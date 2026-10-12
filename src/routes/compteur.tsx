@@ -48,6 +48,7 @@ function CompteurPage() {
   const [tournamentId, setTournamentId] = useState("");
   const [password, setPassword] = useState("");
   const [confirming, setConfirming] = useState(false);
+  const [gameKey, setGameKey] = useState(0);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -136,12 +137,17 @@ function CompteurPage() {
   if (playing) {
     return (
       <Game
+        key={gameKey}
         players={players}
         start={start}
         doubleOut={doubleOut}
         canSave={!!userId}
         tournamentId={tournamentId || null}
         onExit={() => setPlaying(false)}
+        onRestart={() => {
+          setPlayers((prev) => [...prev].reverse());
+          setGameKey((k) => k + 1);
+        }}
       />
     );
   }
