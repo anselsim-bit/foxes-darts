@@ -265,7 +265,26 @@ export function TournamentBoard({
         )}
       </div>
 
-      {poolCount > 0 && poolMatches.length > 0 && (
+      {both && (
+        <div className="flex flex-wrap gap-1.5">
+          {(
+            [
+              ["pools", "Poules"],
+              ["final", "Tableau final"],
+            ] as const
+          ).map(([v, lbl]) => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              className={`rounded-full border px-3 py-1 text-sm transition ${view === v ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground hover:text-foreground"}`}
+            >
+              {lbl}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {showPoolsView && (
         <div>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-2xl">Poules</h2>
@@ -331,68 +350,7 @@ export function TournamentBoard({
         </div>
       )}
 
-      {preview.length > 0 && (
-        <div>
-          <h2 className="text-2xl">Tableau final (aperçu)</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Les 2 premiers de chaque poule se qualifient. Les noms se confirment quand la poule est terminée ; en attendant, le leader actuel est indiqué en gris.
-          </p>
-          <div className="mt-4 flex gap-4 overflow-x-auto pb-2">
-            {previewRounds.map((r) => (
-              <div key={r} className="min-w-56 flex-1 space-y-3">
-                <h3 className="text-sm font-semibold text-primary">{previewName(r)}</h3>
-                <div className="flex h-full flex-col justify-around gap-3">
-                  {preview.filter((m) => m.round === r).map((m) => (
-                    <div key={m.position} className="rounded-lg border border-dashed border-border bg-card p-3 text-sm">
-                      {[m.team_a, m.team_b].map((k, j) => {
-                        const s = seedLabel(k);
-                        return (
-                          <div key={j} className={j ? "mt-1.5 border-t border-border pt-1.5" : ""}>
-                            {s.team ? (
-                              <span className="font-semibold">{name(s.team)}</span>
-                            ) : (
-                              <span className="text-muted-foreground">{s.label}</span>
-                            )}
-                            {!s.team && s.current && r === 1 && (
-                              <span className="ml-1 text-xs text-muted-foreground/70">({name(s.current)})</span>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {bracket.length > 0 && (
-        <div>
-          <h2 className="text-2xl">Tableau final</h2>
-          {finalMatch?.winner && (
-            <p className="mt-2 flex items-center gap-2 text-lg">
-              <Trophy className="h-5 w-5 text-primary" /> Vainqueur :{" "}
-              <span className="text-gradient-ember font-semibold">{name(finalMatch.winner)}</span>
-            </p>
-          )}
-          <div className="mt-4 flex gap-4 overflow-x-auto pb-2">
-            {rounds.map((r) => (
-              <div key={r} className="min-w-56 flex-1 space-y-3">
-                <h3 className="text-sm font-semibold text-primary">{roundName(r)}</h3>
-                <div className="flex h-full flex-col justify-around gap-3">
-                  {bracket
-                    .filter((m) => m.round === r)
-                    .map((m) => (
-                      <MatchRow key={m.id} m={m} name={name} admin={admin} boxed onSave={(a, b) => run(() => reportMatch({ data: { matchId: m.id, scoreA: a, scoreB: b } }), "Résultat enregistré.")} />
-                    ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {showFinalView && finalSection}
     </section>
   );
 }
