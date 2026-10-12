@@ -99,16 +99,6 @@ export const confirmMemberIdentity = createServerFn({ method: "POST" })
     return { token: await makeToken(data.memberId) };
   });
 
-export const listTournamentsForGame = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data } = await context.supabase
-      .from("tournaments")
-      .select("id, title, event_date")
-      .order("event_date", { ascending: false })
-      .limit(50);
-    return data ?? [];
-  });
 
 type GameInput = {
   tournamentId?: string | null | undefined;
