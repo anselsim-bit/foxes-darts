@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Play, Trash2, Trophy, Plus, Check, PencilLine } from "lucide-react";
+import { Play, Trash2, Trophy, Plus, Check, PencilLine, Mail, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { buildBracket, poolStandings, qualifiersFromPools } from "@/lib/bracket";
@@ -12,6 +12,9 @@ import {
   amIAdmin,
   adminAddTeam,
   adminDeleteTeam,
+  adminSendAccessCodes,
+  adminSetCodesActive,
+  getAccessCodesStatus,
 } from "@/lib/tournament.functions";
 
 type Match = {
@@ -52,12 +55,17 @@ export function TournamentBoard({
   const [poolView, setPoolView] = useState<"all" | number>("all");
   const [view, setView] = useState<"pools" | "final">("pools");
   const [busy, setBusy] = useState(false);
+  const [codes, setCodes] = useState<{ count: number; active: boolean } | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (user) setAdmin((await amIAdmin()).admin);
+      if (user) {
+        const isAdm = (await amIAdmin()).admin;
+        setAdmin(isAdm);
+        if (isAdm) setCodes(await getAccessCodesStatus({ data: { tournamentId } }));
+      }
     });
-  }, []);
+  }, [tournamentId]);
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["board", tournamentId] });
