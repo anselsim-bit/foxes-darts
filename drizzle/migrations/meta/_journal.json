@@ -78,6 +78,13 @@
       "when": 1791822754572,
       "tag": "0010_helloasso_teams",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791825770680,
+      "tag": "0011_team_name_locked",
+      "breakpoints": true
     }
   ]
 }

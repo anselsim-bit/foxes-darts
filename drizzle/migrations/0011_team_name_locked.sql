@@ -1,0 +1,1 @@
+ALTER TABLE public.tournament_teams ADD COLUMN name_locked boolean NOT NULL DEFAULT false;
