@@ -280,7 +280,7 @@ function CompteurPage() {
             </div>
           ) : (
             <p className="mt-3 text-xs text-muted-foreground">
-              <Link to="/auth" className="text-primary underline">Connectez-vous</Link> pour ajouter des membres,
+              <Link to="/auth" search={{ redirect: "/compteur" }} className="text-primary underline">Connectez-vous</Link> pour ajouter des membres,
               associer la partie à un tournoi et enregistrer les statistiques.
             </p>
           )}

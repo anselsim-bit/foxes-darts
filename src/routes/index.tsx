@@ -81,6 +81,7 @@ function Index() {
               </Link>
               <Link
                 to="/auth"
+                search={{ redirect: "/" }}
                 className="inline-flex items-center gap-2 rounded-md border border-border px-6 py-3 font-medium transition-colors hover:border-primary"
               >
                 Créer mon compte joueur

@@ -3,12 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
-  beforeLoad: async () => {
+  beforeLoad: async ({ location }) => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      throw redirect({ to: "/auth" });
+      throw redirect({ to: "/auth", search: { redirect: location.href } });
     }
   },
   component: () => <Outlet />,

@@ -5,6 +5,12 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: Record<string, unknown>): { redirect?: string } => {
+    const r = search["redirect"];
+    return typeof r === "string" && r.startsWith("/") && !r.startsWith("//")
+      ? { redirect: r }
+      : {};
+  },
   head: () => ({
     meta: [
       { title: "Connexion — Foxes Darts" },
@@ -25,6 +31,8 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
   const [confirmEmail, setConfirmEmail] = useState(false);
   const navigate = useNavigate();
+  const { redirect: redirectTo } = Route.useSearch();
+  const goBack = () => navigate({ to: redirectTo ?? "/mon-espace" });
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +42,7 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Bienvenue !");
-        navigate({ to: "/mon-espace" });
+        goBack();
       } else {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -49,7 +57,7 @@ function AuthPage() {
           setConfirmEmail(true);
         } else {
           toast.success("Compte créé, bienvenue !");
-          navigate({ to: "/mon-espace" });
+          goBack();
         }
       }
     } catch (err) {
