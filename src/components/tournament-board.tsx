@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Play, Trash2, Trophy, Plus, Check, PencilLine } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { poolStandings } from "@/lib/bracket";
+import { buildBracket, poolStandings, qualifiersFromPools } from "@/lib/bracket";
 import {
   getTournamentBoard,
   startTournament,
@@ -86,6 +86,34 @@ export function TournamentBoard({
   const finalMatch = bracket.find((m) => m.round === rounds[rounds.length - 1]);
   const poolsDone = poolMatches.length > 0 && poolMatches.every((m) => m.winner);
 
+  const poolData = Array.from({ length: poolCount }, (_, i) => {
+    const ms = poolMatches.filter((m) => m.pool_index === i);
+    const ids = [...new Set(ms.flatMap((m) => [m.team_a!, m.team_b!]))];
+    return { i, ms, rows: poolStandings(ids, ms) };
+  });
+  // Aperçu du tableau final avant la fin des poules : "1er Poule A" etc., avec le leader actuel.
+  const preview =
+    poolCount > 0 && poolMatches.length > 0 && bracket.length === 0
+      ? buildBracket(
+          qualifiersFromPools(
+            poolData.map((p) => [0, 1].map((rank) => ({ team: `${rank}:${p.i}`, played: 0, wins: 0, losses: 0, diff: 0 }))),
+            2,
+          ),
+        )
+      : [];
+  const previewRounds = [...new Set(preview.map((m) => m.round))].sort((a, b) => a - b);
+  const seedLabel = (key: string | null) => {
+    if (!key) return { label: "Vainqueur précédent", team: null as string | null };
+    const [rank, pool] = key.split(":").map(Number) as [number, number];
+    const done = poolData[pool]!.ms.every((m) => m.winner);
+    const team = poolData[pool]!.rows[rank]?.team ?? null;
+    return { label: `${rank === 0 ? "1er" : "2e"} ${poolName(pool)}`, team: done ? team : null, current: team };
+  };
+  const previewName = (r: number) => {
+    const left = previewRounds.length - r;
+    return left === 0 ? "Finale" : left === 1 ? "Demi-finales" : left === 2 ? "Quarts de finale" : `Tour ${r}`;
+  };
+
   const roundName = (r: number) => {
     const left = rounds.length - r;
     return left === 0 ? "Finale" : left === 1 ? "Demi-finales" : left === 2 ? "Quarts de finale" : `Tour ${r}`;
@@ -145,12 +173,22 @@ export function TournamentBoard({
 
       {poolCount > 0 && poolMatches.length > 0 && (
         <div>
-          <h2 className="text-2xl">Poules</h2>
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            {Array.from({ length: poolCount }, (_, i) => {
-              const ms = poolMatches.filter((m) => m.pool_index === i);
-              const ids = [...new Set(ms.flatMap((m) => [m.team_a!, m.team_b!]))];
-              const rows = poolStandings(ids, ms);
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-2xl">Poules</h2>
+            <div className="flex flex-wrap gap-1.5">
+              {(["all", ...poolData.map((p) => p.i)] as const).map((v) => (
+                <button
+                  key={String(v)}
+                  onClick={() => setPoolView(v)}
+                  className={`rounded-full border px-3 py-1 text-sm transition ${poolView === v ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground hover:text-foreground"}`}
+                >
+                  {v === "all" ? "Toutes" : poolName(v)}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className={`mt-4 grid gap-4 ${poolView === "all" ? "md:grid-cols-2" : ""}`}>
+            {poolData.filter((p) => poolView === "all" || p.i === poolView).map(({ i, ms, rows }) => {
               return (
                 <div key={i} className="rounded-xl border border-border bg-card p-4">
                   <h3 className="text-lg text-primary">{poolName(i)}</h3>
@@ -196,6 +234,43 @@ export function TournamentBoard({
               Générer la phase finale (2 premiers de chaque poule)
             </button>
           )}
+        </div>
+      )}
+
+      {preview.length > 0 && (
+        <div>
+          <h2 className="text-2xl">Tableau final (aperçu)</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Les 2 premiers de chaque poule se qualifient. Les noms se confirment quand la poule est terminée ; en attendant, le leader actuel est indiqué en gris.
+          </p>
+          <div className="mt-4 flex gap-4 overflow-x-auto pb-2">
+            {previewRounds.map((r) => (
+              <div key={r} className="min-w-56 flex-1 space-y-3">
+                <h3 className="text-sm font-semibold text-primary">{previewName(r)}</h3>
+                <div className="flex h-full flex-col justify-around gap-3">
+                  {preview.filter((m) => m.round === r).map((m) => (
+                    <div key={m.position} className="rounded-lg border border-dashed border-border bg-card p-3 text-sm">
+                      {[m.team_a, m.team_b].map((k, j) => {
+                        const s = seedLabel(k);
+                        return (
+                          <div key={j} className={j ? "mt-1.5 border-t border-border pt-1.5" : ""}>
+                            {s.team ? (
+                              <span className="font-semibold">{name(s.team)}</span>
+                            ) : (
+                              <span className="text-muted-foreground">{s.label}</span>
+                            )}
+                            {!s.team && s.current && r === 1 && (
+                              <span className="ml-1 text-xs text-muted-foreground/70">({name(s.current)})</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
