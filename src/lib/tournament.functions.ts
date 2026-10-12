@@ -379,7 +379,7 @@ export const getAccessCodesStatus = createServerFn({ method: "GET" })
 export const validateTournamentCode = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { tournamentId: string; code: string }) => input)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row } = await supabaseAdmin
       .from("tournament_access_codes")
@@ -388,7 +388,32 @@ export const validateTournamentCode = createServerFn({ method: "GET" })
       .eq("code", data.code.trim().toUpperCase())
       .maybeSingle();
     if (!row) return { valid: false, active: false, participantName: null as string | null };
+    if (row.active) {
+      // Mémorise le code pour ce membre : plus besoin de le ressaisir pendant le tournoi.
+      await supabaseAdmin
+        .from("tournament_access_codes")
+        .update({ claimed_by: context.userId })
+        .eq("tournament_id", data.tournamentId)
+        .eq("code", data.code.trim().toUpperCase());
+    }
     return { valid: true, active: row.active, participantName: row.participant_name };
+  });
+
+/** Code d'accès actif déjà saisi par le membre connecté pour ce tournoi. */
+export const getMyTournamentCode = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { tournamentId: string }) => input)
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row } = await supabaseAdmin
+      .from("tournament_access_codes")
+      .select("code")
+      .eq("tournament_id", data.tournamentId)
+      .eq("claimed_by", context.userId)
+      .eq("active", true)
+      .limit(1)
+      .maybeSingle();
+    return { code: row?.code ?? null };
   });
 
 export function friendly(msg: string) {

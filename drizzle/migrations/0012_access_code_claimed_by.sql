@@ -1,0 +1,1 @@
+ALTER TABLE public.tournament_access_codes ADD COLUMN claimed_by uuid;
