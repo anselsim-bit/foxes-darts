@@ -1,16 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, Undo2, Trophy, RotateCcw, Lightbulb } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { suggestNextDarts } from "@/lib/checkout";
 import {
   findMemberForGame,
-  saveGameResult,
   confirmMemberIdentity,
   listTournamentsForGame,
 } from "@/lib/darts.functions";
-import { listPlayableMatches, reportMatch, setTeamNameWithCode, validateTournamentCode } from "@/lib/tournament.functions";
+import { Game, type Player } from "@/components/dart-game";
 
 export const Route = createFileRoute("/compteur")({
   head: () => ({
@@ -28,21 +26,6 @@ export const Route = createFileRoute("/compteur")({
   }),
   component: CompteurPage,
 });
-
-type Player = { name: string; userId: string | null; token?: string | undefined };
-type PlayableMatch = {
-  id: string;
-  label: string;
-  teamA: string;
-  teamB: string;
-  teamAId: string;
-  teamBId: string;
-  canNameA: boolean;
-  canNameB: boolean;
-};
-
-type Dart = { label: string; value: number; isDouble: boolean };
-type Turn = { player: number; darts: Dart[]; bust: boolean; total: number };
 
 const btn =
   "rounded-md border border-border bg-card px-3 py-3 text-sm font-semibold transition-colors hover:border-primary disabled:opacity-40";
@@ -62,47 +45,6 @@ function CompteurPage() {
   const [confirming, setConfirming] = useState(false);
   const [gameKey, setGameKey] = useState(0);
   const [starter, setStarter] = useState<number | null>(null);
-  const [matches, setMatches] = useState<PlayableMatch[]>([]);
-  const [match, setMatch] = useState<PlayableMatch | null>(null);
-  const [codeInput, setCodeInput] = useState("");
-  const [accessCode, setAccessCode] = useState<string | null>(null);
-  const [codeMsg, setCodeMsg] = useState<string | null>(null);
-  const [checkingCode, setCheckingCode] = useState(false);
-
-  useEffect(() => {
-    setMatches([]);
-    setMatch(null);
-    setCodeInput("");
-    setAccessCode(null);
-    setCodeMsg(null);
-    if (!tournamentId) return;
-    listPlayableMatches({ data: { tournamentId } }).then(setMatches).catch(() => setMatches([]));
-  }, [tournamentId, playing]);
-
-  const checkCode = async () => {
-    if (!tournamentId || !codeInput.trim()) return;
-    setCheckingCode(true);
-    setCodeMsg(null);
-    try {
-      const res = await validateTournamentCode({ data: { tournamentId, code: codeInput } });
-      if (!res.valid) {
-        setAccessCode(null);
-        setCodeMsg("Ce code n'existe pas pour ce tournoi.");
-      } else if (!res.active) {
-        setAccessCode(null);
-        setCodeMsg("Les codes ne sont pas encore activés par l'organisateur.");
-      } else {
-        setAccessCode(codeInput.trim().toUpperCase());
-        setCodeMsg(null);
-        toast.success(res.participantName ? `Code validé, bon match ${res.participantName} !` : "Code validé !");
-      }
-    } catch {
-      setCodeMsg("Vérification impossible pour le moment.");
-    } finally {
-      setCheckingCode(false);
-    }
-  };
-
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
       const id = data.user?.id ?? null;
@@ -196,8 +138,8 @@ function CompteurPage() {
         doubleOut={doubleOut}
         canSave={!!userId}
         tournamentId={tournamentId || null}
-        match={match}
-        accessCode={accessCode}
+        match={null}
+        accessCode={null}
         onExit={() => setPlaying(false)}
         onRestart={() => {
           setPlayers((prev) => [...prev].reverse());
@@ -349,83 +291,6 @@ function CompteurPage() {
                 </option>
               ))}
             </select>
-            {matches.length > 0 && (
-              <select
-                value={match?.id ?? ""}
-                onChange={(e) => {
-                  const m = matches.find((x) => x.id === e.target.value) ?? null;
-                  setMatch(m);
-                  if (m) {
-                    setPlayers([{ name: m.teamA, userId: null }, { name: m.teamB, userId: null }]);
-                    setStarter(null);
-                  }
-                }}
-                className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                aria-label="Match du tournoi"
-              >
-                <option value="">Mode tournoi : choisir un match (facultatif)</option>
-                {matches.map((m) => (
-                  <option key={m.id} value={m.id}>{m.label}</option>
-                ))}
-              </select>
-            )}
-            {match && (
-              <div className="mt-2">
-                {accessCode ? (
-                  <>
-                    <p className="rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-sm">
-                      Code d'accès validé ✓ — vous pourrez envoyer le résultat au tableau.
-                    </p>
-                    {(match.canNameA || match.canNameB) && (
-                      <div className="mt-3 space-y-2 rounded-md border border-border p-3">
-                        <p className="text-sm font-medium">Choisissez le nom de votre équipe</p>
-                        <p className="text-xs text-muted-foreground">
-                          Ce nom sera définitif pour toute la suite du tournoi.
-                        </p>
-                        {(["A", "B"] as const).map((side) =>
-                          (side === "A" ? match.canNameA : match.canNameB) ? (
-                            <TeamNamer
-                              key={side}
-                              teamId={side === "A" ? match.teamAId : match.teamBId}
-                              current={side === "A" ? match.teamA : match.teamB}
-                              code={accessCode}
-                              onDone={(name) => {
-                                const old = side === "A" ? match.teamA : match.teamB;
-                                const nm = side === "A"
-                                  ? { ...match, teamA: name, canNameA: false }
-                                  : { ...match, teamB: name, canNameB: false };
-                                setMatch(nm);
-                                setMatches((ms) => ms.map((x) => (x.id === nm.id ? { ...x, ...nm } : x)));
-                                setPlayers((ps) => ps.map((p) => (p.name === old && !p.userId ? { ...p, name } : p)));
-                              }}
-                            />
-                          ) : null,
-                        )}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="flex gap-2">
-                    <input
-                      value={codeInput}
-                      onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
-                      placeholder="Code d'accès reçu par email"
-                      maxLength={6}
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm uppercase tracking-widest"
-                      aria-label="Code d'accès du tournoi"
-                    />
-                    <button
-                      onClick={checkCode}
-                      disabled={checkingCode || codeInput.trim().length < 6}
-                      className="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
-                    >
-                      {checkingCode ? "..." : "Valider"}
-                    </button>
-                  </div>
-                )}
-                {codeMsg && <p className="mt-1 text-sm text-destructive">{codeMsg}</p>}
-              </div>
-            )}
           </div>
         )}
 
