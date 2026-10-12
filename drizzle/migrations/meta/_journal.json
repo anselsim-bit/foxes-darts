@@ -71,6 +71,13 @@
       "when": 1791822360490,
       "tag": "0009_helloasso_registrations",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791822754572,
+      "tag": "0010_helloasso_teams",
+      "breakpoints": true
     }
   ]
 }
