@@ -11,7 +11,7 @@ const tournamentQuery = (id: string) =>
     queryFn: () => getTournament({ data: { id } }),
   });
 
-export const Route = createFileRoute("/tournois/$id/jouer")({
+export const Route = createFileRoute("/tournois_/$id/jouer")({
   loader: ({ context, params }) =>
     context.queryClient.ensureQueryData(tournamentQuery(params.id)),
   head: ({ loaderData }) => ({
