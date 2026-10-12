@@ -50,6 +50,7 @@ export function TournamentBoard({
   const [admin, setAdmin] = useState(false);
   const [newTeam, setNewTeam] = useState("");
   const [poolView, setPoolView] = useState<"all" | number>("all");
+  const [view, setView] = useState<"pools" | "final">("pools");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -119,6 +120,98 @@ export function TournamentBoard({
     const left = rounds.length - r;
     return left === 0 ? "Finale" : left === 1 ? "Demi-finales" : left === 2 ? "Quarts de finale" : `Tour ${r}`;
   };
+
+  const showPools = poolCount > 0 && poolMatches.length > 0;
+  const hasFinal = bracket.length > 0 || preview.length > 0;
+  const both = showPools && hasFinal;
+  const showPoolsView = showPools && (!both || view === "pools");
+  const showFinalView = hasFinal && (!both || view === "final");
+
+  const genBtn =
+    admin && poolsDone && bracket.length === 0 ? (
+      <button
+        disabled={busy}
+        onClick={() => run(() => generateFinals({ data: { id: tournamentId } }), "Phase finale générée.")}
+        className="btn-ember mt-4 px-4 py-2 text-sm"
+      >
+        Générer la phase finale (2 premiers de chaque poule)
+      </button>
+    ) : null;
+
+  const finalSection =
+    bracket.length > 0 ? (
+      <div>
+        <h2 className="text-2xl">Tableau final</h2>
+        {finalMatch?.winner && (
+          <p className="mt-2 flex items-center gap-2 text-lg">
+            <Trophy className="h-5 w-5 text-primary" /> Vainqueur :{" "}
+            <span className="text-gradient-ember font-semibold">{name(finalMatch.winner)}</span>
+          </p>
+        )}
+        <div className="mt-4 flex gap-4 overflow-x-auto pb-2">
+          {rounds.map((r) => (
+            <div key={r} className="min-w-56 flex-1 space-y-3">
+              <h3 className="text-sm font-semibold text-primary">{roundName(r)}</h3>
+              <div className="flex h-full flex-col justify-around gap-3">
+                {bracket
+                  .filter((m) => m.round === r)
+                  .map((m) => (
+                    <MatchRow
+                      key={m.id}
+                      m={m}
+                      name={name}
+                      admin={admin}
+                      boxed
+                      onSave={(a, b) =>
+                        run(() => reportMatch({ data: { matchId: m.id, scoreA: a, scoreB: b } }), "Résultat enregistré.")
+                      }
+                    />
+                  ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ) : preview.length > 0 ? (
+      <div>
+        <h2 className="text-2xl">Tableau final (aperçu)</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Les 2 premiers de chaque poule se qualifient. Les noms se confirment quand la poule est terminée ; en attendant, le
+          leader actuel est indiqué en gris.
+        </p>
+        <div className="mt-4 flex gap-4 overflow-x-auto pb-2">
+          {previewRounds.map((r) => (
+            <div key={r} className="min-w-56 flex-1 space-y-3">
+              <h3 className="text-sm font-semibold text-primary">{previewName(r)}</h3>
+              <div className="flex h-full flex-col justify-around gap-3">
+                {preview
+                  .filter((m) => m.round === r)
+                  .map((m) => (
+                    <div key={m.position} className="rounded-lg border border-dashed border-border bg-card p-3 text-sm">
+                      {[m.team_a, m.team_b].map((k, j) => {
+                        const s = seedLabel(k);
+                        return (
+                          <div key={j} className={j ? "mt-1.5 border-t border-border pt-1.5" : ""}>
+                            {s.team ? (
+                              <span className="font-semibold">{name(s.team)}</span>
+                            ) : (
+                              <span className="text-muted-foreground">{s.label}</span>
+                            )}
+                            {!s.team && s.current && r === 1 && (
+                              <span className="ml-1 text-xs text-muted-foreground/70">({name(s.current)})</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        {genBtn}
+      </div>
+    ) : null;
 
   return (
     <section className="mt-10 space-y-8">
