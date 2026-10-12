@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { CalendarDays, MapPin, Trophy, Images, Zap, ArrowRight, Ticket } from "lucide-react";
+import { Trophy, Images, Zap, ArrowRight } from "lucide-react";
 import { listTournaments, listPhotos, listStandings, listHighlights } from "@/lib/public.functions";
 import heroImg from "@/assets/hero-darts.jpg";
+import { TournamentCarousel } from "@/components/tournament-carousel";
 
 const homeQuery = queryOptions({
   queryKey: ["home"],
@@ -51,7 +52,6 @@ function formatDate(date: string) {
 function Index() {
   const { data } = useSuspenseQuery(homeQuery);
   const now = new Date().toISOString().slice(0, 10);
-  const upcoming = data.tournaments.filter((t) => t.event_date >= now).slice(0, 3);
   const photos = data.photos.slice(0, 4);
   const topPlayers = data.standings.slice(0, 5);
   const highlights = data.highlights.slice(0, 3);
@@ -99,79 +99,7 @@ function Index() {
         </div>
       </section>
 
-      {/* Prochains tournois */}
-      <section className="mx-auto max-w-6xl px-4 py-14">
-        <div className="flex items-end justify-between">
-          <h2 className="flex items-center gap-2 text-3xl">
-            <CalendarDays className="h-7 w-7 text-primary" /> Prochains tournois
-          </h2>
-          <Link to="/tournois" className="text-sm font-medium text-primary hover:underline">
-            Tout voir
-          </Link>
-        </div>
-        {upcoming.length === 0 ? (
-          <p className="mt-6 text-muted-foreground">
-            Les prochains tournois seront annoncés très bientôt.
-          </p>
-        ) : (
-          <div className="mt-8 grid gap-6 md:grid-cols-3">
-            {upcoming.map((t) => (
-              <article
-                key={t.id}
-                className="card-hover overflow-hidden rounded-xl border border-border bg-card"
-              >
-                {t.image_url && (
-                  <img
-                    src={t.image_url}
-                    alt={t.title}
-                    className="h-40 w-full object-cover"
-                    loading="lazy"
-                  />
-                )}
-                <div className="p-5">
-                  <h3 className="text-lg">
-                    <Link
-                      to="/tournois/$id"
-                      params={{ id: t.id }}
-                      className="transition-colors hover:text-primary"
-                    >
-                      {t.title}
-                    </Link>
-                  </h3>
-                  <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-                    <CalendarDays className="h-4 w-4 text-primary" /> {formatDate(t.event_date)}{t.start_time ? ` · ${t.start_time.slice(0, 5).replace(":", "h")}${t.end_time ? ` – ${t.end_time.slice(0, 5).replace(":", "h")}` : ""}` : ""}
-                  </p>
-                  {t.location && (
-                    <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4 text-primary" /> {t.location}
-                    </p>
-                  )}
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {t.helloasso_url ? (
-                      <a
-                        href={t.helloasso_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-                      >
-                        <Ticket className="h-4 w-4" /> HelloAsso
-                      </a>
-                    ) : (
-                      <Link
-                        to="/tournois/$id"
-                        params={{ id: t.id }}
-                        className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
-                      >
-                        S'inscrire
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
+      <TournamentCarousel tournaments={data.tournaments} today={now} />
 
       {/* Classement + Grandes actions */}
       <section className="border-y border-border bg-card/50">
