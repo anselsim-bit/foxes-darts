@@ -153,6 +153,18 @@ export const adminAddTeam = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const adminRenameTeam = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: string; name: string }) => input)
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const name = data.name.trim();
+    if (!name) throw new Error("Nom requis.");
+    const { error } = await context.supabase.from("tournament_teams").update({ name }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const adminDeleteTeam = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { id: string }) => input)
