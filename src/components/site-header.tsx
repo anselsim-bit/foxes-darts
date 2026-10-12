@@ -1,8 +1,9 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Target, Menu, X, LogOut } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyRoles } from "@/lib/admin.functions";
+import logoAsset from "@/assets/foxes-logo.png.asset.json";
 
 const NAV = [
   { to: "/", label: "Accueil" },
@@ -51,9 +52,12 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary">
-            <Target className="h-5 w-5 text-primary-foreground" />
-          </span>
+          <img
+            src={logoAsset.url}
+            alt="Logo Foxes Darts"
+            className="h-10 w-10 rounded-full object-cover"
+            style={{ objectPosition: "50% 45%" }}
+          />
           <span className="font-display text-lg uppercase tracking-wide">
             Foxes <span className="text-gradient-ember">Darts</span>
           </span>

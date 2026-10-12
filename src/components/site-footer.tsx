@@ -1,14 +1,17 @@
 import { Link } from "@tanstack/react-router";
-import { Target } from "lucide-react";
+import logoAsset from "@/assets/foxes-logo.png.asset.json";
 
 export function SiteFooter() {
   return (
     <footer className="border-t border-border bg-card">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-4 py-8 text-center md:flex-row md:justify-between md:text-left">
         <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary">
-            <Target className="h-4 w-4 text-primary-foreground" />
-          </span>
+          <img
+            src={logoAsset.url}
+            alt="Logo Foxes Darts"
+            className="h-9 w-9 rounded-full object-cover"
+            style={{ objectPosition: "50% 45%" }}
+          />
           <span className="font-display text-sm uppercase">Foxes Darts</span>
         </div>
         <nav className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
