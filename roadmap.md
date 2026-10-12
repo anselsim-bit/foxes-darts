@@ -14,6 +14,7 @@
 - [x] Cartes tournois (accueil + /tournois) : bouton "S'inscrire" retiré quand un lien HelloAsso existe, bouton HelloAsso en orange ; titre cliquable vers la fiche du tournoi
 
 - [x] Tournois solo/équipe, limite de places (blocage serveur), poules optionnelles, tableau généré par « Commencer le tournoi », mise à jour admin ou via Compteur ; tournoi test 16 doublettes / 4 poules
+- [x] Fiche tournoi : affichage au choix « Toutes les poules / une poule », bouton « Poules | Tableau final » pour voir le tableau final seul, aperçu du tableau pendant les poules
 
 ## En attente (bloqué côté utilisateur)
 - (rien pour le moment)
