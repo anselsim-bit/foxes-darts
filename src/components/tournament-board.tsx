@@ -1,0 +1,278 @@
+import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Play, Trash2, Trophy, Plus } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { poolStandings } from "@/lib/bracket";
+import {
+  getTournamentBoard,
+  startTournament,
+  generateFinals,
+  reportMatch,
+  amIAdmin,
+  adminAddTeam,
+  adminDeleteTeam,
+} from "@/lib/tournament.functions";
+
+type Match = {
+  id: string;
+  stage: string;
+  pool_index: number | null;
+  round: number;
+  position: number;
+  team_a: string | null;
+  team_b: string | null;
+  score_a: number | null;
+  score_b: number | null;
+  winner: string | null;
+};
+
+const poolName = (i: number) => `Poule ${String.fromCharCode(65 + i)}`;
+
+export function TournamentBoard({
+  tournamentId,
+  status,
+  poolCount,
+  maxParticipants,
+  isTeam,
+}: {
+  tournamentId: string;
+  status: string;
+  poolCount: number;
+  maxParticipants: number | null;
+  isTeam: boolean;
+}) {
+  const qc = useQueryClient();
+  const { data } = useQuery({
+    queryKey: ["board", tournamentId],
+    queryFn: () => getTournamentBoard({ data: { id: tournamentId } }),
+  });
+  const [admin, setAdmin] = useState(false);
+  const [newTeam, setNewTeam] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (user) setAdmin((await amIAdmin()).admin);
+    });
+  }, []);
+
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["board", tournamentId] });
+    qc.invalidateQueries({ queryKey: ["tournament", tournamentId] });
+  };
+  const run = async (fn: () => Promise<unknown>, ok: string) => {
+    setBusy(true);
+    try {
+      await fn();
+      toast.success(ok);
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (!data) return null;
+  const teams = data.teams;
+  const matches = data.matches as Match[];
+  const name = (id: string | null) => (id ? (teams.find((t) => t.id === id)?.name ?? "?") : "—");
+  const full = maxParticipants ? teams.length >= maxParticipants : teams.length >= 2;
+  const label = isTeam ? "Équipes" : "Participants";
+  const poolMatches = matches.filter((m) => m.stage === "pool");
+  const bracket = matches.filter((m) => m.stage === "bracket");
+  const rounds = [...new Set(bracket.map((m) => m.round))].sort((a, b) => a - b);
+  const finalMatch = bracket.find((m) => m.round === rounds[rounds.length - 1]);
+  const poolsDone = poolMatches.length > 0 && poolMatches.every((m) => m.winner);
+
+  const roundName = (r: number) => {
+    const left = rounds.length - r;
+    return left === 0 ? "Finale" : left === 1 ? "Demi-finales" : left === 2 ? "Quarts de finale" : `Tour ${r}`;
+  };
+
+  return (
+    <section className="mt-10 space-y-8">
+      <div>
+        <h2 className="text-2xl">
+          {label} <span className="text-muted-foreground">({teams.length}{maxParticipants ? ` / ${maxParticipants}` : ""})</span>
+        </h2>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {teams.map((t) => (
+            <span key={t.id} className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm">
+              {t.name}
+              {admin && status === "open" && (
+                <button aria-label="Retirer" onClick={() => run(() => adminDeleteTeam({ data: { id: t.id } }), "Retiré.")}>
+                  <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
+                </button>
+              )}
+            </span>
+          ))}
+          {teams.length === 0 && <p className="text-sm text-muted-foreground">Aucun inscrit pour le moment.</p>}
+        </div>
+        {admin && status === "open" && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {!full || !maxParticipants ? (
+              <form
+                className="flex gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  run(() => adminAddTeam({ data: { tournamentId, name: newTeam } }), "Ajouté.").then(() => setNewTeam(""));
+                }}
+              >
+                <input
+                  value={newTeam}
+                  onChange={(e) => setNewTeam(e.target.value)}
+                  placeholder={isTeam ? "Nom de l'équipe" : "Nom du joueur"}
+                  className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+                <button className="inline-flex items-center gap-1 rounded-md border border-border px-3 py-2 text-sm hover:border-primary">
+                  <Plus className="h-4 w-4" /> Ajouter
+                </button>
+              </form>
+            ) : null}
+            <button
+              disabled={!full || busy}
+              onClick={() => run(() => startTournament({ data: { id: tournamentId } }), "Tournoi lancé !")}
+              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40"
+              title={full ? "" : "Le tournoi doit être complet"}
+            >
+              <Play className="h-4 w-4" /> Commencer le tournoi
+            </button>
+          </div>
+        )}
+      </div>
+
+      {poolCount > 0 && poolMatches.length > 0 && (
+        <div>
+          <h2 className="text-2xl">Poules</h2>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            {Array.from({ length: poolCount }, (_, i) => {
+              const ms = poolMatches.filter((m) => m.pool_index === i);
+              const ids = [...new Set(ms.flatMap((m) => [m.team_a!, m.team_b!]))];
+              const rows = poolStandings(ids, ms);
+              return (
+                <div key={i} className="rounded-xl border border-border bg-card p-4">
+                  <h3 className="text-lg text-primary">{poolName(i)}</h3>
+                  <table className="mt-2 w-full text-sm">
+                    <thead className="text-xs text-muted-foreground">
+                      <tr>
+                        <th className="text-left">#</th>
+                        <th className="text-left">{isTeam ? "Équipe" : "Joueur"}</th>
+                        <th>J</th>
+                        <th>V</th>
+                        <th>D</th>
+                        <th>+/-</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((r, k) => (
+                        <tr key={r.team} className={k < 2 ? "font-semibold" : "text-muted-foreground"}>
+                          <td>{k + 1}</td>
+                          <td>{name(r.team)}</td>
+                          <td className="text-center">{r.played}</td>
+                          <td className="text-center">{r.wins}</td>
+                          <td className="text-center">{r.losses}</td>
+                          <td className="text-center">{r.diff}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="mt-3 space-y-1.5">
+                    {ms.map((m) => (
+                      <MatchRow key={m.id} m={m} name={name} admin={admin} onSave={(a, b) => run(() => reportMatch({ data: { matchId: m.id, scoreA: a, scoreB: b } }), "Résultat enregistré.")} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {admin && poolsDone && bracket.length === 0 && (
+            <button
+              disabled={busy}
+              onClick={() => run(() => generateFinals({ data: { id: tournamentId } }), "Phase finale générée.")}
+              className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+            >
+              Générer la phase finale (2 premiers de chaque poule)
+            </button>
+          )}
+        </div>
+      )}
+
+      {bracket.length > 0 && (
+        <div>
+          <h2 className="text-2xl">Tableau final</h2>
+          {finalMatch?.winner && (
+            <p className="mt-2 flex items-center gap-2 text-lg">
+              <Trophy className="h-5 w-5 text-primary" /> Vainqueur :{" "}
+              <span className="text-gradient-ember font-semibold">{name(finalMatch.winner)}</span>
+            </p>
+          )}
+          <div className="mt-4 flex gap-4 overflow-x-auto pb-2">
+            {rounds.map((r) => (
+              <div key={r} className="min-w-56 flex-1 space-y-3">
+                <h3 className="text-sm font-semibold text-primary">{roundName(r)}</h3>
+                <div className="flex h-full flex-col justify-around gap-3">
+                  {bracket
+                    .filter((m) => m.round === r)
+                    .map((m) => (
+                      <MatchRow key={m.id} m={m} name={name} admin={admin} boxed onSave={(a, b) => run(() => reportMatch({ data: { matchId: m.id, scoreA: a, scoreB: b } }), "Résultat enregistré.")} />
+                    ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function MatchRow({
+  m,
+  name,
+  admin,
+  boxed,
+  onSave,
+}: {
+  m: Match;
+  name: (id: string | null) => string;
+  admin: boolean;
+  boxed?: boolean;
+  onSave: (a: number, b: number) => void;
+}) {
+  const [a, setA] = useState(m.score_a?.toString() ?? "");
+  const [b, setB] = useState(m.score_b?.toString() ?? "");
+  const editable = admin && !!m.team_a && !!m.team_b;
+  const side = (id: string | null, score: number | null, val: string, set: (v: string) => void) => (
+    <div className={`flex items-center justify-between gap-2 ${m.winner && m.winner === id ? "font-semibold text-primary" : ""}`}>
+      <span className="truncate">{name(id)}</span>
+      {editable ? (
+        <input
+          type="number"
+          min={0}
+          value={val}
+          onChange={(e) => set(e.target.value)}
+          className="w-12 rounded border border-input bg-background px-1 py-0.5 text-center text-sm"
+          aria-label={`Score ${name(id)}`}
+        />
+      ) : (
+        <span>{score ?? ""}</span>
+      )}
+    </div>
+  );
+  return (
+    <div className={`text-sm ${boxed ? "rounded-lg border border-border bg-card p-3" : "border-t border-border pt-1.5"}`}>
+      {side(m.team_a, m.score_a, a, setA)}
+      {side(m.team_b, m.score_b, b, setB)}
+      {editable && (
+        <button
+          onClick={() => onSave(parseInt(a, 10) || 0, parseInt(b, 10) || 0)}
+          className="mt-1 text-xs text-primary hover:underline"
+        >
+          {m.winner ? "Corriger" : "Valider"}
+        </button>
+      )}
+    </div>
+  );
+}
