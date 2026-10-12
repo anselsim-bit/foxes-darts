@@ -6,6 +6,7 @@ import {
   useRouter,
   HeadContent,
   Scripts,
+  ClientOnly,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
@@ -152,7 +153,9 @@ function RootComponent() {
         </main>
         <SiteFooter />
       </div>
-      <Toaster theme="dark" position="bottom-right" />
+      <ClientOnly>
+        <Toaster theme="dark" position="bottom-right" />
+      </ClientOnly>
     </QueryClientProvider>
   );
 }
