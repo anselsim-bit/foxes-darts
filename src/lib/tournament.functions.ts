@@ -130,7 +130,7 @@ export const reportMatch = createServerFn({ method: "POST" })
         .eq("round", s.round)
         .eq("position", s.position)
         .maybeSingle();
-      if (next) await supabaseAdmin.from("tournament_matches").update({ [s.side]: winner }).eq("id", next.id);
+      if (next) await supabaseAdmin.from("tournament_matches").update(s.side === "team_a" ? { team_a: winner } : { team_b: winner }).eq("id", next.id);
       else await supabaseAdmin.from("tournaments").update({ status: "finished" }).eq("id", m.tournament_id);
     }
     return { ok: true };
