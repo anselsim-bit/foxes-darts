@@ -43,6 +43,13 @@
       "when": 1791813433061,
       "tag": "0005_tournament_announcements",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791813942778,
+      "tag": "0006_games",
+      "breakpoints": true
     }
   ]
 }
