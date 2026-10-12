@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { suggestNextDarts } from "@/lib/checkout";
 import {
-  listMembersForGame,
+  findMemberForGame,
   saveGameResult,
   confirmMemberIdentity,
   listTournamentsForGame,
@@ -37,10 +37,10 @@ const btn =
 
 function CompteurPage() {
   const [userId, setUserId] = useState<string | null>(null);
-  const [members, setMembers] = useState<{ id: string; name: string }[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
   const [guestName, setGuestName] = useState("");
-  const [memberId, setMemberId] = useState("");
+  const [memberQuery, setMemberQuery] = useState("");
+  const [found, setFound] = useState<{ id: string; name: string } | null>(null);
   const [start, setStart] = useState(501);
   const [doubleOut, setDoubleOut] = useState(true);
   const [playing, setPlaying] = useState(false);
@@ -55,9 +55,7 @@ function CompteurPage() {
       setUserId(id);
       if (id) {
         try {
-          const [m, t] = await Promise.all([listMembersForGame(), listTournamentsForGame()]);
-          setMembers(m);
-          setTournaments(t);
+          setTournaments(await listTournamentsForGame());
         } catch {
           /* liste indisponible */
         }
@@ -71,26 +69,46 @@ function CompteurPage() {
     setPlayers([...players, { name, userId: null }]);
     setGuestName("");
   };
-  const addMember = async () => {
-    const m = members.find((x) => x.id === memberId);
-    if (!m || players.some((p) => p.userId === m.id)) return;
-    let token: string | undefined;
-    if (m.id !== userId) {
-      setConfirming(true);
-      try {
-        token = (await confirmMemberIdentity({ data: { memberId: m.id, password } })).token;
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Mot de passe incorrect");
-        return;
-      } finally {
-        setConfirming(false);
-      }
-    }
-    setPlayers([...players, { name: m.name, userId: m.id, token }]);
-    setMemberId("");
+  const resetMember = () => {
+    setMemberQuery("");
+    setFound(null);
     setPassword("");
   };
-  const needsPassword = !!memberId && memberId !== userId;
+  const lookupMember = async () => {
+    if (!memberQuery.trim()) return;
+    setConfirming(true);
+    try {
+      const m = await findMemberForGame({ data: { query: memberQuery } });
+      if (players.some((p) => p.userId === m.id)) {
+        toast.error(`${m.name} est déjà dans la partie`);
+        return;
+      }
+      if (m.id === userId) {
+        setPlayers([...players, { name: m.name, userId: m.id }]);
+        resetMember();
+        return;
+      }
+      setFound(m);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Ce joueur n'existe pas");
+    } finally {
+      setConfirming(false);
+    }
+  };
+  const addMember = async () => {
+    const m = found;
+    if (!m || !password) return;
+    setConfirming(true);
+    try {
+      const { token } = await confirmMemberIdentity({ data: { memberId: m.id, password } });
+      setPlayers([...players, { name: m.name, userId: m.id, token }]);
+      resetMember();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Mot de passe incorrect");
+    } finally {
+      setConfirming(false);
+    }
+  };
 
   if (playing) {
     return (
@@ -171,40 +189,53 @@ function CompteurPage() {
             </button>
           </div>
           {userId ? (
-            <div className="mt-2 flex gap-2">
-              <select
-                value={memberId}
-                onChange={(e) => setMemberId(e.target.value)}
-                className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
-              >
-                <option value="">Choisir un membre…</option>
-                {members
-                  .filter((m) => !players.some((p) => p.userId === m.id))
-                  .map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name}
-                      {m.id === userId ? " (moi)" : ""}
-                    </option>
-                  ))}
-              </select>
-              {needsPassword && (
+            <div className="mt-2 space-y-2">
+              <div className="flex gap-2">
                 <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && addMember()}
-                  placeholder="Mot de passe du membre"
-                  autoComplete="off"
-                  className="w-48 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                  value={memberQuery}
+                  onChange={(e) => {
+                    setMemberQuery(e.target.value);
+                    setFound(null);
+                    setPassword("");
+                  }}
+                  onKeyDown={(e) => e.key === "Enter" && (found ? addMember() : lookupMember())}
+                  placeholder="Nom de joueur ou email du membre"
+                  className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary"
                 />
+                {!found && (
+                  <button
+                    onClick={lookupMember}
+                    disabled={confirming || !memberQuery.trim()}
+                    className="inline-flex items-center gap-1 rounded-md border border-border px-3 text-sm disabled:opacity-50"
+                  >
+                    <Plus className="h-4 w-4" /> {confirming ? "..." : "Membre"}
+                  </button>
+                )}
+              </div>
+              {found && (
+                <div className="flex flex-wrap items-center gap-2 rounded-md border border-primary/40 p-2">
+                  <span className="text-sm">
+                    <strong>{found.name}</strong> trouvé — entrez son mot de passe :
+                  </span>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addMember()}
+                    placeholder="Mot de passe du membre"
+                    autoComplete="off"
+                    autoFocus
+                    className="w-48 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                  />
+                  <button
+                    onClick={addMember}
+                    disabled={confirming || !password}
+                    className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+                  >
+                    {confirming ? "..." : "Confirmer"}
+                  </button>
+                </div>
               )}
-              <button
-                onClick={addMember}
-                disabled={confirming || (needsPassword && !password)}
-                className="inline-flex items-center gap-1 rounded-md border border-border px-3 text-sm disabled:opacity-50"
-              >
-                <Plus className="h-4 w-4" /> {confirming ? "..." : "Membre"}
-              </button>
             </div>
           ) : (
             <p className="mt-3 text-xs text-muted-foreground">

@@ -31,17 +31,40 @@ async function verifyToken(token: string, userId: string) {
   return (await hmac(`${id}.${exp}`)) === sig;
 }
 
-// Members list for the scoreboard: only id + display name, signed-in users only.
-export const listMembersForGame = createServerFn({ method: "GET" })
+// Find one member by exact player name or email (case-insensitive). Returns id + name only, never the email.
+export const findMemberForGame = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => {
+  .inputValidator((input: { query: string }) => {
+    const q = typeof input?.query === "string" ? input.query.trim().slice(0, 200) : "";
+    if (!q) throw new Error("Entrez un nom de joueur ou un email");
+    return { query: q };
+  })
+  .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
-      .from("profiles")
-      .select("id, display_name")
-      .order("display_name");
-    if (error) throw new Error(error.message);
-    return (data ?? []).map((p) => ({ id: p.id, name: p.display_name ?? "Joueur" }));
+    const q = data.query.toLowerCase();
+    let id: string | null = null;
+    if (q.includes("@")) {
+      for (let page = 1; page <= 20 && !id; page++) {
+        const { data: list, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
+        if (error) throw new Error(error.message);
+        id = list.users.find((u) => u.email?.toLowerCase() === q)?.id ?? null;
+        if (list.users.length < 1000) break;
+      }
+    } else {
+      const escaped = data.query.replace(/[\\%_]/g, (c) => `\\${c}`);
+      const { data: rows, error } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .ilike("display_name", escaped)
+        .limit(2);
+      if (error) throw new Error(error.message);
+      if ((rows?.length ?? 0) > 1) throw new Error("Plusieurs joueurs portent ce nom : utilisez son email");
+      id = rows?.[0]?.id ?? null;
+    }
+    if (!id) throw new Error("Ce joueur n'existe pas");
+    const { data: p } = await supabaseAdmin.from("profiles").select("id, display_name").eq("id", id).maybeSingle();
+    if (!p) throw new Error("Ce joueur n'existe pas");
+    return { id: p.id, name: p.display_name ?? "Joueur" };
   });
 
 // A chosen member proves it's them with their own password; returns a signed play token.
