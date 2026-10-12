@@ -254,7 +254,7 @@ function MatchRow({
           <span
             aria-hidden
             className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
-              picked === id ? "border-primary bg-primary" : "border-input"
+              picked === id ? "border-primary bg-primary" : "border-muted-foreground/50 group-hover:border-primary/70"
             }`}
           >
             {picked === id && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
@@ -270,7 +270,7 @@ function MatchRow({
             type="button"
             onClick={() => setPicked(id)}
             title="Cliquer pour désigner le gagnant"
-            className={`flex min-w-0 items-center gap-2 text-left transition-colors ${
+            className={`group flex min-w-0 items-center gap-2 text-left transition-colors ${
               picked === id ? "font-semibold" : "hover:text-primary"
             }`}
           >
@@ -311,7 +311,7 @@ function MatchRow({
           }}
           className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-2"
         >
-          <label className="flex items-center gap-2 text-[11px] text-muted-foreground">
+          <label className="flex items-center gap-2 text-xs text-muted-foreground">
             <span>Reste au perdant</span>
             <input
               type="text"
