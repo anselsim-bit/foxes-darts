@@ -15,17 +15,19 @@ interface ReauthenticationEmailProps {
 }
 
 export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="fr" dir="ltr">
     <Head />
-    <Preview>Your verification code</Preview>
+    <Preview>Votre code de vérification — Foxes Darts</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Confirm reauthentication</Heading>
-        <Text style={text}>Use the code below to confirm your identity:</Text>
+        <Heading style={h1}>Foxes Darts</Heading>
+        <Text style={text}>
+          Utilisez le code ci-dessous pour confirmer votre identité :
+        </Text>
         <Text style={codeStyle}>{token}</Text>
         <Text style={footer}>
-          This code will expire shortly. If you didn't request this, you can
-          safely ignore this email.
+          Ce code expire rapidement. Si vous n'êtes pas à l'origine de cette
+          demande, vous pouvez ignorer cet e-mail.
         </Text>
       </Container>
     </Body>
@@ -37,22 +39,23 @@ export default ReauthenticationEmail
 const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
 const container = { padding: '20px 25px' }
 const h1 = {
-  fontSize: '22px',
+  fontSize: '24px',
   fontWeight: 'bold' as const,
-  color: '#000000',
+  color: '#e85d3a',
   margin: '0 0 20px',
 }
 const text = {
-  fontSize: '14px',
-  color: '#55575d',
+  fontSize: '15px',
+  color: '#1a1a1a',
   lineHeight: '1.5',
   margin: '0 0 25px',
 }
 const codeStyle = {
   fontFamily: 'Courier, monospace',
-  fontSize: '22px',
+  fontSize: '28px',
   fontWeight: 'bold' as const,
-  color: '#000000',
+  color: '#e85d3a',
+  letterSpacing: '4px',
   margin: '0 0 30px',
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
