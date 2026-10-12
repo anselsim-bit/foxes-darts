@@ -10,7 +10,7 @@ import {
   confirmMemberIdentity,
   listTournamentsForGame,
 } from "@/lib/darts.functions";
-import { listPlayableMatches, reportMatch } from "@/lib/tournament.functions";
+import { listPlayableMatches, reportMatch, validateTournamentCode } from "@/lib/tournament.functions";
 
 export const Route = createFileRoute("/compteur")({
   head: () => ({
@@ -53,13 +53,44 @@ function CompteurPage() {
   const [starter, setStarter] = useState<number | null>(null);
   const [matches, setMatches] = useState<{ id: string; label: string; teamA: string; teamB: string }[]>([]);
   const [match, setMatch] = useState<{ id: string; teamA: string; teamB: string } | null>(null);
+  const [codeInput, setCodeInput] = useState("");
+  const [accessCode, setAccessCode] = useState<string | null>(null);
+  const [codeMsg, setCodeMsg] = useState<string | null>(null);
+  const [checkingCode, setCheckingCode] = useState(false);
 
   useEffect(() => {
     setMatches([]);
     setMatch(null);
+    setCodeInput("");
+    setAccessCode(null);
+    setCodeMsg(null);
     if (!tournamentId) return;
     listPlayableMatches({ data: { tournamentId } }).then(setMatches).catch(() => setMatches([]));
   }, [tournamentId, playing]);
+
+  const checkCode = async () => {
+    if (!tournamentId || !codeInput.trim()) return;
+    setCheckingCode(true);
+    setCodeMsg(null);
+    try {
+      const res = await validateTournamentCode({ data: { tournamentId, code: codeInput } });
+      if (!res.valid) {
+        setAccessCode(null);
+        setCodeMsg("Ce code n'existe pas pour ce tournoi.");
+      } else if (!res.active) {
+        setAccessCode(null);
+        setCodeMsg("Les codes ne sont pas encore activés par l'organisateur.");
+      } else {
+        setAccessCode(codeInput.trim().toUpperCase());
+        setCodeMsg(null);
+        toast.success(res.participantName ? `Code validé, bon match ${res.participantName} !` : "Code validé !");
+      }
+    } catch {
+      setCodeMsg("Vérification impossible pour le moment.");
+    } finally {
+      setCheckingCode(false);
+    }
+  };
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
