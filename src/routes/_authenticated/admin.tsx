@@ -350,7 +350,7 @@ function PhotosTab() {
   const upload = async (file: File) => {
     setBusy(true);
     try {
-      const path = `photos/${crypto.randomUUID()}-${file.name}`;
+      const path = `photos/${crypto.randomUUID()}.${(file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "")}`;
       const { error } = await supabase.storage.from("tournament-photos").upload(path, file);
       if (error) throw error;
       await adminAddPhoto({
@@ -560,7 +560,7 @@ function HighlightsTab() {
   const [mediaPath, setMediaPath] = useState("");
 
   const uploadMedia = async (file: File) => {
-    const path = `highlights/${crypto.randomUUID()}-${file.name}`;
+    const path = `highlights/${crypto.randomUUID()}.${(file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "")}`;
     const { error } = await supabase.storage.from("tournament-photos").upload(path, file);
     if (error) {
       toast.error("Échec de l'envoi.");
