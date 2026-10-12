@@ -97,10 +97,24 @@ export const generateFinals = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Enregistre le résultat d'un match. Admin, ou capitaine d'une des deux équipes. */
+/** Vérifie qu'un code d'accès actif existe pour ce tournoi. */
+async function hasValidCode(tournamentId: string, code: string | undefined) {
+  if (!code) return false;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("tournament_access_codes")
+    .select("id")
+    .eq("tournament_id", tournamentId)
+    .eq("code", code.trim().toUpperCase())
+    .eq("active", true)
+    .maybeSingle();
+  return !!data;
+}
+
+/** Enregistre le résultat d'un match. Admin, capitaine d'une des deux équipes, ou code d'accès actif. */
 export const reportMatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { matchId: string; scoreA: number; scoreB: number }) => input)
+  .inputValidator((input: { matchId: string; scoreA: number; scoreB: number; code?: string | undefined }) => input)
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: m, error } = await supabaseAdmin
@@ -110,10 +124,10 @@ export const reportMatch = createServerFn({ method: "POST" })
       .single();
     if (error || !m) throw new Error("Match introuvable.");
     if (!m.team_a || !m.team_b) throw new Error("Les deux adversaires ne sont pas encore connus.");
-    if (!(await isAdmin(context))) {
+    if (!(await isAdmin(context)) && !(await hasValidCode(m.tournament_id, data.code))) {
       const { data: caps } = await supabaseAdmin.from("tournament_teams").select("captain_id").in("id", [m.team_a, m.team_b]);
       if (!(caps ?? []).some((c) => c.captain_id === context.userId))
-        throw new Error("Seul un administrateur ou un joueur du match peut saisir le résultat.");
+        throw new Error("Seul un administrateur, un joueur du match ou un code d'accès actif permet de saisir le résultat.");
     }
     const a = Math.max(0, Math.floor(data.scoreA));
     const b = Math.max(0, Math.floor(data.scoreB));
