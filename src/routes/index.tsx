@@ -129,7 +129,15 @@ function Index() {
                   />
                 )}
                 <div className="p-5">
-                  <h3 className="text-lg">{t.title}</h3>
+                  <h3 className="text-lg">
+                    <Link
+                      to="/tournois/$id"
+                      params={{ id: t.id }}
+                      className="transition-colors hover:text-primary"
+                    >
+                      {t.title}
+                    </Link>
+                  </h3>
                   <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
                     <CalendarDays className="h-4 w-4 text-primary" /> {formatDate(t.event_date)}
                   </p>
@@ -139,22 +147,23 @@ function Index() {
                     </p>
                   )}
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <Link
-                      to="/tournois/$id"
-                      params={{ id: t.id }}
-                      className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
-                    >
-                      S'inscrire
-                    </Link>
-                    {t.helloasso_url && (
+                    {t.helloasso_url ? (
                       <a
                         href={t.helloasso_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-md border border-border px-4 py-2 text-sm hover:border-primary"
+                        className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                       >
                         <Ticket className="h-4 w-4" /> HelloAsso
                       </a>
+                    ) : (
+                      <Link
+                        to="/tournois/$id"
+                        params={{ id: t.id }}
+                        className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+                      >
+                        S'inscrire
+                      </Link>
                     )}
                   </div>
                 </div>
