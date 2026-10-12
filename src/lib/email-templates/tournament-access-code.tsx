@@ -43,7 +43,7 @@ const Email = ({ participantName, tournamentTitle, tournamentDate, code }: Props
 export const template = {
   component: Email,
   subject: (data: Record<string, any>) =>
-    `Votre code d'accès — ${data.tournamentTitle ?? 'Tournoi Foxes Darts'}`,
+    `Votre code d'accès — ${data['tournamentTitle'] ?? 'Tournoi Foxes Darts'}`,
   displayName: 'Code d’accès tournoi',
   previewData: {
     participantName: 'Simon',
