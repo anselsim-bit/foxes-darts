@@ -20,6 +20,7 @@ import { Route as AuthenticatedMonEspaceRouteImport } from './routes/_authentica
 import { Route as TournoisIndexRouteImport } from './routes/tournois.index'
 import { Route as TournoisIdRouteImport } from './routes/tournois.$id'
 import { Route as ApiPublicHooksHelloassoSyncRouteImport } from './routes/api/public/hooks/helloasso-sync'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -76,6 +77,12 @@ const ApiPublicHooksHelloassoSyncRoute =
     path: '/api/public/hooks/helloasso-sync',
     getParentRoute: () => rootRouteImport,
   } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois/': typeof TournoisIndexRoute
   '/api/public/hooks/helloasso-sync': typeof ApiPublicHooksHelloassoSyncRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -100,6 +108,7 @@ export interface FileRoutesByTo {
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois': typeof TournoisIndexRoute
   '/api/public/hooks/helloasso-sync': typeof ApiPublicHooksHelloassoSyncRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -114,6 +123,7 @@ export interface FileRoutesById {
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois/': typeof TournoisIndexRoute
   '/api/public/hooks/helloasso-sync': typeof ApiPublicHooksHelloassoSyncRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -128,6 +138,7 @@ export interface FileRouteTypes {
     | '/tournois/$id'
     | '/tournois/'
     | '/api/public/hooks/helloasso-sync'
+    | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -140,6 +151,7 @@ export interface FileRouteTypes {
     | '/tournois/$id'
     | '/tournois'
     | '/api/public/hooks/helloasso-sync'
+    | '/lovable/email/transactional/preview'
   id:
     | '__root__'
     | '/'
@@ -153,6 +165,7 @@ export interface FileRouteTypes {
     | '/tournois/$id'
     | '/tournois/'
     | '/api/public/hooks/helloasso-sync'
+    | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -165,6 +178,7 @@ export interface RootRouteChildren {
   TournoisIdRoute: typeof TournoisIdRoute
   TournoisIndexRoute: typeof TournoisIndexRoute
   ApiPublicHooksHelloassoSyncRoute: typeof ApiPublicHooksHelloassoSyncRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -246,6 +260,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksHelloassoSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -272,6 +293,7 @@ const rootRouteChildren: RootRouteChildren = {
   TournoisIdRoute: TournoisIdRoute,
   TournoisIndexRoute: TournoisIndexRoute,
   ApiPublicHooksHelloassoSyncRoute: ApiPublicHooksHelloassoSyncRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

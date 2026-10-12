@@ -97,10 +97,24 @@ export const generateFinals = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Enregistre le résultat d'un match. Admin, ou capitaine d'une des deux équipes. */
+/** Vérifie qu'un code d'accès actif existe pour ce tournoi. */
+async function hasValidCode(tournamentId: string, code: string | undefined) {
+  if (!code) return false;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("tournament_access_codes")
+    .select("id")
+    .eq("tournament_id", tournamentId)
+    .eq("code", code.trim().toUpperCase())
+    .eq("active", true)
+    .maybeSingle();
+  return !!data;
+}
+
+/** Enregistre le résultat d'un match. Admin, capitaine d'une des deux équipes, ou code d'accès actif. */
 export const reportMatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { matchId: string; scoreA: number; scoreB: number }) => input)
+  .inputValidator((input: { matchId: string; scoreA: number; scoreB: number; code?: string | undefined }) => input)
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: m, error } = await supabaseAdmin
@@ -110,10 +124,10 @@ export const reportMatch = createServerFn({ method: "POST" })
       .single();
     if (error || !m) throw new Error("Match introuvable.");
     if (!m.team_a || !m.team_b) throw new Error("Les deux adversaires ne sont pas encore connus.");
-    if (!(await isAdmin(context))) {
+    if (!(await isAdmin(context)) && !(await hasValidCode(m.tournament_id, data.code))) {
       const { data: caps } = await supabaseAdmin.from("tournament_teams").select("captain_id").in("id", [m.team_a, m.team_b]);
       if (!(caps ?? []).some((c) => c.captain_id === context.userId))
-        throw new Error("Seul un administrateur ou un joueur du match peut saisir le résultat.");
+        throw new Error("Seul un administrateur, un joueur du match ou un code d'accès actif permet de saisir le résultat.");
     }
     const a = Math.max(0, Math.floor(data.scoreA));
     const b = Math.max(0, Math.floor(data.scoreB));
@@ -198,6 +212,138 @@ export const listPlayableMatches = createServerFn({ method: "GET" })
       teamA: name.get(m.team_a!) ?? "Équipe A",
       teamB: name.get(m.team_b!) ?? "Équipe B",
     }));
+  });
+
+const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+function generateCode() {
+  const bytes = crypto.getRandomValues(new Uint8Array(6));
+  return Array.from(bytes, (b) => CODE_ALPHABET[b % CODE_ALPHABET.length]).join("");
+}
+
+/**
+ * Génère et envoie un code d'accès par email à chaque participant du tournoi
+ * (capitaines des équipes inscrites sur le site + inscrits HelloAsso).
+ * Les codes restent inactifs jusqu'à adminSetCodesActive.
+ */
+export const adminSendAccessCodes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { tournamentId: string }) => input)
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+
+    const { data: t } = await supabaseAdmin
+      .from("tournaments")
+      .select("title, event_date")
+      .eq("id", data.tournamentId)
+      .single();
+    if (!t) throw new Error("Tournoi introuvable.");
+
+    // Participants : capitaines des équipes du site + inscrits HelloAsso.
+    const recipients = new Map<string, string | null>(); // email -> nom
+    const { data: teams } = await supabaseAdmin
+      .from("tournament_teams")
+      .select("captain_id, name")
+      .eq("tournament_id", data.tournamentId);
+    for (const team of teams ?? []) {
+      if (!team.captain_id) continue;
+      const { data: u } = await supabaseAdmin.auth.admin.getUserById(team.captain_id);
+      if (u.user?.email) recipients.set(u.user.email, team.name);
+    }
+    const { data: ha } = await supabaseAdmin
+      .from("helloasso_registrations")
+      .select("email, first_name, last_name")
+      .eq("tournament_id", data.tournamentId);
+    for (const r of ha ?? []) {
+      if (r.email) recipients.set(r.email, `${r.first_name ?? ""} ${r.last_name ?? ""}`.trim() || null);
+    }
+    if (recipients.size === 0) throw new Error("Aucun participant avec une adresse email.");
+
+    const eventDate = t.event_date
+      ? new Date(t.event_date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
+      : null;
+    let sent = 0;
+    let failed = 0;
+    for (const [email, name] of recipients) {
+      // Réutilise le code existant ou en crée un nouveau.
+      const { data: existing } = await supabaseAdmin
+        .from("tournament_access_codes")
+        .select("code")
+        .eq("tournament_id", data.tournamentId)
+        .eq("email", email)
+        .maybeSingle();
+      let code = existing?.code;
+      if (!code) {
+        code = generateCode();
+        const { error } = await supabaseAdmin.from("tournament_access_codes").insert({
+          tournament_id: data.tournamentId,
+          email,
+          participant_name: name,
+          code,
+        });
+        if (error) {
+          failed++;
+          continue;
+        }
+      }
+      try {
+        const res = await sendTemplateEmail("tournament-access-code", email, {
+          templateData: { participantName: name, tournamentTitle: t.title, tournamentDate: eventDate, code },
+          idempotencyKey: `access-code-${data.tournamentId}-${email}`,
+        });
+        if (res.sent) sent++;
+        else failed++;
+      } catch {
+        failed++;
+      }
+    }
+    return { sent, failed, total: recipients.size };
+  });
+
+/** Active ou désactive les codes d'accès d'un tournoi (jour J). */
+export const adminSetCodesActive = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { tournamentId: string; active: boolean }) => input)
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("tournament_access_codes")
+      .update({ active: data.active })
+      .eq("tournament_id", data.tournamentId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** Statut des codes d'un tournoi (admin) : combien envoyés, actifs ou non. */
+export const getAccessCodesStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { tournamentId: string }) => input)
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const { data: codes } = await context.supabase
+      .from("tournament_access_codes")
+      .select("id, active")
+      .eq("tournament_id", data.tournamentId);
+    const all = codes ?? [];
+    return { count: all.length, active: all.length > 0 && all.every((c) => c.active) };
+  });
+
+/** Vérifie un code d'accès pour le compteur. Renvoie si le code est valide et actif. */
+export const validateTournamentCode = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { tournamentId: string; code: string }) => input)
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row } = await supabaseAdmin
+      .from("tournament_access_codes")
+      .select("active, participant_name")
+      .eq("tournament_id", data.tournamentId)
+      .eq("code", data.code.trim().toUpperCase())
+      .maybeSingle();
+    if (!row) return { valid: false, active: false, participantName: null as string | null };
+    return { valid: true, active: row.active, participantName: row.participant_name };
   });
 
 export function friendly(msg: string) {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Play, Trash2, Trophy, Plus, Check, PencilLine } from "lucide-react";
+import { Play, Trash2, Trophy, Plus, Check, PencilLine, Mail, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { buildBracket, poolStandings, qualifiersFromPools } from "@/lib/bracket";
@@ -12,6 +12,9 @@ import {
   amIAdmin,
   adminAddTeam,
   adminDeleteTeam,
+  adminSendAccessCodes,
+  adminSetCodesActive,
+  getAccessCodesStatus,
 } from "@/lib/tournament.functions";
 
 type Match = {
@@ -52,12 +55,17 @@ export function TournamentBoard({
   const [poolView, setPoolView] = useState<"all" | number>("all");
   const [view, setView] = useState<"pools" | "final">("pools");
   const [busy, setBusy] = useState(false);
+  const [codes, setCodes] = useState<{ count: number; active: boolean } | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (user) setAdmin((await amIAdmin()).admin);
+      if (user) {
+        const isAdm = (await amIAdmin()).admin;
+        setAdmin(isAdm);
+        if (isAdm) setCodes(await getAccessCodesStatus({ data: { tournamentId } }));
+      }
     });
-  }, []);
+  }, [tournamentId]);
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["board", tournamentId] });
@@ -264,6 +272,54 @@ export function TournamentBoard({
           </div>
         )}
       </div>
+
+      {admin && (
+        <div className="mt-4 rounded-xl border border-border bg-card p-4">
+          <h3 className="flex items-center gap-2 text-sm font-semibold">
+            <KeyRound className="h-4 w-4 text-primary" /> Codes d'accès des participants
+          </h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {codes && codes.count > 0
+              ? `${codes.count} code${codes.count > 1 ? "s" : ""} envoyé${codes.count > 1 ? "s" : ""} — ${codes.active ? "activés : les participants peuvent saisir les scores." : "non activés pour le moment."}`
+              : "Aucun code envoyé. Envoyez-les quand le tournoi est complet, puis activez-les le jour J."}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              disabled={busy}
+              onClick={() =>
+                run(
+                  async () => {
+                    const res = await adminSendAccessCodes({ data: { tournamentId } });
+                    setCodes(await getAccessCodesStatus({ data: { tournamentId } }));
+                    if (res.failed > 0) toast.info(`${res.sent} envoyé(s), ${res.failed} en échec.`);
+                  },
+                  "Codes envoyés aux participants.",
+                )
+              }
+              className="btn-ember px-3 py-2 text-sm"
+            >
+              <Mail className="h-4 w-4" /> {codes && codes.count > 0 ? "Renvoyer les codes" : "Envoyer les codes"}
+            </button>
+            {codes && codes.count > 0 && (
+              <button
+                disabled={busy}
+                onClick={() =>
+                  run(
+                    async () => {
+                      await adminSetCodesActive({ data: { tournamentId, active: !codes.active } });
+                      setCodes(await getAccessCodesStatus({ data: { tournamentId } }));
+                    },
+                    codes.active ? "Codes désactivés." : "Codes activés !",
+                  )
+                }
+                className="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted"
+              >
+                {codes.active ? "Désactiver les codes" : "Activer les codes"}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {both && (
         <div className="flex flex-wrap gap-1.5">

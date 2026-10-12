@@ -301,6 +301,44 @@ export type Database = {
         }
         Relationships: []
       }
+      tournament_access_codes: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          email: string
+          id: string
+          participant_name: string | null
+          tournament_id: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          email: string
+          id?: string
+          participant_name?: string | null
+          tournament_id: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          email?: string
+          id?: string
+          participant_name?: string | null
+          tournament_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_access_codes_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tournament_matches: {
         Row: {
           created_at: string

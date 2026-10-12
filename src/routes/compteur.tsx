@@ -10,7 +10,7 @@ import {
   confirmMemberIdentity,
   listTournamentsForGame,
 } from "@/lib/darts.functions";
-import { listPlayableMatches, reportMatch } from "@/lib/tournament.functions";
+import { listPlayableMatches, reportMatch, validateTournamentCode } from "@/lib/tournament.functions";
 
 export const Route = createFileRoute("/compteur")({
   head: () => ({
@@ -53,13 +53,44 @@ function CompteurPage() {
   const [starter, setStarter] = useState<number | null>(null);
   const [matches, setMatches] = useState<{ id: string; label: string; teamA: string; teamB: string }[]>([]);
   const [match, setMatch] = useState<{ id: string; teamA: string; teamB: string } | null>(null);
+  const [codeInput, setCodeInput] = useState("");
+  const [accessCode, setAccessCode] = useState<string | null>(null);
+  const [codeMsg, setCodeMsg] = useState<string | null>(null);
+  const [checkingCode, setCheckingCode] = useState(false);
 
   useEffect(() => {
     setMatches([]);
     setMatch(null);
+    setCodeInput("");
+    setAccessCode(null);
+    setCodeMsg(null);
     if (!tournamentId) return;
     listPlayableMatches({ data: { tournamentId } }).then(setMatches).catch(() => setMatches([]));
   }, [tournamentId, playing]);
+
+  const checkCode = async () => {
+    if (!tournamentId || !codeInput.trim()) return;
+    setCheckingCode(true);
+    setCodeMsg(null);
+    try {
+      const res = await validateTournamentCode({ data: { tournamentId, code: codeInput } });
+      if (!res.valid) {
+        setAccessCode(null);
+        setCodeMsg("Ce code n'existe pas pour ce tournoi.");
+      } else if (!res.active) {
+        setAccessCode(null);
+        setCodeMsg("Les codes ne sont pas encore activés par l'organisateur.");
+      } else {
+        setAccessCode(codeInput.trim().toUpperCase());
+        setCodeMsg(null);
+        toast.success(res.participantName ? `Code validé, bon match ${res.participantName} !` : "Code validé !");
+      }
+    } catch {
+      setCodeMsg("Vérification impossible pour le moment.");
+    } finally {
+      setCheckingCode(false);
+    }
+  };
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -155,6 +186,7 @@ function CompteurPage() {
         canSave={!!userId}
         tournamentId={tournamentId || null}
         match={match}
+        accessCode={accessCode}
         onExit={() => setPlaying(false)}
         onRestart={() => {
           setPlayers((prev) => [...prev].reverse());
@@ -326,6 +358,34 @@ function CompteurPage() {
                 ))}
               </select>
             )}
+            {match && (
+              <div className="mt-2">
+                {accessCode ? (
+                  <p className="rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-sm">
+                    Code d'accès validé ✓ — vous pourrez envoyer le résultat au tableau.
+                  </p>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      value={codeInput}
+                      onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
+                      placeholder="Code d'accès reçu par email"
+                      maxLength={6}
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm uppercase tracking-widest"
+                      aria-label="Code d'accès du tournoi"
+                    />
+                    <button
+                      onClick={checkCode}
+                      disabled={checkingCode || codeInput.trim().length < 6}
+                      className="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+                    >
+                      {checkingCode ? "..." : "Valider"}
+                    </button>
+                  </div>
+                )}
+                {codeMsg && <p className="mt-1 text-sm text-destructive">{codeMsg}</p>}
+              </div>
+            )}
           </div>
         )}
 
@@ -384,10 +444,12 @@ function Game({
   canSave,
   tournamentId,
   match,
+  accessCode,
   onExit,
   onRestart,
 }: {
   match: { id: string; teamA: string; teamB: string } | null;
+  accessCode: string | null;
   players: Player[];
   start: number;
   doubleOut: boolean;
@@ -406,7 +468,7 @@ function Game({
     if (winner === null || !match) return;
     const aWon = players[winner]!.name === match.teamA;
     try {
-      await reportMatch({ data: { matchId: match.id, scoreA: aWon ? 1 : 0, scoreB: aWon ? 0 : 1 } });
+      await reportMatch({ data: { matchId: match.id, scoreA: aWon ? 1 : 0, scoreB: aWon ? 0 : 1, code: accessCode ?? undefined } });
       setReported(true);
       toast.success("Résultat envoyé au tableau du tournoi.");
     } catch (e) {
@@ -545,7 +607,7 @@ function Game({
               </p>
             ))}
           <div className="mt-4 flex flex-wrap justify-center gap-2">
-            {match && canSave && (
+            {match && canSave && accessCode && (
               <button onClick={report} disabled={reported} className={btn}>
                 {reported ? "Tableau mis à jour ✓" : "Envoyer le résultat au tableau du tournoi"}
               </button>
