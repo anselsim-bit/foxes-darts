@@ -20,6 +20,8 @@ import {
   adminListPlayerStats,
   adminListPlayers,
   adminUpsertPlayerStats,
+  adminListHelloAsso,
+  adminSyncHelloAsso,
 } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -775,6 +777,81 @@ function RegistrationsTab() {
                     <button onClick={() => remove(r.id)} className={btnDanger}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <HelloAssoSection />
+    </div>
+  );
+}
+
+function HelloAssoSection() {
+  const queryClient = useQueryClient();
+  const [syncing, setSyncing] = useState(false);
+  const { data: rows = [] } = useQuery({
+    queryKey: ["admin-helloasso"],
+    queryFn: () => adminListHelloAsso(),
+  });
+  const sync = async () => {
+    setSyncing(true);
+    try {
+      const r = await adminSyncHelloAsso();
+      if (r.failures.length) toast.error(`Import partiel : ${r.failures.join(" · ")}`);
+      else toast.success(`${r.imported} inscrit(s) HelloAsso à jour.`);
+      queryClient.invalidateQueries({ queryKey: ["admin-helloasso"] });
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSyncing(false);
+    }
+  };
+  return (
+    <div className="mt-10">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-xl">Inscrits via HelloAsso</h2>
+          <p className="text-sm text-muted-foreground">Mis à jour automatiquement toutes les heures.</p>
+        </div>
+        <button
+          onClick={sync}
+          disabled={syncing}
+          className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+        >
+          {syncing ? "Import en cours…" : "Importer maintenant"}
+        </button>
+      </div>
+      {rows.length === 0 ? (
+        <p className="mt-4 text-muted-foreground">Aucun inscrit HelloAsso importé.</p>
+      ) : (
+        <div className="mt-4 overflow-x-auto rounded-xl border border-border">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-card text-left text-muted-foreground">
+                <th className="px-4 py-3 font-medium">Participant</th>
+                <th className="px-4 py-3 font-medium">Email</th>
+                <th className="px-4 py-3 font-medium">Tournoi</th>
+                <th className="px-4 py-3 font-medium">Tarif</th>
+                <th className="px-4 py-3 font-medium">Montant</th>
+                <th className="px-4 py-3 font-medium">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.id} className="border-t border-border">
+                  <td className="px-4 py-3 font-medium">
+                    {r.name}
+                    <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 text-xs text-muted-foreground">via HelloAsso</span>
+                  </td>
+                  <td className="px-4 py-3">{r.email ?? "—"}</td>
+                  <td className="px-4 py-3">{r.tournament_title}</td>
+                  <td className="px-4 py-3">{r.tier_name ?? "—"}</td>
+                  <td className="px-4 py-3">{(r.amount_cents / 100).toFixed(2).replace(".", ",")} €</td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {r.paid_at ? new Date(r.paid_at).toLocaleDateString("fr-FR") : "—"}
                   </td>
                 </tr>
               ))}

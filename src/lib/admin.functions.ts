@@ -225,6 +225,35 @@ export const adminDeleteRegistration = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const adminListHelloAsso = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context);
+    const { data, error } = await context.supabase
+      .from("helloasso_registrations")
+      .select("id, first_name, last_name, email, amount_cents, tier_name, state, paid_at, tournaments(title)")
+      .order("paid_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((r) => ({
+      id: r.id,
+      name: [r.first_name, r.last_name].filter(Boolean).join(" ") || "Participant",
+      email: r.email,
+      amount_cents: r.amount_cents,
+      tier_name: r.tier_name,
+      state: r.state,
+      paid_at: r.paid_at,
+      tournament_title: (r.tournaments as { title: string } | null)?.title ?? "Tournoi",
+    }));
+  });
+
+export const adminSyncHelloAsso = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context);
+    const { syncHelloAsso } = await import("./helloasso.server");
+    return syncHelloAsso();
+  });
+
 export const adminListPlayerStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {

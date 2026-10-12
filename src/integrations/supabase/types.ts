@@ -55,6 +55,56 @@ export type Database = {
           },
         ]
       }
+      helloasso_registrations: {
+        Row: {
+          amount_cents: number
+          email: string | null
+          first_name: string | null
+          id: string
+          item_id: number
+          last_name: string | null
+          paid_at: string | null
+          state: string | null
+          synced_at: string
+          tier_name: string | null
+          tournament_id: string
+        }
+        Insert: {
+          amount_cents?: number
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          item_id: number
+          last_name?: string | null
+          paid_at?: string | null
+          state?: string | null
+          synced_at?: string
+          tier_name?: string | null
+          tournament_id: string
+        }
+        Update: {
+          amount_cents?: number
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          item_id?: number
+          last_name?: string | null
+          paid_at?: string | null
+          state?: string | null
+          synced_at?: string
+          tier_name?: string | null
+          tournament_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "helloasso_registrations_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       highlights: {
         Row: {
           created_at: string
