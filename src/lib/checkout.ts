@@ -42,7 +42,7 @@ function findFinish(score: number, darts: number, doubleOut: boolean): Throw[] |
 // Lower is better: prefer singles/trebles on the big numbers for set-up darts, then a good double.
 function score_(path: Throw[]) {
   return path.reduce((s, t, i) => {
-    if (i === path.length - 1) return s + (t.isDouble ? doubleRank(t) : 0);
+    if (i === path.length - 1) return s + (t.isDouble ? doubleRank(t) * 8 : 0);
     const n = t.label === "25" ? 25 : Number(t.label.slice(1));
     return s + (20 - Math.min(n, 20)) * 2 + (t.label.startsWith("D") ? 30 : 0) + (t.label === "25" ? 10 : 0);
   }, 0);
@@ -57,7 +57,9 @@ export function suggestNextDarts(score: number, dartsLeft: number, doubleOut: bo
   // Not finishable this visit: leave a comfortable double (40 = D20, 32 = D16) for next time.
   for (const target of doubleOut ? [40, 32, 36, 24, 16] : [60, 50, 40]) {
     const need = score - target;
-    const t = THROWS.find((x) => x.value === need && !x.label.startsWith("D"));
+    const t =
+      THROWS.find((x) => x.value === need && (x.label.startsWith("S") || x.label === "25")) ??
+      THROWS.find((x) => x.value === need && x.label.startsWith("T"));
     if (t) return { darts: [t.label], note: `Laissez ${target} pour la prochaine volée.` };
   }
   return { darts: ["T20"], note: "Marquez un maximum de points." };
