@@ -21,6 +21,8 @@ export function SiteHeader() {
   const [newCount, setNewCount] = useState(0);
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const currentHref = useRouterState({ select: (s) => s.location.href });
+  const authSearch = currentHref === "/auth" ? {} : { redirect: currentHref };
 
   // Pastille: new tournaments since last visit; visiting /tournois clears it.
   useEffect(() => {
@@ -134,6 +136,7 @@ export function SiteHeader() {
           ) : (
             <Link
               to="/auth"
+              search={authSearch}
               className="ml-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
             >
               Se connecter
@@ -201,6 +204,7 @@ export function SiteHeader() {
             ) : (
               <Link
                 to="/auth"
+                search={authSearch}
                 onClick={() => setOpen(false)}
                 className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground"
               >
