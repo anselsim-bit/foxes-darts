@@ -90,8 +90,9 @@ export function Game({
   const report = async () => {
     if (winner === null || !match) return;
     const aWon = players[winner]!.name === match.teamA;
+    const loserRemaining = scores[winner === 0 ? 1 : 0] ?? 0;
     try {
-      await reportMatch({ data: { matchId: match.id, scoreA: aWon ? 1 : 0, scoreB: aWon ? 0 : 1, code: accessCode ?? undefined } });
+      await reportMatch({ data: { matchId: match.id, scoreA: aWon ? 0 : loserRemaining, scoreB: aWon ? loserRemaining : 0, code: accessCode ?? undefined } });
       setReported(true);
       toast.success("Résultat envoyé au tableau du tournoi.");
     } catch (e) {
