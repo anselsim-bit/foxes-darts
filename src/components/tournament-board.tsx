@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Play, Trash2, Trophy, Plus } from "lucide-react";
+import { Play, Trash2, Trophy, Plus, Check, PencilLine } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { poolStandings } from "@/lib/bracket";
