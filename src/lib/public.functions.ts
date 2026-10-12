@@ -49,14 +49,18 @@ export const listTournaments = createServerFn({ method: "GET" }).handler(async (
   const supabase = publicClient();
   const { data, error } = await supabase
     .from("tournaments")
-    .select("id, title, event_date, start_time, end_time, format, max_participants, team_size, pool_count, status, location, description, helloasso_url, image_url")
+    .select("id, title, event_date, start_time, end_time, format, max_participants, team_size, pool_count, status, location, description, helloasso_url, image_url, tournament_teams(count)")
     .order("event_date", { ascending: false });
   if (error) throw new Error(error.message);
   const signed = await signImageUrls(
     supabase,
     (data ?? []).map((t) => t.image_url ?? "").filter(Boolean),
   );
-  return (data ?? []).map((t) => ({ ...t, image_url: resolveImage(t.image_url, signed) }));
+  return (data ?? []).map(({ tournament_teams, ...t }) => ({
+    ...t,
+    registrations_count: tournament_teams[0]?.count ?? 0,
+    image_url: resolveImage(t.image_url, signed),
+  }));
 });
 
 export const listPhotos = createServerFn({ method: "GET" }).handler(async () => {
