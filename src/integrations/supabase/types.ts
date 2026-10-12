@@ -304,6 +304,7 @@ export type Database = {
       tournament_access_codes: {
         Row: {
           active: boolean
+          claimed_by: string | null
           code: string
           created_at: string
           email: string
@@ -313,6 +314,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          claimed_by?: string | null
           code: string
           created_at?: string
           email: string
@@ -322,6 +324,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          claimed_by?: string | null
           code?: string
           created_at?: string
           email?: string

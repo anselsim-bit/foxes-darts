@@ -85,6 +85,13 @@
       "when": 1791825770680,
       "tag": "0011_team_name_locked",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791826255078,
+      "tag": "0012_access_code_claimed_by",
+      "breakpoints": true
     }
   ]
 }
