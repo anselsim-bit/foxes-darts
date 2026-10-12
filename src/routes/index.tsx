@@ -139,7 +139,7 @@ function Index() {
                     </Link>
                   </h3>
                   <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-                    <CalendarDays className="h-4 w-4 text-primary" /> {formatDate(t.event_date)}
+                    <CalendarDays className="h-4 w-4 text-primary" /> {formatDate(t.event_date)}{t.start_time ? ` · ${t.start_time.slice(0, 5).replace(":", "h")}${t.end_time ? ` – ${t.end_time.slice(0, 5).replace(":", "h")}` : ""}` : ""}
                   </p>
                   {t.location && (
                     <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
