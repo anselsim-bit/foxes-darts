@@ -65,9 +65,11 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
       helloasso_url: data.helloasso_url || null,
       image_url: data.image_url || null,
     };
+    // On edit, an absent image keeps the current one.
+    const { image_url, ...rest } = row;
     const query = data.id
-      ? context.supabase.from("tournaments").update(row).eq("id", data.id)
-      : context.supabase.from("tournaments").insert(row);
+      ? context.supabase.from("tournaments").update(data.image_url ? row : rest).eq("id", data.id)
+      : context.supabase.from("tournaments").insert({ ...rest, image_url });
     const { error } = await query;
     if (error) throw new Error(error.message);
     return { ok: true };
