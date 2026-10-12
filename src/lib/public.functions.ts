@@ -20,13 +20,16 @@ function publicClient() {
 }
 
 // Photos live in a private bucket: paths are turned into short-lived signed URLs.
+// Signing uses the server-only admin client so the bucket needs no public read rule;
+// only paths already referenced by published rows are signed.
 async function signImageUrls(
-  supabase: ReturnType<typeof publicClient>,
+  _supabase: ReturnType<typeof publicClient>,
   paths: string[],
 ): Promise<Record<string, string>> {
   const storagePaths = paths.filter((p) => p && !p.startsWith("http"));
   if (storagePaths.length === 0) return {};
-  const { data } = await supabase.storage
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin.storage
     .from("tournament-photos")
     .createSignedUrls(storagePaths, 3600);
   const map: Record<string, string> = {};
