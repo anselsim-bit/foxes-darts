@@ -48,6 +48,7 @@ function CompteurPage() {
   const [tournamentId, setTournamentId] = useState("");
   const [password, setPassword] = useState("");
   const [confirming, setConfirming] = useState(false);
+  const [gameKey, setGameKey] = useState(0);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -136,12 +137,17 @@ function CompteurPage() {
   if (playing) {
     return (
       <Game
+        key={gameKey}
         players={players}
         start={start}
         doubleOut={doubleOut}
         canSave={!!userId}
         tournamentId={tournamentId || null}
         onExit={() => setPlaying(false)}
+        onRestart={() => {
+          setPlayers((prev) => [...prev].reverse());
+          setGameKey((k) => k + 1);
+        }}
       />
     );
   }
@@ -310,6 +316,7 @@ function Game({
   canSave,
   tournamentId,
   onExit,
+  onRestart,
 }: {
   players: Player[];
   start: number;
@@ -317,6 +324,7 @@ function Game({
   canSave: boolean;
   tournamentId: string | null;
   onExit: () => void;
+  onRestart: () => void;
 }) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [current, setCurrent] = useState<Dart[]>([]);
@@ -454,11 +462,19 @@ function Game({
                 Pour enregistrer les statistiques, un membre doit être connecté sur cet appareil.
               </p>
             ))}
-          <div className="mt-4 flex justify-center gap-2">
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            <button onClick={onRestart} className={btn}>
+              <RotateCcw className="mr-1 inline h-4 w-4" /> Recommencer la partie
+            </button>
             <button onClick={undo} className={btn}>
               <Undo2 className="mr-1 inline h-4 w-4" /> Annuler la dernière fléchette
             </button>
           </div>
+          {players.length > 1 && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Au nouveau départ, l'ordre des joueurs est inversé : {players[1]!.name} commence.
+            </p>
+          )}
         </div>
       ) : (
         <div className="mt-8">
