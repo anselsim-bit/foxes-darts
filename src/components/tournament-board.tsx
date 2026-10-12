@@ -49,6 +49,7 @@ export function TournamentBoard({
   });
   const [admin, setAdmin] = useState(false);
   const [newTeam, setNewTeam] = useState("");
+  const [poolView, setPoolView] = useState<"all" | number>("all");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -103,7 +104,7 @@ export function TournamentBoard({
       : [];
   const previewRounds = [...new Set(preview.map((m) => m.round))].sort((a, b) => a - b);
   const seedLabel = (key: string | null) => {
-    if (!key) return { label: "Vainqueur précédent", team: null as string | null };
+    if (!key) return { label: "Vainqueur précédent", team: null as string | null, current: null as string | null };
     const [rank, pool] = key.split(":").map(Number) as [number, number];
     const done = poolData[pool]!.ms.every((m) => m.winner);
     const team = poolData[pool]!.rows[rank]?.team ?? null;
