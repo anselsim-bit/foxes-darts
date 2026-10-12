@@ -316,6 +316,7 @@ function Game({
   canSave,
   tournamentId,
   onExit,
+  onRestart,
 }: {
   players: Player[];
   start: number;
@@ -323,6 +324,7 @@ function Game({
   canSave: boolean;
   tournamentId: string | null;
   onExit: () => void;
+  onRestart: () => void;
 }) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [current, setCurrent] = useState<Dart[]>([]);
