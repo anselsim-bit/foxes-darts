@@ -31,6 +31,8 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
   const [confirmEmail, setConfirmEmail] = useState(false);
   const navigate = useNavigate();
+  const { redirect: redirectTo } = Route.useSearch();
+  const goBack = () => navigate({ to: redirectTo ?? "/mon-espace" });
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
