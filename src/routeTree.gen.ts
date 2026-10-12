@@ -65,9 +65,9 @@ const TournoisIndexRoute = TournoisIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const TournoisIdRoute = TournoisIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => TournoisRoute,
+  id: '/tournois/$id',
+  path: '/tournois/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -149,6 +149,7 @@ export interface RootRouteChildren {
   ClassementsRoute: typeof ClassementsRoute
   CompteurRoute: typeof CompteurRoute
   GalerieRoute: typeof GalerieRoute
+  TournoisIdRoute: typeof TournoisIdRoute
   TournoisIndexRoute: typeof TournoisIndexRoute
 }
 
@@ -219,10 +220,10 @@ declare module '@tanstack/react-router' {
     }
     '/tournois/$id': {
       id: '/tournois/$id'
-      path: '/$id'
+      path: '/tournois/$id'
       fullPath: '/tournois/$id'
       preLoaderRoute: typeof TournoisIdRouteImport
-      parentRoute: typeof TournoisRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -247,6 +248,7 @@ const rootRouteChildren: RootRouteChildren = {
   ClassementsRoute: ClassementsRoute,
   CompteurRoute: CompteurRoute,
   GalerieRoute: GalerieRoute,
+  TournoisIdRoute: TournoisIdRoute,
   TournoisIndexRoute: TournoisIndexRoute,
 }
 export const routeTree = rootRouteImport
