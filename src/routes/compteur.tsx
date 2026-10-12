@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, Undo2, Trophy, RotateCcw } from "lucide-react";
+import { Plus, Trash2, Undo2, Trophy, RotateCcw, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { suggestNextDarts } from "@/lib/checkout";
 import {
   listMembersForGame,
   saveGameResult,
@@ -413,6 +414,22 @@ function Game({
             </span>
             <span className="text-muted-foreground">{current.map((d) => d.label).join(" · ")}</span>
           </div>
+          {(() => {
+            const tip = suggestNextDarts(remaining, 3 - current.length, doubleOut);
+            if (!tip.note) return null;
+            return (
+              <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-4 py-2 text-sm">
+                <Lightbulb className="h-4 w-4 text-primary" />
+                <span className="font-semibold">Conseil :</span>
+                {tip.darts.map((d, i) => (
+                  <span key={i} className="rounded bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">
+                    {d}
+                  </span>
+                ))}
+                <span className="text-muted-foreground">{tip.note}</span>
+              </div>
+            );
+          })()}
           <div className="mb-3 grid grid-cols-3 gap-2">
             {([1, 2, 3] as const).map((m) => (
               <button
