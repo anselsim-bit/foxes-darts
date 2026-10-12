@@ -141,7 +141,7 @@ function TournamentsTab() {
     const path = `tournaments/${crypto.randomUUID()}.${ext}`;
     const { error } = await supabase.storage
       .from("tournament-photos")
-      .upload(path, file, { contentType: file.type || undefined });
+      .upload(path, file, file.type ? { contentType: file.type } : {});
     if (error) {
       toast.error(`Échec de l'envoi de l'image : ${error.message}`);
       return;
