@@ -91,6 +91,21 @@ export async function syncHelloAsso() {
           .upsert(rows, { onConflict: "item_id" });
         if (upErr) throw new Error(upErr.message);
         imported += rows.length;
+        // Each valid HelloAsso ticket becomes a tournament participant (counts toward capacity).
+        const ids = rows.filter((r) => !r.state || ["Processed", "Registered"].includes(r.state)).map((r) => r.item_id);
+        if (ids.length) {
+          const { data: existing } = await supabaseAdmin
+            .from("tournament_teams").select("helloasso_item_id").in("helloasso_item_id", ids);
+          const known = new Set((existing ?? []).map((e) => e.helloasso_item_id));
+          for (const r of rows) {
+            if (!ids.includes(r.item_id) || known.has(r.item_id)) continue;
+            const name = [r.first_name, r.last_name].filter(Boolean).join(" ").trim() || `Participant HelloAsso #${r.item_id}`;
+            // Trigger rejects when full or started; ignore those.
+            await supabaseAdmin.from("tournament_teams").insert({
+              tournament_id: t.id, name, captain_id: null, helloasso_item_id: r.item_id,
+            });
+          }
+        }
         continuation = body.pagination?.continuationToken;
         if (!continuation || items.length < 100) break;
       }
