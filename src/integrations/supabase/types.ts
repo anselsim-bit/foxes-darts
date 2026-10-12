@@ -379,6 +379,7 @@ export type Database = {
         Row: {
           captain_id: string | null
           created_at: string
+          helloasso_item_id: number | null
           id: string
           name: string
           tournament_id: string
@@ -386,6 +387,7 @@ export type Database = {
         Insert: {
           captain_id?: string | null
           created_at?: string
+          helloasso_item_id?: number | null
           id?: string
           name: string
           tournament_id: string
@@ -393,6 +395,7 @@ export type Database = {
         Update: {
           captain_id?: string | null
           created_at?: string
+          helloasso_item_id?: number | null
           id?: string
           name?: string
           tournament_id?: string

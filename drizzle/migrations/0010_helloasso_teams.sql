@@ -1,0 +1,1 @@
+ALTER TABLE public.tournament_teams ADD COLUMN helloasso_item_id bigint UNIQUE;
