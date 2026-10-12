@@ -20,6 +20,6 @@
 - (rien pour le moment)
 
 ## Affichage des tournois
-- [ ] Afficher « Complet » au lieu de l’inscription quand la capacité est atteinte.
-- [ ] Accueil : carrousel prochains tournois / en cours / terminés ; onglet Tournois : trois sections successives.
-- [ ] Vérifier les règles et les deux pages.
+- [x] Afficher « Complet » au lieu de l’inscription quand la capacité est atteinte.
+- [x] Accueil : carrousel prochains tournois / en cours / terminés ; onglet Tournois : trois sections successives.
+- [x] Vérifier les règles et les deux pages.
