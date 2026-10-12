@@ -59,6 +59,13 @@ function CompteurPage() {
         } catch {
           /* liste indisponible */
         }
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("id", id)
+          .single();
+        const name = profile?.display_name ?? "Moi";
+        setPlayers((prev) => (prev.some((p) => p.userId === id) ? prev : [{ name, userId: id }, ...prev]));
       }
     });
   }, []);
@@ -75,10 +82,26 @@ function CompteurPage() {
     setPassword("");
   };
   const lookupMember = async () => {
-    if (!memberQuery.trim()) return;
+    const q = memberQuery.trim();
+    if (!q) return;
+    if (q.toLowerCase() === "moi") {
+      if (!userId) return;
+      if (players.some((p) => p.userId === userId)) {
+        toast.error("Vous êtes déjà dans la partie");
+        return;
+      }
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("id", userId)
+        .single();
+      setPlayers([...players, { name: profile?.display_name ?? "Moi", userId }]);
+      resetMember();
+      return;
+    }
     setConfirming(true);
     try {
-      const m = await findMemberForGame({ data: { query: memberQuery } });
+      const m = await findMemberForGame({ data: { query: q } });
       if (players.some((p) => p.userId === m.id)) {
         toast.error(`${m.name} est déjà dans la partie`);
         return;
