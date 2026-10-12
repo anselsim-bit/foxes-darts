@@ -101,24 +101,11 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
     );
   }
 
-  if (!open) {
-    return (
-      <div className="mt-8">
-        <button
-          onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          <Target className="h-4 w-4" /> Participer au tournoi
-        </button>
-      </div>
-    );
-  }
-
   if (!signedIn) {
     return (
       <div className="mt-8 rounded-xl border border-border bg-card p-5 text-sm">
         Connectez-vous pour participer au tournoi.{" "}
-        <Link to="/auth" search={{ redirect: `/tournois/${tournamentId}` }} className="font-semibold text-primary">
+        <Link to="/auth" search={{ redirect: `/tournois/${tournamentId}/jouer` }} className="font-semibold text-primary">
           Se connecter
         </Link>
       </div>
