@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ClassementsRouteImport } from './routes/classements'
 import { Route as GalerieRouteImport } from './routes/galerie'
 import { Route as TournoisRouteImport } from './routes/tournois'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedMonEspaceRouteImport } from './routes/_authenticated/mon-espace'
 import { Route as TournoisIdRouteImport } from './routes/tournois.$id'
 
@@ -47,6 +48,11 @@ const TournoisRoute = TournoisRouteImport.update({
   path: '/tournois',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedMonEspaceRoute = AuthenticatedMonEspaceRouteImport.update({
   id: '/mon-espace',
   path: '/mon-espace',
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/classements': typeof ClassementsRoute
   '/galerie': typeof GalerieRoute
   '/tournois': typeof TournoisRouteWithChildren
+  '/admin': typeof AuthenticatedAdminRoute
   '/mon-espace': typeof AuthenticatedMonEspaceRoute
   '/tournois/$id': typeof TournoisIdRoute
 }
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/classements': typeof ClassementsRoute
   '/galerie': typeof GalerieRoute
   '/tournois': typeof TournoisRouteWithChildren
+  '/admin': typeof AuthenticatedAdminRoute
   '/mon-espace': typeof AuthenticatedMonEspaceRoute
   '/tournois/$id': typeof TournoisIdRoute
 }
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/classements': typeof ClassementsRoute
   '/galerie': typeof GalerieRoute
   '/tournois': typeof TournoisRouteWithChildren
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/mon-espace': typeof AuthenticatedMonEspaceRoute
   '/tournois/$id': typeof TournoisIdRoute
 }
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
     | '/classements'
     | '/galerie'
     | '/tournois'
+    | '/admin'
     | '/mon-espace'
     | '/tournois/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
     | '/classements'
     | '/galerie'
     | '/tournois'
+    | '/admin'
     | '/mon-espace'
     | '/tournois/$id'
   id:
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
     | '/classements'
     | '/galerie'
     | '/tournois'
+    | '/_authenticated/admin'
     | '/_authenticated/mon-espace'
     | '/tournois/$id'
   fileRoutesById: FileRoutesById
@@ -171,6 +183,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TournoisRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/mon-espace': {
       id: '/_authenticated/mon-espace'
       path: '/mon-espace'
@@ -189,10 +208,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedMonEspaceRoute: typeof AuthenticatedMonEspaceRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedMonEspaceRoute: AuthenticatedMonEspaceRoute,
 }
 
