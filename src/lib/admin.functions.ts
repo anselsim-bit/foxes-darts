@@ -75,7 +75,7 @@ export const adminDeleteTournament = createServerFn({ method: "POST" })
 export const adminAddPhoto = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (input: { image_url: string; caption?: string; tournament_id?: string }) => input,
+    (input: { image_url: string; caption?: string | undefined; tournament_id?: string | undefined }) => input,
   )
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
