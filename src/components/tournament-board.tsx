@@ -309,7 +309,7 @@ function MatchRow({
             e.preventDefault();
             save();
           }}
-          className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-2"
+          className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-md border-t border-border/60 px-1.5 pt-2 pb-0.5"
         >
           <label className="flex items-center gap-2 text-xs text-foreground/70">
             <span className="leading-none">Reste au perdant</span>
