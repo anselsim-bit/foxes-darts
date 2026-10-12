@@ -10,6 +10,7 @@ import {
   confirmMemberIdentity,
   listTournamentsForGame,
 } from "@/lib/darts.functions";
+import { listPlayableMatches, reportMatch } from "@/lib/tournament.functions";
 
 export const Route = createFileRoute("/compteur")({
   head: () => ({
@@ -50,6 +51,15 @@ function CompteurPage() {
   const [confirming, setConfirming] = useState(false);
   const [gameKey, setGameKey] = useState(0);
   const [starter, setStarter] = useState<number | null>(null);
+  const [matches, setMatches] = useState<{ id: string; label: string; teamA: string; teamB: string }[]>([]);
+  const [match, setMatch] = useState<{ id: string; teamA: string; teamB: string } | null>(null);
+
+  useEffect(() => {
+    setMatches([]);
+    setMatch(null);
+    if (!tournamentId) return;
+    listPlayableMatches({ data: { tournamentId } }).then(setMatches).catch(() => setMatches([]));
+  }, [tournamentId, playing]);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -144,6 +154,7 @@ function CompteurPage() {
         doubleOut={doubleOut}
         canSave={!!userId}
         tournamentId={tournamentId || null}
+        match={match}
         onExit={() => setPlaying(false)}
         onRestart={() => {
           setPlayers((prev) => [...prev].reverse());
@@ -295,6 +306,26 @@ function CompteurPage() {
                 </option>
               ))}
             </select>
+            {matches.length > 0 && (
+              <select
+                value={match?.id ?? ""}
+                onChange={(e) => {
+                  const m = matches.find((x) => x.id === e.target.value) ?? null;
+                  setMatch(m);
+                  if (m) {
+                    setPlayers([{ name: m.teamA, userId: null }, { name: m.teamB, userId: null }]);
+                    setStarter(null);
+                  }
+                }}
+                className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                aria-label="Match du tournoi"
+              >
+                <option value="">Mode tournoi : choisir un match (facultatif)</option>
+                {matches.map((m) => (
+                  <option key={m.id} value={m.id}>{m.label}</option>
+                ))}
+              </select>
+            )}
           </div>
         )}
 
@@ -352,9 +383,11 @@ function Game({
   doubleOut,
   canSave,
   tournamentId,
+  match,
   onExit,
   onRestart,
 }: {
+  match: { id: string; teamA: string; teamB: string } | null;
   players: Player[];
   start: number;
   doubleOut: boolean;
@@ -368,6 +401,18 @@ function Game({
   const [mult, setMult] = useState<1 | 2 | 3>(1);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [reported, setReported] = useState(false);
+  const report = async () => {
+    if (winner === null || !match) return;
+    const aWon = players[winner]!.name === match.teamA;
+    try {
+      await reportMatch({ data: { matchId: match.id, scoreA: aWon ? 1 : 0, scoreB: aWon ? 0 : 1 } });
+      setReported(true);
+      toast.success("Résultat envoyé au tableau du tournoi.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur");
+    }
+  };
 
   const scores = useMemo(() => {
     const s = players.map(() => start);
@@ -500,6 +545,11 @@ function Game({
               </p>
             ))}
           <div className="mt-4 flex flex-wrap justify-center gap-2">
+            {match && canSave && (
+              <button onClick={report} disabled={reported} className={btn}>
+                {reported ? "Tableau mis à jour ✓" : "Envoyer le résultat au tableau du tournoi"}
+              </button>
+            )}
             <button onClick={onRestart} className={btn}>
               <RotateCcw className="mr-1 inline h-4 w-4" /> Recommencer la partie
             </button>
