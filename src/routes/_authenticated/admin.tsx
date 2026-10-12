@@ -125,6 +125,8 @@ function TournamentsTab() {
     event_date: "",
     start_time: "",
     end_time: "",
+    format: "solo" as "solo" | "equipe",
+    max_participants: "",
     venue: DEFAULT_VENUE.venue,
     street: DEFAULT_VENUE.street,
     postal_code: DEFAULT_VENUE.postal_code,
@@ -162,6 +164,8 @@ function TournamentsTab() {
           event_date: form.event_date,
           start_time: form.start_time || undefined,
           end_time: form.end_time || undefined,
+          format: form.format,
+          max_participants: form.max_participants ? Math.max(1, parseInt(form.max_participants, 10)) : undefined,
           location: location || undefined,
           description: form.description,
           helloasso_url: form.helloasso_url,
@@ -229,6 +233,32 @@ function TournamentsTab() {
               className={inputCls}
               value={form.end_time}
               onChange={(e) => setForm({ ...form, end_time: e.target.value })}
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="mb-1 block text-sm font-medium">Format</label>
+            <select
+              className={inputCls}
+              value={form.format}
+              onChange={(e) => setForm({ ...form, format: e.target.value as "solo" | "equipe" })}
+            >
+              <option value="solo">Solo</option>
+              <option value="equipe">En équipe</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">
+              {form.format === "equipe" ? "Nombre max d'équipes" : "Nombre max de participants"}
+            </label>
+            <input
+              type="number"
+              min={1}
+              className={inputCls}
+              placeholder="Illimité"
+              value={form.max_participants}
+              onChange={(e) => setForm({ ...form, max_participants: e.target.value })}
             />
           </div>
         </div>
