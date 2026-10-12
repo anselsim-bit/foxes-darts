@@ -19,7 +19,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedMonEspaceRouteImport } from './routes/_authenticated/mon-espace'
 import { Route as TournoisIndexRouteImport } from './routes/tournois.index'
 import { Route as TournoisIdRouteImport } from './routes/tournois.$id'
-import { Route as TournoisIdJouerRouteImport } from './routes/tournois.$id.jouer'
+import { Route as TournoisIdJouerRouteImport } from './routes/tournois_.$id.jouer'
 import { Route as ApiPublicHooksHelloassoSyncRouteImport } from './routes/api/public/hooks/helloasso-sync'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
@@ -75,9 +75,9 @@ const TournoisIdRoute = TournoisIdRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const TournoisIdJouerRoute = TournoisIdJouerRouteImport.update({
-  id: '/jouer',
-  path: '/jouer',
-  getParentRoute: () => TournoisIdRoute,
+  id: '/tournois_/$id/jouer',
+  path: '/tournois/$id/jouer',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicHooksHelloassoSyncRoute =
   ApiPublicHooksHelloassoSyncRouteImport.update({
@@ -110,7 +110,7 @@ export interface FileRoutesByFullPath {
   '/galerie': typeof GalerieRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/mon-espace': typeof AuthenticatedMonEspaceRoute
-  '/tournois/$id': typeof TournoisIdRouteWithChildren
+  '/tournois/$id': typeof TournoisIdRoute
   '/tournois/': typeof TournoisIndexRoute
   '/tournois/$id/jouer': typeof TournoisIdJouerRoute
   '/api/public/hooks/helloasso-sync': typeof ApiPublicHooksHelloassoSyncRoute
@@ -126,7 +126,7 @@ export interface FileRoutesByTo {
   '/galerie': typeof GalerieRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/mon-espace': typeof AuthenticatedMonEspaceRoute
-  '/tournois/$id': typeof TournoisIdRouteWithChildren
+  '/tournois/$id': typeof TournoisIdRoute
   '/tournois': typeof TournoisIndexRoute
   '/tournois/$id/jouer': typeof TournoisIdJouerRoute
   '/api/public/hooks/helloasso-sync': typeof ApiPublicHooksHelloassoSyncRoute
@@ -144,9 +144,9 @@ export interface FileRoutesById {
   '/galerie': typeof GalerieRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/mon-espace': typeof AuthenticatedMonEspaceRoute
-  '/tournois/$id': typeof TournoisIdRouteWithChildren
+  '/tournois/$id': typeof TournoisIdRoute
   '/tournois/': typeof TournoisIndexRoute
-  '/tournois/$id/jouer': typeof TournoisIdJouerRoute
+  '/tournois_/$id/jouer': typeof TournoisIdJouerRoute
   '/api/public/hooks/helloasso-sync': typeof ApiPublicHooksHelloassoSyncRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -197,7 +197,7 @@ export interface FileRouteTypes {
     | '/_authenticated/mon-espace'
     | '/tournois/$id'
     | '/tournois/'
-    | '/tournois/$id/jouer'
+    | '/tournois_/$id/jouer'
     | '/api/public/hooks/helloasso-sync'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -211,8 +211,9 @@ export interface RootRouteChildren {
   ClassementsRoute: typeof ClassementsRoute
   CompteurRoute: typeof CompteurRoute
   GalerieRoute: typeof GalerieRoute
-  TournoisIdRoute: typeof TournoisIdRouteWithChildren
+  TournoisIdRoute: typeof TournoisIdRoute
   TournoisIndexRoute: typeof TournoisIndexRoute
+  TournoisIdJouerRoute: typeof TournoisIdJouerRoute
   ApiPublicHooksHelloassoSyncRoute: typeof ApiPublicHooksHelloassoSyncRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -291,12 +292,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TournoisIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tournois/$id/jouer': {
-      id: '/tournois/$id/jouer'
-      path: '/jouer'
+    '/tournois_/$id/jouer': {
+      id: '/tournois_/$id/jouer'
+      path: '/tournois/$id/jouer'
       fullPath: '/tournois/$id/jouer'
       preLoaderRoute: typeof TournoisIdJouerRouteImport
-      parentRoute: typeof TournoisIdRoute
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/helloasso-sync': {
       id: '/api/public/hooks/helloasso-sync'
@@ -342,18 +343,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
-interface TournoisIdRouteChildren {
-  TournoisIdJouerRoute: typeof TournoisIdJouerRoute
-}
-
-const TournoisIdRouteChildren: TournoisIdRouteChildren = {
-  TournoisIdJouerRoute: TournoisIdJouerRoute,
-}
-
-const TournoisIdRouteWithChildren = TournoisIdRoute._addFileChildren(
-  TournoisIdRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -361,8 +350,9 @@ const rootRouteChildren: RootRouteChildren = {
   ClassementsRoute: ClassementsRoute,
   CompteurRoute: CompteurRoute,
   GalerieRoute: GalerieRoute,
-  TournoisIdRoute: TournoisIdRouteWithChildren,
+  TournoisIdRoute: TournoisIdRoute,
   TournoisIndexRoute: TournoisIndexRoute,
+  TournoisIdJouerRoute: TournoisIdJouerRoute,
   ApiPublicHooksHelloassoSyncRoute: ApiPublicHooksHelloassoSyncRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
