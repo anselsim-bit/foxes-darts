@@ -43,6 +43,13 @@ const TABS = [
 
 type TabKey = (typeof TABS)[number]["key"];
 
+const DEFAULT_VENUE = {
+  venue: "Salle des sports Huchin",
+  street: "5 Place Charles de Gaulle",
+  postal_code: "62360",
+  city: "Saint-Léonard",
+};
+
 const inputCls =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary";
 const btnPrimary =
@@ -113,21 +120,30 @@ function TournamentsTab() {
     queryKey: ["tournaments"],
     queryFn: () => listTournaments(),
   });
-  const [form, setForm] = useState({
+  const emptyForm = {
     title: "",
     event_date: "",
-    location: "",
+    start_time: "",
+    end_time: "",
+    venue: DEFAULT_VENUE.venue,
+    street: DEFAULT_VENUE.street,
+    postal_code: DEFAULT_VENUE.postal_code,
+    city: DEFAULT_VENUE.city,
     description: "",
     helloasso_url: "",
-  });
+  };
+  const [form, setForm] = useState(emptyForm);
   const [imagePath, setImagePath] = useState("");
   const [busy, setBusy] = useState(false);
 
   const uploadImage = async (file: File) => {
-    const path = `tournaments/${crypto.randomUUID()}-${file.name}`;
-    const { error } = await supabase.storage.from("tournament-photos").upload(path, file);
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const path = `tournaments/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage
+      .from("tournament-photos")
+      .upload(path, file, file.type ? { contentType: file.type } : {});
     if (error) {
-      toast.error("Échec de l'envoi de l'image.");
+      toast.error(`Échec de l'envoi de l'image : ${error.message}`);
       return;
     }
     setImagePath(path);
@@ -138,9 +154,22 @@ function TournamentsTab() {
     e.preventDefault();
     setBusy(true);
     try {
-      await adminUpsertTournament({ data: { ...form, image_url: imagePath || undefined } });
+      const cityLine = [form.postal_code, form.city].map((v) => v.trim()).filter(Boolean).join(" ");
+      const location = [form.venue, form.street, cityLine].map((v) => v.trim()).filter(Boolean).join(", ");
+      await adminUpsertTournament({
+        data: {
+          title: form.title,
+          event_date: form.event_date,
+          start_time: form.start_time || undefined,
+          end_time: form.end_time || undefined,
+          location: location || undefined,
+          description: form.description,
+          helloasso_url: form.helloasso_url,
+          image_url: imagePath || undefined,
+        },
+      });
       toast.success("Tournoi enregistré.");
-      setForm({ title: "", event_date: "", location: "", description: "", helloasso_url: "" });
+      setForm(emptyForm);
       setImagePath("");
       queryClient.invalidateQueries({ queryKey: ["tournaments"] });
       queryClient.invalidateQueries({ queryKey: ["home"] });
@@ -173,7 +202,7 @@ function TournamentsTab() {
             required
           />
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <div>
             <label className="mb-1 block text-sm font-medium">Date</label>
             <input
@@ -185,11 +214,59 @@ function TournamentsTab() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium">Lieu</label>
+            <label className="mb-1 block text-sm font-medium">Heure de début</label>
             <input
+              type="time"
               className={inputCls}
-              value={form.location}
-              onChange={(e) => setForm({ ...form, location: e.target.value })}
+              value={form.start_time}
+              onChange={(e) => setForm({ ...form, start_time: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">Heure de fin</label>
+            <input
+              type="time"
+              className={inputCls}
+              value={form.end_time}
+              onChange={(e) => setForm({ ...form, end_time: e.target.value })}
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="mb-1 block text-sm font-medium">Nom du lieu</label>
+            <input
+              type="text"
+              className={inputCls}
+              value={form.venue}
+              onChange={(e) => setForm({ ...form, venue: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">Rue</label>
+            <input
+              type="text"
+              className={inputCls}
+              value={form.street}
+              onChange={(e) => setForm({ ...form, street: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">Code postal</label>
+            <input
+              type="text"
+              className={inputCls}
+              value={form.postal_code}
+              onChange={(e) => setForm({ ...form, postal_code: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">Ville</label>
+            <input
+              type="text"
+              className={inputCls}
+              value={form.city}
+              onChange={(e) => setForm({ ...form, city: e.target.value })}
             />
           </div>
         </div>
@@ -240,7 +317,11 @@ function TournamentsTab() {
             >
               <div>
                 <p className="font-medium">{t.title}</p>
-                <p className="text-xs text-muted-foreground">{t.event_date}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t.event_date}
+                  {t.start_time ? ` · ${t.start_time.slice(0, 5)}` : ""}
+                  {t.end_time ? `–${t.end_time.slice(0, 5)}` : ""}
+                </p>
               </div>
               <button onClick={() => remove(t.id)} className={btnDanger}>
                 <Trash2 className="h-3.5 w-3.5" /> Supprimer
@@ -269,7 +350,7 @@ function PhotosTab() {
   const upload = async (file: File) => {
     setBusy(true);
     try {
-      const path = `photos/${crypto.randomUUID()}-${file.name}`;
+      const path = `photos/${crypto.randomUUID()}.${(file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "")}`;
       const { error } = await supabase.storage.from("tournament-photos").upload(path, file);
       if (error) throw error;
       await adminAddPhoto({
@@ -479,7 +560,7 @@ function HighlightsTab() {
   const [mediaPath, setMediaPath] = useState("");
 
   const uploadMedia = async (file: File) => {
-    const path = `highlights/${crypto.randomUUID()}-${file.name}`;
+    const path = `highlights/${crypto.randomUUID()}.${(file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "")}`;
     const { error } = await supabase.storage.from("tournament-photos").upload(path, file);
     if (error) {
       toast.error("Échec de l'envoi.");

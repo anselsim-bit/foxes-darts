@@ -29,6 +29,13 @@
       "when": 1791812882013,
       "tag": "0003_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791813163224,
+      "tag": "0004_tournament_times",
+      "breakpoints": true
     }
   ]
 }

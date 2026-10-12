@@ -123,6 +123,7 @@ function TournamentDetail() {
             month: "long",
             year: "numeric",
           })}
+          {tournament.start_time ? ` · ${tournament.start_time.slice(0, 5).replace(":", "h")}${tournament.end_time ? ` – ${tournament.end_time.slice(0, 5).replace(":", "h")}` : ""}` : ""}
         </span>
         {tournament.location && (
           <span className="flex items-center gap-2">

@@ -88,6 +88,8 @@ function TournamentCard({
     id: string;
     title: string;
     event_date: string;
+    start_time?: string | null;
+    end_time?: string | null;
     location: string | null;
     description: string | null;
     helloasso_url: string | null;
@@ -119,6 +121,7 @@ function TournamentCard({
           <span className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-primary" />
             {formatDate(tournament.event_date)}
+            {tournament.start_time ? ` · ${tournament.start_time.slice(0, 5).replace(":", "h")}${tournament.end_time ? ` – ${tournament.end_time.slice(0, 5).replace(":", "h")}` : ""}` : ""}
           </span>
           {tournament.location && (
             <span className="flex items-center gap-2">
