@@ -33,13 +33,13 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
     (input: {
-      id?: string;
+      id?: string | undefined;
       title: string;
       event_date: string;
-      location?: string;
-      description?: string;
-      helloasso_url?: string;
-      image_url?: string;
+      location?: string | undefined;
+      description?: string | undefined;
+      helloasso_url?: string | undefined;
+      image_url?: string | undefined;
     }) => input,
   )
   .handler(async ({ data, context }) => {
@@ -104,7 +104,7 @@ export const adminUpsertStanding = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
     (input: {
-      id?: string;
+      id?: string | undefined;
       season: string;
       rank: number;
       player_name: string;
@@ -149,11 +149,11 @@ export const adminUpsertHighlight = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
     (input: {
-      id?: string;
+      id?: string | undefined;
       title: string;
-      description?: string;
-      media_url?: string;
-      event_date?: string;
+      description?: string | undefined;
+      media_url?: string | undefined;
+      event_date?: string | undefined;
     }) => input,
   )
   .handler(async ({ data, context }) => {
