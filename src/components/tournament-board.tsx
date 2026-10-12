@@ -241,37 +241,67 @@ function MatchRow({
   boxed?: boolean;
   onSave: (a: number, b: number) => void;
 }) {
-  const [a, setA] = useState(m.score_a?.toString() ?? "");
-  const [b, setB] = useState(m.score_b?.toString() ?? "");
   const editable = admin && !!m.team_a && !!m.team_b;
-  const side = (id: string | null, score: number | null, val: string, set: (v: string) => void) => (
-    <div className={`flex items-center justify-between gap-2 ${m.winner && m.winner === id ? "font-semibold text-primary" : ""}`}>
-      <span className="truncate">{name(id)}</span>
-      {editable ? (
-        <input
-          type="number"
-          min={0}
-          value={val}
-          onChange={(e) => set(e.target.value)}
-          className="w-12 rounded border border-input bg-background px-1 py-0.5 text-center text-sm"
-          aria-label={`Score ${name(id)}`}
-        />
-      ) : (
-        <span>{score ?? ""}</span>
-      )}
-    </div>
-  );
+  const [picked, setPicked] = useState<string | null>(m.winner);
+  const loserId = picked === m.team_a ? m.team_b : m.team_a;
+  const loserScore = picked === m.team_a ? m.score_b : m.score_a;
+  const [remaining, setRemaining] = useState(loserScore && loserScore > 0 ? loserScore.toString() : "");
+
+  const side = (id: string | null, score: number | null) => {
+    const isWinner = m.winner ? m.winner === id : picked === id;
+    return (
+      <div className={`flex items-center justify-between gap-2 ${isWinner ? "font-semibold text-primary" : ""}`}>
+        {editable ? (
+          <button
+            type="button"
+            onClick={() => setPicked(id)}
+            className={`truncate rounded px-1 py-0.5 text-left ${picked === id ? "text-primary underline decoration-2 underline-offset-2" : "hover:text-primary"}`}
+            title="Cliquer pour désigner le gagnant"
+          >
+            {name(id)}
+          </button>
+        ) : (
+          <span className="truncate">{name(id)}</span>
+        )}
+        <span>
+          {m.winner ? (m.winner === id ? "0" : (score ?? "")) : editable && picked === id ? "0" : ""}
+        </span>
+      </div>
+    );
+  };
+
+  const save = () => {
+    if (!picked) {
+      toast.error("Cliquez sur le nom du gagnant.");
+      return;
+    }
+    const rest = parseInt(remaining, 10);
+    if (isNaN(rest) || rest < 1) {
+      toast.error("Indiquez les points restants du perdant (au moins 1).");
+      return;
+    }
+    onSave(picked === m.team_a ? 0 : rest, picked === m.team_b ? 0 : rest);
+  };
+
   return (
     <div className={`text-sm ${boxed ? "rounded-lg border border-border bg-card p-3" : "border-t border-border pt-1.5"}`}>
-      {side(m.team_a, m.score_a, a, setA)}
-      {side(m.team_b, m.score_b, b, setB)}
+      {side(m.team_a, m.score_a)}
+      {side(m.team_b, m.score_b)}
       {editable && (
-        <button
-          onClick={() => onSave(parseInt(a, 10) || 0, parseInt(b, 10) || 0)}
-          className="mt-1 text-xs text-primary hover:underline"
-        >
-          {m.winner ? "Corriger" : "Valider"}
-        </button>
+        <div className="mt-1.5 flex items-center gap-2">
+          <input
+            type="number"
+            min={1}
+            value={remaining}
+            onChange={(e) => setRemaining(e.target.value)}
+            placeholder="Reste au perdant"
+            className="w-32 rounded border border-input bg-background px-2 py-1 text-xs"
+            aria-label="Points restants du perdant"
+          />
+          <button onClick={save} className="text-xs text-primary hover:underline">
+            {m.winner ? "Corriger" : "Valider"}
+          </button>
+        </div>
       )}
     </div>
   );
