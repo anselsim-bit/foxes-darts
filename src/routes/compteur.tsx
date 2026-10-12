@@ -462,11 +462,19 @@ function Game({
                 Pour enregistrer les statistiques, un membre doit être connecté sur cet appareil.
               </p>
             ))}
-          <div className="mt-4 flex justify-center gap-2">
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            <button onClick={onRestart} className={btn}>
+              <RotateCcw className="mr-1 inline h-4 w-4" /> Recommencer la partie
+            </button>
             <button onClick={undo} className={btn}>
               <Undo2 className="mr-1 inline h-4 w-4" /> Annuler la dernière fléchette
             </button>
           </div>
+          {players.length > 1 && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Au nouveau départ, l'ordre des joueurs est inversé : {players[1]!.name} commence.
+            </p>
+          )}
         </div>
       ) : (
         <div className="mt-8">
