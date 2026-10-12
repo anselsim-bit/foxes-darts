@@ -3,7 +3,12 @@ import { useEffect, useMemo, useState } from "react";
 import { Plus, Trash2, Undo2, Trophy, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { listMembersForGame, saveGameResult } from "@/lib/darts.functions";
+import {
+  listMembersForGame,
+  saveGameResult,
+  confirmMemberIdentity,
+  listTournamentsForGame,
+} from "@/lib/darts.functions";
 
 export const Route = createFileRoute("/compteur")({
   head: () => ({
@@ -22,7 +27,7 @@ export const Route = createFileRoute("/compteur")({
   component: CompteurPage,
 });
 
-type Player = { name: string; userId: string | null };
+type Player = { name: string; userId: string | null; token?: string | undefined };
 type Dart = { label: string; value: number; isDouble: boolean };
 type Turn = { player: number; darts: Dart[]; bust: boolean; total: number };
 
@@ -38,6 +43,10 @@ function CompteurPage() {
   const [start, setStart] = useState(501);
   const [doubleOut, setDoubleOut] = useState(true);
   const [playing, setPlaying] = useState(false);
+  const [tournaments, setTournaments] = useState<{ id: string; title: string; event_date: string }[]>([]);
+  const [tournamentId, setTournamentId] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -45,7 +54,9 @@ function CompteurPage() {
       setUserId(id);
       if (id) {
         try {
-          setMembers(await listMembersForGame());
+          const [m, t] = await Promise.all([listMembersForGame(), listTournamentsForGame()]);
+          setMembers(m);
+          setTournaments(t);
         } catch {
           /* liste indisponible */
         }
@@ -59,12 +70,26 @@ function CompteurPage() {
     setPlayers([...players, { name, userId: null }]);
     setGuestName("");
   };
-  const addMember = () => {
+  const addMember = async () => {
     const m = members.find((x) => x.id === memberId);
     if (!m || players.some((p) => p.userId === m.id)) return;
-    setPlayers([...players, { name: m.name, userId: m.id }]);
+    let token: string | undefined;
+    if (m.id !== userId) {
+      setConfirming(true);
+      try {
+        token = (await confirmMemberIdentity({ data: { memberId: m.id, password } })).token;
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Mot de passe incorrect");
+        return;
+      } finally {
+        setConfirming(false);
+      }
+    }
+    setPlayers([...players, { name: m.name, userId: m.id, token }]);
     setMemberId("");
+    setPassword("");
   };
+  const needsPassword = !!memberId && memberId !== userId;
 
   if (playing) {
     return (
@@ -72,7 +97,8 @@ function CompteurPage() {
         players={players}
         start={start}
         doubleOut={doubleOut}
-        canSave={!!userId && players.some((p) => p.userId === userId)}
+        canSave={!!userId}
+        tournamentId={tournamentId || null}
         onExit={() => setPlaying(false)}
       />
     );
@@ -160,17 +186,55 @@ function CompteurPage() {
                     </option>
                   ))}
               </select>
-              <button onClick={addMember} className="inline-flex items-center gap-1 rounded-md border border-border px-3 text-sm">
-                <Plus className="h-4 w-4" /> Membre
+              {needsPassword && (
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && addMember()}
+                  placeholder="Mot de passe du membre"
+                  autoComplete="off"
+                  className="w-48 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                />
+              )}
+              <button
+                onClick={addMember}
+                disabled={confirming || (needsPassword && !password)}
+                className="inline-flex items-center gap-1 rounded-md border border-border px-3 text-sm disabled:opacity-50"
+              >
+                <Plus className="h-4 w-4" /> {confirming ? "..." : "Membre"}
               </button>
             </div>
           ) : (
             <p className="mt-3 text-xs text-muted-foreground">
-              <Link to="/auth" className="text-primary underline">Connectez-vous</Link> pour ajouter des membres et
-              enregistrer les statistiques.
+              <Link to="/auth" className="text-primary underline">Connectez-vous</Link> pour ajouter des membres,
+              associer la partie à un tournoi et enregistrer les statistiques.
             </p>
           )}
         </div>
+
+        {userId && (
+          <p className="-mt-2 text-xs text-muted-foreground">
+            Chaque membre choisi (autre que vous) confirme son identité avec son mot de passe. Vous pouvez aussi jouer seul.
+          </p>
+        )}
+        {userId && tournaments.length > 0 && (
+          <div>
+            <p className="mb-2 text-sm font-medium">Associer à un tournoi (facultatif)</p>
+            <select
+              value={tournamentId}
+              onChange={(e) => setTournamentId(e.target.value)}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value="">Partie libre</option>
+              {tournaments.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.title} — {t.event_date}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <button
           disabled={players.length === 0}
@@ -189,12 +253,14 @@ function Game({
   start,
   doubleOut,
   canSave,
+  tournamentId,
   onExit,
 }: {
   players: Player[];
   start: number;
   doubleOut: boolean;
   canSave: boolean;
+  tournamentId: string | null;
   onExit: () => void;
 }) {
   const [turns, setTurns] = useState<Turn[]>([]);
@@ -257,7 +323,16 @@ function Game({
     try {
       await saveGameResult({
         data: {
-          players: players.map((p, i) => ({ userId: p.userId, won: i === winner, bestVisit: bestVisit(i) })),
+          tournamentId,
+          startScore: start,
+          doubleOut,
+          players: players.map((p, i) => ({
+            name: p.name,
+            userId: p.userId,
+            token: p.token ?? null,
+            won: i === winner,
+            bestVisit: bestVisit(i),
+          })),
         },
       });
       setSaved(true);
@@ -307,7 +382,8 @@ function Game({
       {winner !== null ? (
         <div className="mt-8 rounded-xl border border-primary bg-card p-6 text-center">
           <p className="font-display text-3xl">
-            <span className="text-gradient-ember">{players[winner]!.name}</span> gagne !
+            <span className="text-gradient-ember">{players[winner]!.name}</span>{" "}
+            {players.length === 1 ? "a terminé !" : "gagne !"}
           </p>
           {players.some((p) => p.userId) &&
             (canSave ? (
@@ -320,7 +396,7 @@ function Game({
               </button>
             ) : (
               <p className="mt-3 text-sm text-muted-foreground">
-                Pour enregistrer les statistiques, un membre participant doit être connecté.
+                Pour enregistrer les statistiques, un membre doit être connecté sur cet appareil.
               </p>
             ))}
           <div className="mt-4 flex justify-center gap-2">

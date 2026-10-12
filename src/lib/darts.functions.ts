@@ -143,13 +143,14 @@ export const saveGameResult = createServerFn({ method: "POST" })
       .from("player_stats")
       .select("user_id, matches_played, wins, losses, best_score")
       .in("user_id", ids);
+    const solo = data.players.length === 1; // solo practice: no win/loss counted
     const rows = members.map((p) => {
       const cur = existing?.find((e) => e.user_id === p.userId);
       return {
         user_id: p.userId as string,
         matches_played: (cur?.matches_played ?? 0) + 1,
-        wins: (cur?.wins ?? 0) + (p.won ? 1 : 0),
-        losses: (cur?.losses ?? 0) + (p.won ? 0 : 1),
+        wins: (cur?.wins ?? 0) + (!solo && p.won ? 1 : 0),
+        losses: (cur?.losses ?? 0) + (!solo && !p.won ? 1 : 0),
         best_score: Math.max(cur?.best_score ?? 0, p.bestVisit),
         updated_at: new Date().toISOString(),
       };
