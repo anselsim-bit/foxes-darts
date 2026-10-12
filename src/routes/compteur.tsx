@@ -10,7 +10,7 @@ import {
   confirmMemberIdentity,
   listTournamentsForGame,
 } from "@/lib/darts.functions";
-import { listPlayableMatches, reportMatch, validateTournamentCode } from "@/lib/tournament.functions";
+import { listPlayableMatches, reportMatch, setTeamNameWithCode, validateTournamentCode } from "@/lib/tournament.functions";
 
 export const Route = createFileRoute("/compteur")({
   head: () => ({
@@ -30,6 +30,55 @@ export const Route = createFileRoute("/compteur")({
 });
 
 type Player = { name: string; userId: string | null; token?: string | undefined };
+type PlayableMatch = {
+  id: string;
+  label: string;
+  teamA: string;
+  teamB: string;
+  teamAId: string;
+  teamBId: string;
+  canNameA: boolean;
+  canNameB: boolean;
+};
+
+function TeamNamer({ teamId, current, code, onDone }: { teamId: string; current: string; code: string; onDone: (name: string) => void }) {
+  const [value, setValue] = useState("");
+  const [busy, setBusy] = useState(false);
+  const submit = async () => {
+    const name = value.trim();
+    if (name.length < 2) return;
+    if (!window.confirm(`Nommer définitivement l'équipe de ${current} « ${name} » ?`)) return;
+    setBusy(true);
+    try {
+      const res = await setTeamNameWithCode({ data: { teamId, name, code } });
+      toast.success(`Équipe renommée « ${res.name} »`);
+      onDone(res.name);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="flex gap-2">
+      <input
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        maxLength={40}
+        placeholder={`Nom d'équipe pour ${current}`}
+        aria-label={`Nom d'équipe pour ${current}`}
+        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+      />
+      <button
+        onClick={submit}
+        disabled={busy || value.trim().length < 2}
+        className="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+      >
+        {busy ? "..." : "Valider"}
+      </button>
+    </div>
+  );
+}
 type Dart = { label: string; value: number; isDouble: boolean };
 type Turn = { player: number; darts: Dart[]; bust: boolean; total: number };
 
@@ -51,8 +100,8 @@ function CompteurPage() {
   const [confirming, setConfirming] = useState(false);
   const [gameKey, setGameKey] = useState(0);
   const [starter, setStarter] = useState<number | null>(null);
-  const [matches, setMatches] = useState<{ id: string; label: string; teamA: string; teamB: string }[]>([]);
-  const [match, setMatch] = useState<{ id: string; teamA: string; teamB: string } | null>(null);
+  const [matches, setMatches] = useState<PlayableMatch[]>([]);
+  const [match, setMatch] = useState<PlayableMatch | null>(null);
   const [codeInput, setCodeInput] = useState("");
   const [accessCode, setAccessCode] = useState<string | null>(null);
   const [codeMsg, setCodeMsg] = useState<string | null>(null);
@@ -361,9 +410,38 @@ function CompteurPage() {
             {match && (
               <div className="mt-2">
                 {accessCode ? (
-                  <p className="rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-sm">
-                    Code d'accès validé ✓ — vous pourrez envoyer le résultat au tableau.
-                  </p>
+                  <>
+                    <p className="rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-sm">
+                      Code d'accès validé ✓ — vous pourrez envoyer le résultat au tableau.
+                    </p>
+                    {(match.canNameA || match.canNameB) && (
+                      <div className="mt-3 space-y-2 rounded-md border border-border p-3">
+                        <p className="text-sm font-medium">Choisissez le nom de votre équipe</p>
+                        <p className="text-xs text-muted-foreground">
+                          Ce nom sera définitif pour toute la suite du tournoi.
+                        </p>
+                        {(["A", "B"] as const).map((side) =>
+                          (side === "A" ? match.canNameA : match.canNameB) ? (
+                            <TeamNamer
+                              key={side}
+                              teamId={side === "A" ? match.teamAId : match.teamBId}
+                              current={side === "A" ? match.teamA : match.teamB}
+                              code={accessCode}
+                              onDone={(name) => {
+                                const old = side === "A" ? match.teamA : match.teamB;
+                                const nm = side === "A"
+                                  ? { ...match, teamA: name, canNameA: false }
+                                  : { ...match, teamB: name, canNameB: false };
+                                setMatch(nm);
+                                setMatches((ms) => ms.map((x) => (x.id === nm.id ? { ...x, ...nm } : x)));
+                                setPlayers((ps) => ps.map((p) => (p.name === old && !p.userId ? { ...p, name } : p)));
+                              }}
+                            />
+                          ) : null,
+                        )}
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <div className="flex gap-2">
                     <input
