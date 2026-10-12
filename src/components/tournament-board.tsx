@@ -312,7 +312,7 @@ function MatchRow({
           className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-2"
         >
           <label className="flex items-center gap-2 text-xs text-foreground/70">
-            <span>Reste au perdant</span>
+            <span className="leading-none">Reste au perdant</span>
             <input
               type="text"
               inputMode="numeric"
@@ -320,7 +320,9 @@ function MatchRow({
               value={remaining}
               onChange={(e) => setRemaining(e.target.value.replace(/\D/g, "").slice(0, 3))}
               placeholder="—"
-              className="w-16 rounded-md border border-input bg-background px-2 py-1.5 text-center text-sm tabular-nums outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
+              className={`w-16 rounded-md border bg-background px-2 py-1.5 text-center text-sm tabular-nums outline-none transition-colors placeholder:text-muted-foreground focus:border-primary ${
+                picked && !remaining ? "border-primary/60" : "border-input"
+              }`}
               aria-label="Points restants du perdant"
             />
           </label>
