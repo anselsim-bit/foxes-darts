@@ -10,15 +10,21 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ClassementsRouteImport } from './routes/classements'
 import { Route as GalerieRouteImport } from './routes/galerie'
 import { Route as TournoisRouteImport } from './routes/tournois'
+import { Route as AuthenticatedMonEspaceRouteImport } from './routes/_authenticated/mon-espace'
 import { Route as TournoisIdRouteImport } from './routes/tournois.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -41,6 +47,11 @@ const TournoisRoute = TournoisRouteImport.update({
   path: '/tournois',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedMonEspaceRoute = AuthenticatedMonEspaceRouteImport.update({
+  id: '/mon-espace',
+  path: '/mon-espace',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const TournoisIdRoute = TournoisIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -53,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/classements': typeof ClassementsRoute
   '/galerie': typeof GalerieRoute
   '/tournois': typeof TournoisRouteWithChildren
+  '/mon-espace': typeof AuthenticatedMonEspaceRoute
   '/tournois/$id': typeof TournoisIdRoute
 }
 export interface FileRoutesByTo {
@@ -61,36 +73,54 @@ export interface FileRoutesByTo {
   '/classements': typeof ClassementsRoute
   '/galerie': typeof GalerieRoute
   '/tournois': typeof TournoisRouteWithChildren
+  '/mon-espace': typeof AuthenticatedMonEspaceRoute
   '/tournois/$id': typeof TournoisIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/classements': typeof ClassementsRoute
   '/galerie': typeof GalerieRoute
   '/tournois': typeof TournoisRouteWithChildren
+  '/_authenticated/mon-espace': typeof AuthenticatedMonEspaceRoute
   '/tournois/$id': typeof TournoisIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/auth' | '/classements' | '/galerie' | '/tournois' | '/tournois/$id'
-  fileRoutesByTo: FileRoutesByTo
-  to:
-    '/' | '/auth' | '/classements' | '/galerie' | '/tournois' | '/tournois/$id'
-  id:
-    | '__root__'
     | '/'
     | '/auth'
     | '/classements'
     | '/galerie'
     | '/tournois'
+    | '/mon-espace'
+    | '/tournois/$id'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/'
+    | '/auth'
+    | '/classements'
+    | '/galerie'
+    | '/tournois'
+    | '/mon-espace'
+    | '/tournois/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/classements'
+    | '/galerie'
+    | '/tournois'
+    | '/_authenticated/mon-espace'
     | '/tournois/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ClassementsRoute: typeof ClassementsRoute
   GalerieRoute: typeof GalerieRoute
@@ -104,6 +134,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -134,6 +171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TournoisRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/mon-espace': {
+      id: '/_authenticated/mon-espace'
+      path: '/mon-espace'
+      fullPath: '/mon-espace'
+      preLoaderRoute: typeof AuthenticatedMonEspaceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/tournois/$id': {
       id: '/tournois/$id'
       path: '/$id'
@@ -143,6 +187,17 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedMonEspaceRoute: typeof AuthenticatedMonEspaceRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedMonEspaceRoute: AuthenticatedMonEspaceRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 interface TournoisRouteChildren {
   TournoisIdRoute: typeof TournoisIdRoute
@@ -158,6 +213,7 @@ const TournoisRouteWithChildren = TournoisRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ClassementsRoute: ClassementsRoute,
   GalerieRoute: GalerieRoute,
