@@ -11,6 +11,7 @@ const NAV = [
   { to: "/tournois", label: "Tournois" },
   { to: "/galerie", label: "Galerie" },
   { to: "/classements", label: "Classements" },
+  { to: "/compteur", label: "Compteur" },
 ] as const;
 
 export function SiteHeader() {

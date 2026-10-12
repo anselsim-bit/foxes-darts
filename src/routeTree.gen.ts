@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ClassementsRouteImport } from './routes/classements'
+import { Route as CompteurRouteImport } from './routes/compteur'
 import { Route as GalerieRouteImport } from './routes/galerie'
 import { Route as TournoisRouteImport } from './routes/tournois'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -36,6 +37,11 @@ const AuthRoute = AuthRouteImport.update({
 const ClassementsRoute = ClassementsRouteImport.update({
   id: '/classements',
   path: '/classements',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompteurRoute = CompteurRouteImport.update({
+  id: '/compteur',
+  path: '/compteur',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GalerieRoute = GalerieRouteImport.update({
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/classements': typeof ClassementsRoute
+  '/compteur': typeof CompteurRoute
   '/galerie': typeof GalerieRoute
   '/tournois': typeof TournoisRouteWithChildren
   '/admin': typeof AuthenticatedAdminRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/classements': typeof ClassementsRoute
+  '/compteur': typeof CompteurRoute
   '/galerie': typeof GalerieRoute
   '/tournois': typeof TournoisRouteWithChildren
   '/admin': typeof AuthenticatedAdminRoute
@@ -90,6 +98,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/classements': typeof ClassementsRoute
+  '/compteur': typeof CompteurRoute
   '/galerie': typeof GalerieRoute
   '/tournois': typeof TournoisRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
@@ -102,6 +111,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/classements'
+    | '/compteur'
     | '/galerie'
     | '/tournois'
     | '/admin'
@@ -112,6 +122,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/classements'
+    | '/compteur'
     | '/galerie'
     | '/tournois'
     | '/admin'
@@ -123,6 +134,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/classements'
+    | '/compteur'
     | '/galerie'
     | '/tournois'
     | '/_authenticated/admin'
@@ -135,6 +147,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ClassementsRoute: typeof ClassementsRoute
+  CompteurRoute: typeof CompteurRoute
   GalerieRoute: typeof GalerieRoute
   TournoisRoute: typeof TournoisRouteWithChildren
 }
@@ -167,6 +180,13 @@ declare module '@tanstack/react-router' {
       path: '/classements'
       fullPath: '/classements'
       preLoaderRoute: typeof ClassementsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/compteur': {
+      id: '/compteur'
+      path: '/compteur'
+      fullPath: '/compteur'
+      preLoaderRoute: typeof CompteurRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/galerie': {
@@ -237,6 +257,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ClassementsRoute: ClassementsRoute,
+  CompteurRoute: CompteurRoute,
   GalerieRoute: GalerieRoute,
   TournoisRoute: TournoisRouteWithChildren,
 }
