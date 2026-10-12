@@ -50,6 +50,13 @@
       "when": 1791813942778,
       "tag": "0006_games",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791816188855,
+      "tag": "0007_tournament_format",
+      "breakpoints": true
     }
   ]
 }

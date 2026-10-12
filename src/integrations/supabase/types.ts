@@ -257,10 +257,12 @@ export type Database = {
           description: string | null
           end_time: string | null
           event_date: string
+          format: string
           helloasso_url: string | null
           id: string
           image_url: string | null
           location: string | null
+          max_participants: number | null
           start_time: string | null
           title: string
         }
@@ -269,10 +271,12 @@ export type Database = {
           description?: string | null
           end_time?: string | null
           event_date: string
+          format?: string
           helloasso_url?: string | null
           id?: string
           image_url?: string | null
           location?: string | null
+          max_participants?: number | null
           start_time?: string | null
           title: string
         }
@@ -281,10 +285,12 @@ export type Database = {
           description?: string | null
           end_time?: string | null
           event_date?: string
+          format?: string
           helloasso_url?: string | null
           id?: string
           image_url?: string | null
           location?: string | null
+          max_participants?: number | null
           start_time?: string | null
           title?: string
         }

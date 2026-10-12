@@ -125,6 +125,11 @@ function TournamentDetail() {
           })}
           {tournament.start_time ? ` · ${tournament.start_time.slice(0, 5).replace(":", "h")}${tournament.end_time ? ` – ${tournament.end_time.slice(0, 5).replace(":", "h")}` : ""}` : ""}
         </span>
+        <span className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-primary" />
+          {tournament.format === "equipe" ? "En équipe" : "Solo"}
+          {tournament.max_participants ? ` · ${tournament.max_participants} ${tournament.format === "equipe" ? "équipes" : "participants"} max` : ""}
+        </span>
         {tournament.location && (
           <span className="flex items-center gap-2">
             <MapPin className="h-4 w-4 text-primary" /> {tournament.location}

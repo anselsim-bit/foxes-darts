@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { CalendarDays, MapPin, Ticket } from "lucide-react";
+import { CalendarDays, MapPin, Users, Ticket } from "lucide-react";
 import { listTournaments } from "@/lib/public.functions";
 
 const tournamentsQuery = queryOptions({
@@ -90,6 +90,8 @@ function TournamentCard({
     event_date: string;
     start_time?: string | null;
     end_time?: string | null;
+    format?: string | null;
+    max_participants?: number | null;
     location: string | null;
     description: string | null;
     helloasso_url: string | null;
@@ -122,6 +124,11 @@ function TournamentCard({
             <CalendarDays className="h-4 w-4 text-primary" />
             {formatDate(tournament.event_date)}
             {tournament.start_time ? ` · ${tournament.start_time.slice(0, 5).replace(":", "h")}${tournament.end_time ? ` – ${tournament.end_time.slice(0, 5).replace(":", "h")}` : ""}` : ""}
+          </span>
+          <span className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-primary" />
+            {tournament.format === "equipe" ? "En équipe" : "Solo"}
+            {tournament.max_participants ? ` · ${tournament.max_participants} ${tournament.format === "equipe" ? "équipes" : "participants"} max` : ""}
           </span>
           {tournament.location && (
             <span className="flex items-center gap-2">
