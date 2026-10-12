@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      games: {
+        Row: {
+          created_at: string
+          double_out: boolean
+          id: string
+          players: Json
+          recorded_by: string
+          start_score: number
+          tournament_id: string | null
+          winner_name: string
+        }
+        Insert: {
+          created_at?: string
+          double_out?: boolean
+          id?: string
+          players: Json
+          recorded_by: string
+          start_score: number
+          tournament_id?: string | null
+          winner_name: string
+        }
+        Update: {
+          created_at?: string
+          double_out?: boolean
+          id?: string
+          players?: Json
+          recorded_by?: string
+          start_score?: number
+          tournament_id?: string | null
+          winner_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "games_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       highlights: {
         Row: {
           created_at: string
