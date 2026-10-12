@@ -208,31 +208,37 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          end_time: string | null
           event_date: string
           helloasso_url: string | null
           id: string
           image_url: string | null
           location: string | null
+          start_time: string | null
           title: string
         }
         Insert: {
           created_at?: string
           description?: string | null
+          end_time?: string | null
           event_date: string
           helloasso_url?: string | null
           id?: string
           image_url?: string | null
           location?: string | null
+          start_time?: string | null
           title: string
         }
         Update: {
           created_at?: string
           description?: string | null
+          end_time?: string | null
           event_date?: string
           helloasso_url?: string | null
           id?: string
           image_url?: string | null
           location?: string | null
+          start_time?: string | null
           title?: string
         }
         Relationships: []

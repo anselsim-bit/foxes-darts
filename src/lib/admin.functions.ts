@@ -36,6 +36,8 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
       id?: string | undefined;
       title: string;
       event_date: string;
+      start_time?: string | undefined;
+      end_time?: string | undefined;
       location?: string | undefined;
       description?: string | undefined;
       helloasso_url?: string | undefined;
@@ -47,6 +49,8 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
     const row = {
       title: data.title,
       event_date: data.event_date,
+      start_time: data.start_time || null,
+      end_time: data.end_time || null,
       location: data.location || null,
       description: data.description || null,
       helloasso_url: data.helloasso_url || null,
