@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
@@ -13,6 +12,7 @@ import {
   shuffle,
   type MatchDraft,
 } from "@/lib/bracket";
+import { publicClient } from "@/lib/public.functions";
 
 type Ctx = { supabase: SupabaseClient<Database>; userId: string };
 
@@ -22,12 +22,6 @@ async function isAdmin(ctx: Ctx) {
 }
 async function requireAdmin(ctx: Ctx) {
   if (!(await isAdmin(ctx))) throw new Error("Accès réservé aux administrateurs.");
-}
-
-function publicClient() {
-  return createClient<Database>(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
 }
 
 export const getTournamentBoard = createServerFn({ method: "GET" })

@@ -40,6 +40,8 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
       end_time?: string | undefined;
       format?: "solo" | "equipe" | undefined;
       max_participants?: number | undefined;
+      team_size?: number | undefined;
+      pool_count?: number | undefined;
       location?: string | undefined;
       description?: string | undefined;
       helloasso_url?: string | undefined;
@@ -56,6 +58,8 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
       format: data.format === "equipe" ? "equipe" : "solo",
       max_participants:
         data.max_participants && data.max_participants > 0 ? Math.floor(data.max_participants) : null,
+      team_size: Math.max(1, Math.floor(data.team_size ?? 1)),
+      pool_count: Math.max(0, Math.floor(data.pool_count ?? 0)),
       location: data.location || null,
       description: data.description || null,
       helloasso_url: data.helloasso_url || null,

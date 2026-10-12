@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
-function publicClient() {
+export function publicClient() {
   const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
   return createClient<Database>(process.env["SUPABASE_URL"]!, key, {
     auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
@@ -49,7 +49,7 @@ export const listTournaments = createServerFn({ method: "GET" }).handler(async (
   const supabase = publicClient();
   const { data, error } = await supabase
     .from("tournaments")
-    .select("id, title, event_date, start_time, end_time, format, max_participants, location, description, helloasso_url, image_url")
+    .select("id, title, event_date, start_time, end_time, format, max_participants, team_size, pool_count, status, location, description, helloasso_url, image_url")
     .order("event_date", { ascending: false });
   if (error) throw new Error(error.message);
   const signed = await signImageUrls(
@@ -111,13 +111,13 @@ export const getTournament = createServerFn({ method: "GET" })
     const supabase = publicClient();
     const { data: t, error } = await supabase
       .from("tournaments")
-      .select("id, title, event_date, start_time, end_time, format, max_participants, location, description, helloasso_url, image_url")
+      .select("id, title, event_date, start_time, end_time, format, max_participants, team_size, pool_count, status, location, description, helloasso_url, image_url")
       .eq("id", data.id)
       .single();
     if (error) throw new Error(error.message);
     const signed = await signImageUrls(supabase, t.image_url ? [t.image_url] : []);
     const { count } = await supabase
-      .from("registrations")
+      .from("tournament_teams")
       .select("id", { count: "exact", head: true })
       .eq("tournament_id", t.id);
     return {
