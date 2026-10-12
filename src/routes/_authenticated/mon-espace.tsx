@@ -8,6 +8,7 @@ import {
   getMyStats,
   getMyProfile,
   updateMyProfile,
+  setTournamentAnnouncements,
   cancelRegistration,
 } from "@/lib/player.functions";
 
@@ -40,6 +41,18 @@ function MonEspace() {
   const queryClient = useQueryClient();
   const [displayName, setDisplayName] = useState(data.profile.display_name);
   const [saving, setSaving] = useState(false);
+  const [announcements, setAnnouncements] = useState(data.profile.tournament_announcements);
+
+  const toggleAnnouncements = async (enabled: boolean) => {
+    setAnnouncements(enabled);
+    try {
+      await setTournamentAnnouncements({ data: { enabled } });
+      toast.success(enabled ? "Annonces de tournois activées." : "Annonces de tournois désactivées.");
+    } catch (e) {
+      setAnnouncements(!enabled);
+      toast.error(e instanceof Error ? e.message : "Erreur");
+    }
+  };
   const { stats } = data;
   const winRate =
     stats.matches_played > 0 ? Math.round((stats.wins / stats.matches_played) * 100) : 0;
@@ -96,6 +109,20 @@ function MonEspace() {
             {saving ? "..." : "Enregistrer"}
           </button>
         </div>
+        <label className="mt-5 flex cursor-pointer items-start gap-3 text-sm">
+          <input
+            type="checkbox"
+            checked={announcements}
+            onChange={(e) => toggleAnnouncements(e.target.checked)}
+            className="mt-0.5 h-4 w-4 accent-primary"
+          />
+          <span>
+            M'avertir des nouveaux tournois
+            <span className="block text-xs text-muted-foreground">
+              Une pastille apparaît sur l'onglet « Tournois » quand un tournoi est publié.
+            </span>
+          </span>
+        </label>
       </section>
 
       {/* Statistiques */}
