@@ -607,7 +607,7 @@ function Game({
               </p>
             ))}
           <div className="mt-4 flex flex-wrap justify-center gap-2">
-            {match && canSave && (
+            {match && canSave && accessCode && (
               <button onClick={report} disabled={reported} className={btn}>
                 {reported ? "Tableau mis à jour ✓" : "Envoyer le résultat au tableau du tournoi"}
               </button>
