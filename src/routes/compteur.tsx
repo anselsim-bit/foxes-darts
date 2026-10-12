@@ -357,6 +357,34 @@ function CompteurPage() {
                 ))}
               </select>
             )}
+            {match && (
+              <div className="mt-2">
+                {accessCode ? (
+                  <p className="rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-sm">
+                    Code d'accès validé ✓ — vous pourrez envoyer le résultat au tableau.
+                  </p>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      value={codeInput}
+                      onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
+                      placeholder="Code d'accès reçu par email"
+                      maxLength={6}
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm uppercase tracking-widest"
+                      aria-label="Code d'accès du tournoi"
+                    />
+                    <button
+                      onClick={checkCode}
+                      disabled={checkingCode || codeInput.trim().length < 6}
+                      className="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+                    >
+                      {checkingCode ? "..." : "Valider"}
+                    </button>
+                  </div>
+                )}
+                {codeMsg && <p className="mt-1 text-sm text-destructive">{codeMsg}</p>}
+              </div>
+            )}
           </div>
         )}
 
