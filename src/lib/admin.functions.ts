@@ -4,9 +4,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 type AdminContext = {
   supabase: {
     rpc: (
-      fn: string,
-      args: Record<string, unknown>,
-    ) => Promise<{ data: unknown; error: { message: string } | null }>;
+      fn: "has_role",
+      args: { _user_id: string; _role: "admin" | "user" },
+    ) => Promise<{ data: boolean | null; error: { message: string } | null }>;
   };
   userId: string;
 };
