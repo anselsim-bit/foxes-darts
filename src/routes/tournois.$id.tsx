@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { CalendarDays, MapPin, Users, Ticket, Users } from "lucide-react";
+import { CalendarDays, MapPin, Ticket, Users } from "lucide-react";
 import { toast } from "sonner";
 import { getTournament } from "@/lib/public.functions";
 import {
