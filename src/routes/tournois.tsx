@@ -106,7 +106,15 @@ function TournamentCard({
         />
       )}
       <div className="p-5">
-        <h3 className="text-lg">{tournament.title}</h3>
+        <h3 className="text-lg">
+          <Link
+            to="/tournois/$id"
+            params={{ id: tournament.id }}
+            className="transition-colors hover:text-primary"
+          >
+            {tournament.title}
+          </Link>
+        </h3>
         <div className="mt-3 flex flex-col gap-1.5 text-sm text-muted-foreground">
           <span className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-primary" />
@@ -123,24 +131,25 @@ function TournamentCard({
           <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">{tournament.description}</p>
         )}
         <div className="mt-5 flex flex-wrap gap-2">
-          {!past && (
-            <Link
-              to="/tournois/$id"
-              params={{ id: tournament.id }}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              S'inscrire
-            </Link>
-          )}
-          {tournament.helloasso_url && (
+          {tournament.helloasso_url ? (
             <a
               href={tournament.helloasso_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary"
+              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
             >
               <Ticket className="h-4 w-4" /> Billetterie HelloAsso
             </a>
+          ) : (
+            !past && (
+              <Link
+                to="/tournois/$id"
+                params={{ id: tournament.id }}
+                className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                S'inscrire
+              </Link>
+            )
           )}
         </div>
       </div>
