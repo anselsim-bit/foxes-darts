@@ -1,5 +1,5 @@
 import React from 'react'
-import { Body, Container, Head, Heading, Html, Preview, Section, Text } from '@react-email/components'
+import { Body, Button, Container, Head, Heading, Html, Preview, Section, Text } from '@react-email/components'
 import type { TemplateEntry } from './registry'
 
 interface Props {
@@ -7,9 +7,10 @@ interface Props {
   tournamentTitle?: string
   tournamentDate?: string
   code?: string
+  playUrl?: string
 }
 
-const Email = ({ participantName, tournamentTitle, tournamentDate, code }: Props) => (
+const Email = ({ participantName, tournamentTitle, tournamentDate, code, playUrl }: Props) => (
   <Html lang="fr" dir="ltr">
     <Head />
     <Preview>Votre code d'accès pour le tournoi {tournamentTitle ?? 'Foxes Darts'}</Preview>
@@ -26,11 +27,17 @@ const Email = ({ participantName, tournamentTitle, tournamentDate, code }: Props
           <Text style={codeText}>{code ?? '------'}</Text>
         </Section>
         <Text style={text}>
-          Le jour du tournoi, une fois les codes activés par l'organisateur, rendez-vous dans
-          l'onglet « Compteur » du site, choisissez le tournoi puis votre match, et saisissez ce
-          code pour enregistrer les résultats. Le tableau du tournoi se mettra à jour
-          automatiquement.
+          Le jour du tournoi, une fois les codes activés par l'organisateur, cliquez sur le
+          bouton ci-dessous, saisissez votre code, puis choisissez votre match pour enregistrer
+          les résultats. Le tableau du tournoi se mettra à jour automatiquement.
         </Text>
+        {playUrl ? (
+          <Section style={buttonWrap}>
+            <Button style={button} href={playUrl}>
+              Accéder au tournoi
+            </Button>
+          </Section>
+        ) : null}
         <Text style={muted}>
           Ce code est personnel : ne le partagez pas. Si vous n'êtes pas à l'origine de cette
           inscription, ignorez simplement cet email.
