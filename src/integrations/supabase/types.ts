@@ -420,6 +420,7 @@ export type Database = {
           helloasso_item_id: number | null
           id: string
           name: string
+          name_locked: boolean
           tournament_id: string
         }
         Insert: {
@@ -428,6 +429,7 @@ export type Database = {
           helloasso_item_id?: number | null
           id?: string
           name: string
+          name_locked?: boolean
           tournament_id: string
         }
         Update: {
@@ -436,6 +438,7 @@ export type Database = {
           helloasso_item_id?: number | null
           id?: string
           name?: string
+          name_locked?: boolean
           tournament_id?: string
         }
         Relationships: [
