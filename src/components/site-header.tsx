@@ -1,8 +1,9 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Menu, X, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyRoles } from "@/lib/admin.functions";
+import { getNewTournamentsCount, markTournamentsSeen } from "@/lib/player.functions";
 import logoAsset from "@/assets/foxes-logo.png.asset.json";
 
 const NAV = [
@@ -16,7 +17,31 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [newCount, setNewCount] = useState(0);
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  // Pastille: new tournaments since last visit; visiting /tournois clears it.
+  useEffect(() => {
+    if (!signedIn) {
+      setNewCount(0);
+      return;
+    }
+    let active = true;
+    const run = async () => {
+      if (pathname.startsWith("/tournois")) {
+        await markTournamentsSeen();
+        if (active) setNewCount(0);
+      } else {
+        const { count } = await getNewTournamentsCount();
+        if (active) setNewCount(count);
+      }
+    };
+    run().catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [signedIn, pathname]);
 
   useEffect(() => {
     let active = true;
@@ -73,6 +98,11 @@ export function SiteHeader() {
               activeProps={{ className: "rounded-md px-3 py-2 text-sm font-semibold text-primary" }}
             >
               {item.label}
+              {item.to === "/tournois" && newCount > 0 && (
+                <span className="ml-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground" title="Nouveaux tournois">
+                  {newCount > 9 ? "9+" : newCount}
+                </span>
+              )}
             </Link>
           ))}
           {signedIn ? (
@@ -132,6 +162,11 @@ export function SiteHeader() {
                 activeProps={{ className: "rounded-md px-3 py-2 text-sm font-semibold text-primary" }}
               >
                 {item.label}
+              {item.to === "/tournois" && newCount > 0 && (
+                <span className="ml-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground" title="Nouveaux tournois">
+                  {newCount > 9 ? "9+" : newCount}
+                </span>
+              )}
               </Link>
             ))}
             {signedIn ? (
