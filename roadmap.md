@@ -10,5 +10,8 @@
 - [x] Espace joueur : profil, inscriptions, statistiques
 - [x] Vérification build + contrôle visuel
 
+- [x] Nommer le premier admin : simon.ansel@outlook.com a le rôle admin (onglet Admin visible dans le menu)
+- [x] Cartes tournois (accueil + /tournois) : bouton "S'inscrire" retiré quand un lien HelloAsso existe, bouton HelloAsso en orange ; titre cliquable vers la fiche du tournoi
+
 ## En attente (bloqué côté utilisateur)
-- [ ] Nommer le premier admin : l'utilisateur doit créer son compte sur /auth, puis me demander de lui donner le rôle admin (je l'ajoute dans user_roles)
+- (rien pour le moment)
