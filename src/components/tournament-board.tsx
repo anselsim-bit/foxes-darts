@@ -254,7 +254,7 @@ function MatchRow({
           <span
             aria-hidden
             className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
-              picked === id ? "border-primary bg-primary" : "border-muted-foreground/50 group-hover:border-primary/70"
+              picked === id ? "border-primary bg-primary" : "border-muted-foreground group-hover:border-primary/70"
             }`}
           >
             {picked === id && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
@@ -311,7 +311,7 @@ function MatchRow({
           }}
           className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-2"
         >
-          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+          <label className="flex items-center gap-2 text-xs text-foreground/70">
             <span>Reste au perdant</span>
             <input
               type="text"
@@ -320,7 +320,7 @@ function MatchRow({
               value={remaining}
               onChange={(e) => setRemaining(e.target.value.replace(/\D/g, "").slice(0, 3))}
               placeholder="—"
-              className="w-16 rounded-md border border-input bg-background px-2 py-1.5 text-center text-sm tabular-nums outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-primary"
+              className="w-16 rounded-md border border-input bg-background px-2 py-1.5 text-center text-sm tabular-nums outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
               aria-label="Points restants du perdant"
             />
           </label>
