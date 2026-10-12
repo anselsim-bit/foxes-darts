@@ -13,5 +13,7 @@
 - [x] Nommer le premier admin : simon.ansel@outlook.com a le rôle admin (onglet Admin visible dans le menu)
 - [x] Cartes tournois (accueil + /tournois) : bouton "S'inscrire" retiré quand un lien HelloAsso existe, bouton HelloAsso en orange ; titre cliquable vers la fiche du tournoi
 
+- [x] Tournois solo/équipe, limite de places (blocage serveur), poules optionnelles, tableau généré par « Commencer le tournoi », mise à jour admin ou via Compteur ; tournoi test 16 doublettes / 4 poules
+
 ## En attente (bloqué côté utilisateur)
 - (rien pour le moment)
