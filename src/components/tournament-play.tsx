@@ -11,9 +11,22 @@ const choice = (on: boolean) =>
     ? "rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground"
     : "rounded-md border border-border px-3 py-2 text-sm text-muted-foreground";
 
+export function TournamentPlayButton({ tournamentId }: { tournamentId: string }) {
+  return (
+    <div className="mt-8">
+      <Link
+        to="/tournois/$id/jouer"
+        params={{ id: tournamentId }}
+        className="inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+      >
+        <Target className="h-4 w-4" /> Participer au tournoi
+      </Link>
+    </div>
+  );
+}
+
 export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: string; signedIn: boolean }) {
   const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
   const [code, setCode] = useState<string | null>(null);
   const [codeInput, setCodeInput] = useState("");
   const [codeMsg, setCodeMsg] = useState<string | null>(null);
@@ -30,11 +43,11 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
     listPlayableMatches({ data: { tournamentId } }).then(setMatches).catch(() => setMatches([]));
 
   useEffect(() => {
-    if (!open || !signedIn) return;
+    if (!signedIn) return;
     getMyTournamentCode({ data: { tournamentId } })
       .then((r) => r.code && setCode(r.code))
       .catch(() => {});
-  }, [open, signedIn, tournamentId]);
+  }, [signedIn, tournamentId]);
 
   useEffect(() => {
     if (code) loadMatches();
