@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { CalendarDays, MapPin, Ticket, Users } from "lucide-react";
+import { CalendarDays, MapPin, Users, Ticket, Users } from "lucide-react";
 import { toast } from "sonner";
 import { getTournament } from "@/lib/public.functions";
 import {
@@ -124,6 +124,11 @@ function TournamentDetail() {
             year: "numeric",
           })}
           {tournament.start_time ? ` · ${tournament.start_time.slice(0, 5).replace(":", "h")}${tournament.end_time ? ` – ${tournament.end_time.slice(0, 5).replace(":", "h")}` : ""}` : ""}
+        </span>
+        <span className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-primary" />
+          {tournament.format === "equipe" ? "En équipe" : "Solo"}
+          {tournament.max_participants ? ` · ${tournament.max_participants} ${tournament.format === "equipe" ? "équipes" : "participants"} max` : ""}
         </span>
         {tournament.location && (
           <span className="flex items-center gap-2">
