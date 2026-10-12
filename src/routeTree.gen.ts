@@ -19,6 +19,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedMonEspaceRouteImport } from './routes/_authenticated/mon-espace'
 import { Route as TournoisIndexRouteImport } from './routes/tournois.index'
 import { Route as TournoisIdRouteImport } from './routes/tournois.$id'
+import { Route as ApiPublicHooksHelloassoSyncRouteImport } from './routes/api/public/hooks/helloasso-sync'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -69,6 +70,12 @@ const TournoisIdRoute = TournoisIdRouteImport.update({
   path: '/tournois/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksHelloassoSyncRoute =
+  ApiPublicHooksHelloassoSyncRouteImport.update({
+    id: '/api/public/hooks/helloasso-sync',
+    path: '/api/public/hooks/helloasso-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/mon-espace': typeof AuthenticatedMonEspaceRoute
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois/': typeof TournoisIndexRoute
+  '/api/public/hooks/helloasso-sync': typeof ApiPublicHooksHelloassoSyncRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -91,6 +99,7 @@ export interface FileRoutesByTo {
   '/mon-espace': typeof AuthenticatedMonEspaceRoute
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois': typeof TournoisIndexRoute
+  '/api/public/hooks/helloasso-sync': typeof ApiPublicHooksHelloassoSyncRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -104,6 +113,7 @@ export interface FileRoutesById {
   '/_authenticated/mon-espace': typeof AuthenticatedMonEspaceRoute
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois/': typeof TournoisIndexRoute
+  '/api/public/hooks/helloasso-sync': typeof ApiPublicHooksHelloassoSyncRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/mon-espace'
     | '/tournois/$id'
     | '/tournois/'
+    | '/api/public/hooks/helloasso-sync'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/mon-espace'
     | '/tournois/$id'
     | '/tournois'
+    | '/api/public/hooks/helloasso-sync'
   id:
     | '__root__'
     | '/'
@@ -140,6 +152,7 @@ export interface FileRouteTypes {
     | '/_authenticated/mon-espace'
     | '/tournois/$id'
     | '/tournois/'
+    | '/api/public/hooks/helloasso-sync'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -151,6 +164,7 @@ export interface RootRouteChildren {
   GalerieRoute: typeof GalerieRoute
   TournoisIdRoute: typeof TournoisIdRoute
   TournoisIndexRoute: typeof TournoisIndexRoute
+  ApiPublicHooksHelloassoSyncRoute: typeof ApiPublicHooksHelloassoSyncRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -225,6 +239,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TournoisIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/helloasso-sync': {
+      id: '/api/public/hooks/helloasso-sync'
+      path: '/api/public/hooks/helloasso-sync'
+      fullPath: '/api/public/hooks/helloasso-sync'
+      preLoaderRoute: typeof ApiPublicHooksHelloassoSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -250,6 +271,7 @@ const rootRouteChildren: RootRouteChildren = {
   GalerieRoute: GalerieRoute,
   TournoisIdRoute: TournoisIdRoute,
   TournoisIndexRoute: TournoisIndexRoute,
+  ApiPublicHooksHelloassoSyncRoute: ApiPublicHooksHelloassoSyncRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
