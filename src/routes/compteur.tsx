@@ -49,6 +49,7 @@ function CompteurPage() {
   const [password, setPassword] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [gameKey, setGameKey] = useState(0);
+  const [starter, setStarter] = useState<number | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -199,7 +200,7 @@ function CompteurPage() {
                   {p.name}{" "}
                   <span className="text-xs text-muted-foreground">{p.userId ? "· membre" : "· invité"}</span>
                 </span>
-                <button onClick={() => setPlayers(players.filter((_, j) => j !== i))} aria-label="Retirer">
+                <button onClick={() => { setPlayers(players.filter((_, j) => j !== i)); setStarter(null); }} aria-label="Retirer">
                   <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                 </button>
               </li>
@@ -297,9 +298,45 @@ function CompteurPage() {
           </div>
         )}
 
+        {players.length > 0 && (
+          <div>
+            <p className="mb-2 text-sm font-medium">Qui commence ?</p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setStarter(null)}
+                className={
+                  starter === null
+                    ? "rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground"
+                    : "rounded-md border border-border px-3 py-2 text-sm text-muted-foreground"
+                }
+              >
+                Aléatoire
+              </button>
+              {players.map((p, i) => (
+                <button
+                  key={i}
+                  onClick={() => setStarter(i)}
+                  className={
+                    starter === i
+                      ? "rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground"
+                      : "rounded-md border border-border px-3 py-2 text-sm text-muted-foreground"
+                  }
+                >
+                  {p.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <button
           disabled={players.length === 0}
-          onClick={() => setPlaying(true)}
+          onClick={() => {
+            if (players.length === 0) return;
+            const idx = starter === null ? Math.floor(Math.random() * players.length) : starter;
+            setPlayers([...players.slice(idx), ...players.slice(0, idx)]);
+            setPlaying(true);
+          }}
           className="w-full rounded-md bg-primary px-4 py-3 font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
         >
           Commencer la partie
