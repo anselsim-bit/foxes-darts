@@ -233,12 +233,15 @@ export const adminListHelloAsso = createServerFn({ method: "GET" })
     await requireAdmin(context);
     const { data, error } = await context.supabase
       .from("helloasso_registrations")
-      .select("id, first_name, last_name, email, amount_cents, tier_name, state, paid_at, tournaments(title)")
+      .select(
+        "id, first_name, last_name, email, amount_cents, tier_name, state, paid_at, partner_first_name, partner_last_name, tournaments(title)",
+      )
       .order("paid_at", { ascending: false });
     if (error) throw new Error(error.message);
     return (data ?? []).map((r) => ({
       id: r.id,
       name: [r.first_name, r.last_name].filter(Boolean).join(" ") || "Participant",
+      partner: [r.partner_first_name, r.partner_last_name].filter(Boolean).join(" ") || null,
       email: r.email,
       amount_cents: r.amount_cents,
       tier_name: r.tier_name,
