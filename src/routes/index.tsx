@@ -106,13 +106,10 @@ function Index() {
       <section className="border-y border-border bg-card/50">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 md:grid-cols-2">
           <div>
-            <div className="flex items-end justify-between">
+            <div className="flex items-end">
               <h2 className="flex items-center gap-2 text-3xl">
                 <Trophy className="h-7 w-7 text-primary" /> Classement
               </h2>
-              <Link to="/classements" className="text-sm font-medium text-primary hover:underline">
-                Classement complet
-              </Link>
             </div>
             {topPlayers.length === 0 ? (
               <p className="mt-6 text-muted-foreground">Le classement arrive bientôt.</p>
@@ -170,13 +167,10 @@ function Index() {
 
       {/* Galerie */}
       <section className="mx-auto max-w-6xl px-4 py-14">
-        <div className="flex items-end justify-between">
+        <div className="flex items-end">
           <h2 className="flex items-center gap-2 text-3xl">
             <Images className="h-7 w-7 text-primary" /> Dernières photos
           </h2>
-          <Link to="/galerie" className="text-sm font-medium text-primary hover:underline">
-            Toute la galerie
-          </Link>
         </div>
         {photos.length === 0 ? (
           <p className="mt-6 text-muted-foreground">Les photos des tournois arrivent bientôt.</p>

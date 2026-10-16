@@ -20,7 +20,7 @@ export function TournamentCarousel({ tournaments, today }: { tournaments: Tourna
     <section className="mx-auto max-w-6xl px-4 py-14">
       <div role="region" aria-roledescription="carrousel" aria-label="Catégories de tournois">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
-          <Link to="/tournois" className="text-sm font-medium text-primary hover:underline">Tous les tournois</Link>
+          <div />
           <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" onClick={() => move(-1)} aria-label="Catégorie précédente" title="Catégorie précédente"><ArrowLeft /></Button>
             <Button variant="outline" size="icon" onClick={() => move(1)} aria-label="Catégorie suivante" title="Catégorie suivante"><ArrowRight /></Button>
