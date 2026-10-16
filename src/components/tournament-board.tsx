@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Play, Trash2, Trophy, Plus, Check, PencilLine, Mail, KeyRound } from "lucide-react";
+import { Play, Trash2, Trophy, Plus, Check, PencilLine, Mail, KeyRound, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { buildBracket, poolStandings, qualifiersFromPools } from "@/lib/bracket";
@@ -52,6 +52,7 @@ export function TournamentBoard({
   });
   const [admin, setAdmin] = useState(false);
   const [newTeam, setNewTeam] = useState("");
+  const [showTeams, setShowTeams] = useState(false);
   const [poolView, setPoolView] = useState<"all" | number>("all");
   const [view, setView] = useState<"pools" | "final">("pools");
   const [busy, setBusy] = useState(false);
@@ -224,22 +225,35 @@ export function TournamentBoard({
   return (
     <section className="mt-10 space-y-8">
       <div>
-        <h2 className="text-2xl">
-          {label} <span className="text-muted-foreground">({teams.length}{maxParticipants ? ` / ${maxParticipants}` : ""})</span>
-        </h2>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {teams.map((t) => (
-            <span key={t.id} className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm">
-              {t.name}
-              {admin && status === "open" && (
-                <button aria-label="Retirer" onClick={() => run(() => adminDeleteTeam({ data: { id: t.id } }), "Retiré.")}>
-                  <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
-                </button>
-              )}
-            </span>
-          ))}
-          {teams.length === 0 && <p className="text-sm text-muted-foreground">Aucun inscrit pour le moment.</p>}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-2xl">
+            {label} <span className="text-muted-foreground">({teams.length}{maxParticipants ? ` / ${maxParticipants}` : ""})</span>
+          </h2>
+          <button
+            type="button"
+            aria-expanded={showTeams}
+            onClick={() => setShowTeams((v) => !v)}
+            className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+          >
+            {showTeams ? "Masquer la liste" : "Afficher la liste"}
+            <ChevronDown className={`h-4 w-4 transition-transform ${showTeams ? "rotate-180" : ""}`} />
+          </button>
         </div>
+        {showTeams && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {teams.map((t) => (
+              <span key={t.id} className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm">
+                {t.name}
+                {admin && status === "open" && (
+                  <button aria-label="Retirer" onClick={() => run(() => adminDeleteTeam({ data: { id: t.id } }), "Retiré.")}>
+                    <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
+                  </button>
+                )}
+              </span>
+            ))}
+            {teams.length === 0 && <p className="text-sm text-muted-foreground">Aucun inscrit pour le moment.</p>}
+          </div>
+        )}
         {admin && status === "open" && (
           <div className="mt-4 flex flex-wrap gap-2">
             {!full || !maxParticipants ? (
