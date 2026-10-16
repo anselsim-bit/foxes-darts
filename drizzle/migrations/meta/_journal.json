@@ -92,6 +92,13 @@
       "when": 1791826255078,
       "tag": "0012_access_code_claimed_by",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792162487530,
+      "tag": "0013_helloasso_partner_fields",
+      "breakpoints": true
     }
   ]
 }

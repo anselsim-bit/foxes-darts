@@ -58,12 +58,15 @@ export type Database = {
       helloasso_registrations: {
         Row: {
           amount_cents: number
+          custom_fields: Json | null
           email: string | null
           first_name: string | null
           id: string
           item_id: number
           last_name: string | null
           paid_at: string | null
+          partner_first_name: string | null
+          partner_last_name: string | null
           state: string | null
           synced_at: string
           tier_name: string | null
@@ -71,12 +74,15 @@ export type Database = {
         }
         Insert: {
           amount_cents?: number
+          custom_fields?: Json | null
           email?: string | null
           first_name?: string | null
           id?: string
           item_id: number
           last_name?: string | null
           paid_at?: string | null
+          partner_first_name?: string | null
+          partner_last_name?: string | null
           state?: string | null
           synced_at?: string
           tier_name?: string | null
@@ -84,12 +90,15 @@ export type Database = {
         }
         Update: {
           amount_cents?: number
+          custom_fields?: Json | null
           email?: string | null
           first_name?: string | null
           id?: string
           item_id?: number
           last_name?: string | null
           paid_at?: string | null
+          partner_first_name?: string | null
+          partner_last_name?: string | null
           state?: string | null
           synced_at?: string
           tier_name?: string | null
