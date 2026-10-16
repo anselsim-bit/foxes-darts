@@ -157,9 +157,9 @@ export function TournamentBoard({
             <span className="text-gradient-ember font-semibold">{name(finalMatch.winner)}</span>
           </p>
         )}
-        <div className="mt-4 flex gap-4 overflow-x-auto pb-2">
+        <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:gap-4">
           {rounds.map((r) => (
-            <div key={r} className="min-w-56 flex-1 space-y-3">
+            <div key={r} className="min-w-0 flex-1 space-y-3">
               <h3 className="text-sm font-semibold text-primary">{roundName(r)}</h3>
               <div className="flex h-full flex-col justify-around gap-3">
                 {bracket
@@ -188,9 +188,9 @@ export function TournamentBoard({
           Les 2 premiers de chaque poule se qualifient. Les noms se confirment quand la poule est terminée ; en attendant, le
           leader actuel est indiqué en gris.
         </p>
-        <div className="mt-4 flex gap-4 overflow-x-auto pb-2">
+        <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:gap-4">
           {previewRounds.map((r) => (
-            <div key={r} className="min-w-56 flex-1 space-y-3">
+            <div key={r} className="min-w-0 flex-1 space-y-3">
               <h3 className="text-sm font-semibold text-primary">{previewName(r)}</h3>
               <div className="flex h-full flex-col justify-around gap-3">
                 {preview
