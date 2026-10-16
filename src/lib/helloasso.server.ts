@@ -34,6 +34,8 @@ async function getToken() {
   return ((await res.json()) as { access_token: string }).access_token;
 }
 
+type CustomField = { id?: number; name?: string; type?: string; answer?: string };
+
 type Item = {
   id: number;
   amount?: number;
@@ -42,7 +44,45 @@ type Item = {
   user?: { firstName?: string; lastName?: string };
   payer?: { firstName?: string; lastName?: string; email?: string };
   order?: { date?: string };
+  customFields?: CustomField[];
 };
+
+const PARTNER_HINTS = ["partenaire", "coequipier", "equipier", "binome", "colocataire", "binettes"];
+
+const stripAccents = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+/**
+ * Retrouve le coéquipier déclaré dans les questions personnalisées du formulaire
+ * HelloAsso (« Nom partenaire », « Prénom partenaire », … ).
+ */
+export function extractPartner(fields?: CustomField[]) {
+  if (!fields?.length) return null;
+  let firstName: string | null = null;
+  let lastName: string | null = null;
+  for (const f of fields) {
+    const answer = (f.answer ?? "").trim();
+    const label = stripAccents(f.name ?? "").toLowerCase();
+    if (!answer || !PARTNER_HINTS.some((h) => label.includes(h))) continue;
+    const clean = label.replace(/[^a-z]/g, "");
+    if (clean.includes("prenom")) firstName = answer;
+    else if (clean.includes("nom")) lastName = answer;
+  }
+  return firstName || lastName ? { firstName, lastName } : null;
+}
+
+/** Nom d'équipe par défaut : les deux joueurs de la doublette, sinon le titulaire seul. */
+export function teamNameOf(r: {
+  first_name: string | null;
+  last_name: string | null;
+  partner_first_name?: string | null;
+  partner_last_name?: string | null;
+  item_id: number;
+}) {
+  const holder = [r.first_name, r.last_name].filter(Boolean).join(" ").trim();
+  const partner = [r.partner_first_name, r.partner_last_name].filter(Boolean).join(" ").trim();
+  if (holder && partner) return `${holder} & ${partner}`;
+  return holder || `Participant HelloAsso #${r.item_id}`;
+}
 
 export async function syncHelloAsso() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -74,18 +114,24 @@ export async function syncHelloAsso() {
         };
         const items = body.data ?? [];
         if (items.length === 0) break;
-        const rows = items.map((i) => ({
-          tournament_id: t.id,
-          item_id: i.id,
-          first_name: i.user?.firstName ?? i.payer?.firstName ?? null,
-          last_name: i.user?.lastName ?? i.payer?.lastName ?? null,
-          email: i.payer?.email ?? null,
-          amount_cents: i.amount ?? 0,
-          tier_name: i.name ?? null,
-          state: i.state ?? null,
-          paid_at: i.order?.date ?? null,
-          synced_at: new Date().toISOString(),
-        }));
+        const rows = items.map((i) => {
+          const partner = extractPartner(i.customFields);
+          return {
+            tournament_id: t.id,
+            item_id: i.id,
+            first_name: i.user?.firstName ?? i.payer?.firstName ?? null,
+            last_name: i.user?.lastName ?? i.payer?.lastName ?? null,
+            email: i.payer?.email ?? null,
+            amount_cents: i.amount ?? 0,
+            tier_name: i.name ?? null,
+            state: i.state ?? null,
+            paid_at: i.order?.date ?? null,
+            partner_first_name: partner?.firstName ?? null,
+            partner_last_name: partner?.lastName ?? null,
+            custom_fields: i.customFields ?? null,
+            synced_at: new Date().toISOString(),
+          };
+        });
         const { error: upErr } = await supabaseAdmin
           .from("helloasso_registrations")
           .upsert(rows, { onConflict: "item_id" });
@@ -95,15 +141,23 @@ export async function syncHelloAsso() {
         const ids = rows.filter((r) => !r.state || ["Processed", "Registered"].includes(r.state)).map((r) => r.item_id);
         if (ids.length) {
           const { data: existing } = await supabaseAdmin
-            .from("tournament_teams").select("helloasso_item_id").in("helloasso_item_id", ids);
-          const known = new Set((existing ?? []).map((e) => e.helloasso_item_id));
+            .from("tournament_teams")
+            .select("id, name, name_locked, helloasso_item_id")
+            .in("helloasso_item_id", ids);
+          const known = new Map((existing ?? []).map((e) => [e.helloasso_item_id, e]));
           for (const r of rows) {
-            if (!ids.includes(r.item_id) || known.has(r.item_id)) continue;
-            const name = [r.first_name, r.last_name].filter(Boolean).join(" ").trim() || `Participant HelloAsso #${r.item_id}`;
-            // Trigger rejects when full or started; ignore those.
-            await supabaseAdmin.from("tournament_teams").insert({
-              tournament_id: t.id, name, captain_id: null, helloasso_item_id: r.item_id,
-            });
+            if (!ids.includes(r.item_id)) continue;
+            const name = teamNameOf(r);
+            const team = known.get(r.item_id);
+            if (!team) {
+              // Trigger rejects when full or started; ignore those.
+              await supabaseAdmin.from("tournament_teams").insert({
+                tournament_id: t.id, name, captain_id: null, helloasso_item_id: r.item_id,
+              });
+            } else if (!team.name_locked && team.name !== name) {
+              // Le coéquipier vient d'être découvert : on complète le nom de l'équipe.
+              await supabaseAdmin.from("tournament_teams").update({ name }).eq("id", team.id);
+            }
           }
         }
         continuation = body.pagination?.continuationToken;

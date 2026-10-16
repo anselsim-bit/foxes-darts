@@ -298,10 +298,13 @@ export const adminSendAccessCodes = createServerFn({ method: "POST" })
     }
     const { data: ha } = await supabaseAdmin
       .from("helloasso_registrations")
-      .select("email, first_name, last_name")
+      .select("email, first_name, last_name, partner_first_name, partner_last_name")
       .eq("tournament_id", data.tournamentId);
     for (const r of ha ?? []) {
-      if (r.email) recipients.set(r.email, `${r.first_name ?? ""} ${r.last_name ?? ""}`.trim() || null);
+      if (!r.email) continue;
+      const holder = `${r.first_name ?? ""} ${r.last_name ?? ""}`.trim();
+      const partner = `${r.partner_first_name ?? ""} ${r.partner_last_name ?? ""}`.trim();
+      recipients.set(r.email, [holder, partner].filter(Boolean).join(" & ") || null);
     }
     if (recipients.size === 0) throw new Error("Aucun participant avec une adresse email.");
 

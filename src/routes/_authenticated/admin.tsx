@@ -995,6 +995,7 @@ function HelloAssoSection() {
             <thead>
               <tr className="bg-card text-left text-muted-foreground">
                 <th className="px-4 py-3 font-medium">Participant</th>
+                <th className="px-4 py-3 font-medium">Coéquipier</th>
                 <th className="px-4 py-3 font-medium">Email</th>
                 <th className="px-4 py-3 font-medium">Tournoi</th>
                 <th className="px-4 py-3 font-medium">Tarif</th>
@@ -1009,6 +1010,7 @@ function HelloAssoSection() {
                     {r.name}
                     <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 text-xs text-muted-foreground">via HelloAsso</span>
                   </td>
+                  <td className="px-4 py-3">{r.partner ?? "—"}</td>
                   <td className="px-4 py-3">{r.email ?? "—"}</td>
                   <td className="px-4 py-3">{r.tournament_title}</td>
                   <td className="px-4 py-3">{r.tier_name ?? "—"}</td>
