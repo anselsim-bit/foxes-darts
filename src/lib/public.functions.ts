@@ -1,3 +1,4 @@
+import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
@@ -117,8 +118,9 @@ export const getTournament = createServerFn({ method: "GET" })
       .from("tournaments")
       .select("id, title, event_date, start_time, end_time, format, max_participants, team_size, pool_count, start_score, double_out, pool_double_limit, status, location, description, helloasso_url, image_url")
       .eq("id", data.id)
-      .single();
+      .maybeSingle();
     if (error) throw new Error(error.message);
+    if (!t) throw notFound();
     const signed = await signImageUrls(supabase, t.image_url ? [t.image_url] : []);
     const { count } = await supabase
       .from("tournament_teams")

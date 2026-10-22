@@ -44,6 +44,13 @@ export const Route = createFileRoute("/tournois/$id")({
         : []),
     ],
   }),
+  notFoundComponent: () => (
+    <div className="mx-auto max-w-4xl px-4 py-12">
+      <h1 className="text-3xl">Tournoi introuvable</h1>
+      <p className="mt-3 text-muted-foreground">Ce tournoi n'existe plus ou a été supprimé.</p>
+      <Link to="/tournois" className="mt-6 inline-block text-primary">Voir les tournois</Link>
+    </div>
+  ),
   component: TournamentDetail,
 });
 
