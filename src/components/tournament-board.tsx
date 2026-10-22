@@ -11,7 +11,7 @@ import {
   generateFinals,
   reportMatch,
   amIAdmin,
-  adminAddTeam,
+  adminRenameTeam,
   adminDeleteTeam,
   adminSendTournamentLink,
   adminSetTournamentCode,
@@ -55,6 +55,7 @@ export function TournamentBoard({
   });
   const [admin, setAdmin] = useState(false);
   const [newTeam, setNewTeam] = useState("");
+  const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
   const [showTeams, setShowTeams] = useState(false);
   const [poolView, setPoolView] = useState<"all" | number>("all");
   const [view, setView] = useState<"pools" | "final">("pools");
