@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Target } from "lucide-react";
 import { toast } from "sonner";
-import { Game, TeamNamer, type PlayableMatch, type Player } from "@/components/dart-game";
+import { Game, type PlayableMatch, type Player } from "@/components/dart-game";
 import { getMyTournamentCode, listPlayableMatches, validateTournamentCode } from "@/lib/tournament.functions";
 
 const choice = (on: boolean) =>
@@ -117,7 +117,7 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
       <h2 className="text-xl">Participer au tournoi</h2>
       {!code ? (
         <div>
-          <p className="mb-2 text-sm text-muted-foreground">Saisissez le code d'accès reçu par email.</p>
+          <p className="mb-2 text-sm text-muted-foreground">Saisissez le code d'accès communiqué par l'organisateur.</p>
           <div className="flex gap-2">
             <input
               value={codeInput}
@@ -129,7 +129,7 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
             />
             <button
               onClick={checkCode}
-              disabled={busy || codeInput.trim().length < 6}
+              disabled={busy || codeInput.trim().length < 1}
               className="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
             >
               {busy ? "..." : "Valider"}
@@ -162,28 +162,6 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
           )}
           {match && (
             <>
-              {(match.canNameA || match.canNameB) && (
-                <div className="space-y-2 rounded-md border border-border p-3">
-                  <p className="text-sm font-medium">Choisissez le nom de votre équipe</p>
-                  <p className="text-xs text-muted-foreground">Ce nom sera définitif pour toute la suite du tournoi.</p>
-                  {(["A", "B"] as const).map((side) =>
-                    (side === "A" ? match.canNameA : match.canNameB) ? (
-                      <TeamNamer
-                        key={side}
-                        teamId={side === "A" ? match.teamAId : match.teamBId}
-                        current={side === "A" ? match.teamA : match.teamB}
-                        code={code}
-                        onDone={(name) => {
-                          const nm =
-                            side === "A" ? { ...match, teamA: name, canNameA: false } : { ...match, teamB: name, canNameB: false };
-                          setMatch(nm);
-                          setMatches((ms) => ms.map((x) => (x.id === nm.id ? nm : x)));
-                        }}
-                      />
-                    ) : null,
-                  )}
-                </div>
-              )}
               <div className="flex flex-wrap gap-2">
                 {[301, 501, 701].map((s) => (
                   <button key={s} onClick={() => setStart(s)} className={choice(start === s)}>

@@ -12,9 +12,9 @@ import {
   amIAdmin,
   adminAddTeam,
   adminDeleteTeam,
-  adminSendAccessCodes,
-  adminSetCodesActive,
-  getAccessCodesStatus,
+  adminSendTournamentLink,
+  adminSetTournamentCode,
+  getTournamentCodeAdmin,
 } from "@/lib/tournament.functions";
 
 type Match = {
@@ -56,14 +56,19 @@ export function TournamentBoard({
   const [poolView, setPoolView] = useState<"all" | number>("all");
   const [view, setView] = useState<"pools" | "final">("pools");
   const [busy, setBusy] = useState(false);
-  const [codes, setCodes] = useState<{ count: number; active: boolean } | null>(null);
+  const [accessCode, setAccessCode] = useState<string | null>(null);
+  const [codeDraft, setCodeDraft] = useState("");
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (user) {
         const isAdm = (await amIAdmin()).admin;
         setAdmin(isAdm);
-        if (isAdm) setCodes(await getAccessCodesStatus({ data: { tournamentId } }));
+        if (isAdm) {
+          const r = await getTournamentCodeAdmin({ data: { tournamentId } });
+          setAccessCode(r.code);
+          setCodeDraft(r.code ?? "");
+        }
       }
     });
   }, [tournamentId]);
@@ -277,7 +282,20 @@ export function TournamentBoard({
             ) : null}
             <button
               disabled={!full || busy}
-              onClick={() => run(() => startTournament({ data: { id: tournamentId } }), "Tournoi lancé !")}
+              onClick={() => {
+                const c = window.prompt("Code d'accès des participants (au moins 4 caractères, modifiable ensuite) :", accessCode ?? "");
+                if (c === null) return;
+                if (c.trim().length < 4) {
+                  toast.error("Le code d'accès doit contenir au moins 4 caractères.");
+                  return;
+                }
+                void run(async () => {
+                  await startTournament({ data: { id: tournamentId, accessCode: c } });
+                  const r = await getTournamentCodeAdmin({ data: { tournamentId } });
+                  setAccessCode(r.code);
+                  setCodeDraft(r.code ?? "");
+                }, "Tournoi lancé !");
+              }}
               className="btn-ember px-4 py-2 text-sm"
               title={full ? "" : "Le tournoi doit être complet"}
             >
@@ -290,48 +308,49 @@ export function TournamentBoard({
       {admin && (
         <div className="mt-4 rounded-xl border border-border bg-card p-4">
           <h3 className="flex items-center gap-2 text-sm font-semibold">
-            <KeyRound className="h-4 w-4 text-primary" /> Codes d'accès des participants
+            <KeyRound className="h-4 w-4 text-primary" /> Code d'accès du tournoi
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            {codes && codes.count > 0
-              ? `${codes.count} code${codes.count > 1 ? "s" : ""} envoyé${codes.count > 1 ? "s" : ""} — ${codes.active ? "activés : les participants peuvent saisir les scores." : "non activés pour le moment."}`
-              : "Aucun code envoyé. Envoyez-les quand le tournoi est complet, puis activez-les le jour J."}
+            {accessCode
+              ? `Code actuel : ${accessCode}. Communiquez-le aux participants pour qu'ils saisissent leurs scores.`
+              : "Le code d'accès sera demandé au lancement du tournoi. Vous pouvez aussi le définir dès maintenant."}
           </p>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <form
+            className="mt-3 flex flex-wrap gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void run(async () => {
+                const r = await adminSetTournamentCode({ data: { tournamentId, code: codeDraft } });
+                setAccessCode(r.code);
+                setCodeDraft(r.code);
+              }, "Code d'accès enregistré.");
+            }}
+          >
+            <input
+              value={codeDraft}
+              onChange={(e) => setCodeDraft(e.target.value.toUpperCase())}
+              maxLength={20}
+              placeholder="Ex. FOXES26"
+              aria-label="Code d'accès du tournoi"
+              className="rounded-md border border-input bg-background px-3 py-2 font-mono text-sm tracking-widest"
+            />
+            <button type="submit" disabled={busy || codeDraft.trim().length < 4} className="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted">
+              <Check className="mr-1 inline h-4 w-4" /> {accessCode ? "Modifier le code" : "Enregistrer le code"}
+            </button>
             <button
+              type="button"
               disabled={busy}
               onClick={() =>
-                run(
-                  async () => {
-                    const res = await adminSendAccessCodes({ data: { tournamentId } });
-                    setCodes(await getAccessCodesStatus({ data: { tournamentId } }));
-                    if (res.failed > 0) toast.info(`${res.sent} envoyé(s), ${res.failed} en échec.`);
-                  },
-                  "Codes envoyés aux participants.",
-                )
+                run(async () => {
+                  const res = await adminSendTournamentLink({ data: { tournamentId } });
+                  if (res.failed > 0) toast.info(`${res.sent} envoyé(s), ${res.failed} en échec.`);
+                }, "Lien du tournoi envoyé aux participants.")
               }
               className="btn-ember px-3 py-2 text-sm"
             >
-              <Mail className="h-4 w-4" /> {codes && codes.count > 0 ? "Renvoyer les codes" : "Envoyer les codes"}
+              <Mail className="h-4 w-4" /> Envoyer le lien aux participants
             </button>
-            {codes && codes.count > 0 && (
-              <button
-                disabled={busy}
-                onClick={() =>
-                  run(
-                    async () => {
-                      await adminSetCodesActive({ data: { tournamentId, active: !codes.active } });
-                      setCodes(await getAccessCodesStatus({ data: { tournamentId } }));
-                    },
-                    codes.active ? "Codes désactivés." : "Codes activés !",
-                  )
-                }
-                className="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted"
-              >
-                {codes.active ? "Désactiver les codes" : "Activer les codes"}
-              </button>
-            )}
-          </div>
+          </form>
         </div>
       )}
 
