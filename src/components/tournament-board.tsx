@@ -181,7 +181,7 @@ export function TournamentBoard({
                       admin={admin}
                       boxed
                       onSave={(a, b, legsA, legsB) =>
-                        run(() => reportMatch({ data: { matchId: m.id, scoreA: a, scoreB: b, legsA, legsB } }), "Résultat enregistré.")
+                        run(() => reportMatch({ data: { matchId: m.id, scoreA: a, scoreB: b, ...(legsA !== undefined && legsB !== undefined ? { legsA, legsB } : {}) } }), "Résultat enregistré.")
                       }
                     />
                   ))}

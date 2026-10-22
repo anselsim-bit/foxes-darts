@@ -28,6 +28,30 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 describe("Tournament device recovery", () => {
+  it("restores a final at 1–1 and reports only after a second winning leg, with the real loser remaining", async () => {
+    vi.mocked(listPlayableMatches).mockResolvedValue([{ ...match, start: 301, doubleOut: false, poolDoubleLimit: false, legsToWin: 2 }]);
+    const checkout = () => {
+      for (let i = 0; i < 3; i++) { fireEvent.click(screen.getByRole("button", { name: "Triple" })); shoot(20); }
+      fireEvent.click(screen.getByRole("button", { name: "Suivant" }));
+      shoot(0); shoot(0); shoot(0); fireEvent.click(screen.getByRole("button", { name: "Suivant" }));
+      for (let i = 0; i < 2; i++) { fireEvent.click(screen.getByRole("button", { name: "Triple" })); shoot(20); }
+      shoot(1);
+    };
+    await begin(); checkout();
+    expect(screen.queryByRole("button", { name: "Envoyer le résultat au tableau du tournoi" })).not.toBeInTheDocument();
+    expect(reportTournamentMatch).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Manche suivante" }));
+    expect(screen.getByText("Au tour de", { exact: false })).toHaveTextContent("B");
+    checkout(); fireEvent.click(screen.getByRole("button", { name: "Manche suivante" }));
+    shoot(19); cleanup(); open();
+    expect(await screen.findByText("282")).toBeInTheDocument();
+    expect(screen.getAllByText("Manches : 1 / 2")).toHaveLength(2);
+    fireEvent.click(screen.getByRole("button", { name: "Annuler" })); checkout();
+    vi.mocked(reportTournamentMatch).mockResolvedValue({ ok: true });
+    fireEvent.click(screen.getByRole("button", { name: "Envoyer le résultat au tableau du tournoi" }));
+    await waitFor(() => expect(reportTournamentMatch).toHaveBeenCalledWith({ data: { matchId: "match-1", scoreA: 0, scoreB: 301, code: "FOXES", legsA: 2, legsB: 1 } }));
+    expect(localStorage.getItem(deviceDraftKey("test"))).toBeNull();
+  });
   it("remembers a guest code and restores 444 remaining with the third dart pending handover", async () => {
     await begin(); shoot(20); shoot(19); shoot(18);
     expect(localStorage.getItem(deviceCodeKey("test"))).toBe("FOXES");

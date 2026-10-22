@@ -79,7 +79,7 @@ export function Game({
     const loserRemaining = scores[winner === 0 ? 1 : 0] ?? 0;
     try {
       await reportTournamentMatch({ data: { matchId: match.id, scoreA: aWon ? 0 : loserRemaining, scoreB: aWon ? loserRemaining : 0, code: accessCode,
-        ...(legsToWin === 2 ? { legsA: legWins[players[0]?.name === match.teamA ? 0 : 1], legsB: legWins[players[0]?.name === match.teamB ? 0 : 1] } : {}),
+        ...(legsToWin === 2 ? { legsA: legWins[players[0]?.name === match.teamA ? 0 : 1] ?? 0, legsB: legWins[players[0]?.name === match.teamB ? 0 : 1] ?? 0 } : {}),
       } });
       setReported(true);
       onReported?.();
