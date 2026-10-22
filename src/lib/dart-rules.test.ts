@@ -44,4 +44,9 @@ describe("tournament rules", () => {
     expect(requiresDouble(false, true, 0)).toBe(false);
     expect(tournamentRules(301, false, "pool").poolDoubleLimit).toBe(false);
   });
+  it("keeps the 5-attempt limit only when the admin enabled it", () => {
+    expect(tournamentRules(501, true, "pool").poolDoubleLimit).toBe(true);
+    expect(tournamentRules(501, true, "pool", false).poolDoubleLimit).toBe(false);
+    expect(tournamentRules(501, true, "bracket", false).poolDoubleLimit).toBe(false);
+  });
 });

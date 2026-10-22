@@ -1,10 +1,10 @@
 export type ScoredDart = { value: number; isDouble: boolean };
 export type ScoredTurn = { player: number; darts: ScoredDart[]; bust: boolean; total: number };
 
-export function tournamentRules(startScore: number, doubleOut: boolean, stage: string) {
+export function tournamentRules(startScore: number, doubleOut: boolean, stage: string, limitDoubles = true) {
   if (startScore !== 301 && startScore !== 501) throw new Error("Choisissez une partie en 301 ou 501.");
   if (typeof doubleOut !== "boolean") throw new Error("Choisissez le type de sortie.");
-  return { start: startScore, doubleOut, poolDoubleLimit: stage === "pool" && doubleOut };
+  return { start: startScore, doubleOut, poolDoubleLimit: stage === "pool" && doubleOut && limitDoubles };
 }
 
 /** A visit counts once if a dart is thrown with 50 or fewer remaining, including bust visits. */

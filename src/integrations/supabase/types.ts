@@ -532,6 +532,7 @@ export type Database = {
           location: string | null
           max_participants: number | null
           pool_count: number
+          pool_double_limit: boolean
           start_score: number
           start_time: string | null
           status: string
@@ -551,6 +552,7 @@ export type Database = {
           location?: string | null
           max_participants?: number | null
           pool_count?: number
+          pool_double_limit?: boolean
           start_score?: number
           start_time?: string | null
           status?: string
@@ -570,6 +572,7 @@ export type Database = {
           location?: string | null
           max_participants?: number | null
           pool_count?: number
+          pool_double_limit?: boolean
           start_score?: number
           start_time?: string | null
           status?: string

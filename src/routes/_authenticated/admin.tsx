@@ -141,6 +141,7 @@ function TournamentsTab() {
     pool_count: "4",
     start_score: 501,
     double_out: true,
+    pool_double_limit: true,
     venue: DEFAULT_VENUE.venue,
     street: DEFAULT_VENUE.street,
     postal_code: DEFAULT_VENUE.postal_code,
@@ -177,6 +178,7 @@ function TournamentsTab() {
       pool_count: String(t.pool_count || 4),
       start_score: t.start_score,
       double_out: t.double_out,
+      pool_double_limit: t.pool_double_limit ?? true,
       venue: parts[0] ?? "",
       street: parts[1] ?? "",
       postal_code: m ? m[1]! : "",
@@ -222,6 +224,7 @@ function TournamentsTab() {
           pool_count: form.with_pools ? Math.max(1, parseInt(form.pool_count, 10) || 1) : 0,
           start_score: form.start_score,
           double_out: form.double_out,
+          pool_double_limit: form.pool_double_limit,
           location: location || undefined,
           description: form.description,
           helloasso_url: form.helloasso_url,
@@ -339,6 +342,11 @@ function TournamentsTab() {
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={form.double_out} onChange={(e) => setForm({ ...form, double_out: e.target.checked })} /> Sortie double
             </label>
+            {form.double_out && (
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={form.pool_double_limit} onChange={(e) => setForm({ ...form, pool_double_limit: e.target.checked })} /> Limite de 5 tours d'essais de double en poules
+              </label>
+            )}
           </div>
         </fieldset>
         <div className="grid grid-cols-2 gap-3">

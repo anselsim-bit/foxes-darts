@@ -1,0 +1,2 @@
+ALTER TABLE public.tournaments ADD COLUMN pool_double_limit boolean NOT NULL DEFAULT true;
+COMMENT ON COLUMN public.tournaments.pool_double_limit IS 'When true and double-out is on, pool stage limits double attempts to 5 visits per team; when false, doubles stay required until checkout.';
