@@ -60,7 +60,7 @@ function TournamentPlayPage() {
           Le tournoi n'a pas encore commencé. Revenez une fois qu'il sera lancé par l'organisateur.
         </p>
       ) : (
-        <TournamentPlay tournamentId={id} signedIn={signedIn} />
+        <TournamentPlay key={id} tournamentId={id} signedIn={signedIn} />
       )}
     </div>
   );

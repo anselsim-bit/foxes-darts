@@ -20,7 +20,7 @@ async function begin() {
   fireEvent.click(screen.getByRole("button", { name: "A", exact: true }));
   fireEvent.click(screen.getByRole("button", { name: "Commencer le match" }));
 }
-const shoot = (n: number) => fireEvent.click(screen.getByRole("button", { name: String(n), exact: true }));
+const shoot = (n: number) => fireEvent.click(screen.getByRole("button", { name: n === 0 ? "Raté" : String(n), exact: true }));
 beforeEach(() => {
   localStorage.clear(); vi.clearAllMocks();
   vi.mocked(validateTournamentCode).mockResolvedValue({ valid: true, active: true, participantName: null } as Awaited<ReturnType<typeof validateTournamentCode>>);

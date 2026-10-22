@@ -53,7 +53,7 @@ export function Game({
   tournamentId: string | null;
   onExit: () => void;
   onRestart?: () => void;
-  initialProgress?: GameProgress;
+  initialProgress?: GameProgress | undefined;
   onProgress?: (progress: GameProgress) => void;
   onReported?: () => void;
 }) {
