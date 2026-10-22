@@ -28,6 +28,7 @@ function AuthPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [password2, setPassword2] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirmEmail, setConfirmEmail] = useState(false);
@@ -37,6 +38,10 @@ function AuthPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mode === "signup" && password !== password2) {
+      toast.error("Les deux mots de passe ne sont pas identiques.");
+      return;
+    }
     setBusy(true);
     try {
       if (mode === "login") {
@@ -142,6 +147,27 @@ function AuthPage() {
             placeholder="6 caractères minimum"
           />
         </div>
+        {mode === "signup" && (
+          <div>
+            <label className="mb-1 block text-sm font-medium" htmlFor="password2">
+              Confirmer le mot de passe
+            </label>
+            <input
+              id="password2"
+              type="password"
+              value={password2}
+              onChange={(e) => setPassword2(e.target.value)}
+              required
+              minLength={6}
+              aria-invalid={password2.length > 0 && password2 !== password}
+              className="w-full rounded-md border border-input bg-card px-3 py-2 text-sm outline-none focus:border-primary aria-[invalid=true]:border-destructive"
+              placeholder="Retapez le mot de passe"
+            />
+            {password2.length > 0 && password2 !== password && (
+              <p className="mt-1 text-xs text-destructive">Les mots de passe ne correspondent pas.</p>
+            )}
+          </div>
+        )}
         <button
           type="submit"
           disabled={busy}

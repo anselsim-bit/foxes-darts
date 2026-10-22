@@ -3,6 +3,7 @@ import { queryOptions, useSuspenseQuery, useQueryClient } from "@tanstack/react-
 import { useState } from "react";
 import { CalendarDays, MapPin, Trophy, Target, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import {
   getMyRegistrations,
   getMyStats,
@@ -133,6 +134,7 @@ function MonEspace() {
             </span>
           </span>
         </label>
+        <PasswordChange />
       </section>
 
       {/* Statistiques */}
@@ -216,5 +218,49 @@ function MonEspace() {
         )}
       </section>
     </div>
+  );
+}
+
+function PasswordChange() {
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [next2, setNext2] = useState("");
+  const [busy, setBusy] = useState(false);
+  const cls = "w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary";
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (next !== next2) return toast.error("Les deux nouveaux mots de passe ne sont pas identiques.");
+    setBusy(true);
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      const email = u.user?.email;
+      if (!email) throw new Error("Session expirée, reconnectez-vous.");
+      const { error: authError } = await supabase.auth.signInWithPassword({ email, password: current });
+      if (authError) throw new Error("Mot de passe actuel incorrect.");
+      const { error } = await supabase.auth.updateUser({ password: next, current_password: current } as { password: string });
+      if (error) throw error;
+      toast.success("Mot de passe modifié.");
+      setCurrent(""); setNext(""); setNext2("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <form onSubmit={submit} className="mt-6 border-t border-border pt-5">
+      <h3 className="text-lg">Changer mon mot de passe</h3>
+      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+        <input type="password" required value={current} onChange={(e) => setCurrent(e.target.value)} placeholder="Mot de passe actuel" aria-label="Mot de passe actuel" autoComplete="current-password" className={cls} />
+        <input type="password" required minLength={6} value={next} onChange={(e) => setNext(e.target.value)} placeholder="Nouveau mot de passe" aria-label="Nouveau mot de passe" autoComplete="new-password" className={cls} />
+        <input type="password" required minLength={6} value={next2} onChange={(e) => setNext2(e.target.value)} placeholder="Confirmer le nouveau" aria-label="Confirmer le nouveau mot de passe" autoComplete="new-password" className={cls} />
+      </div>
+      {next2.length > 0 && next2 !== next && <p className="mt-1 text-xs text-destructive">Les mots de passe ne correspondent pas.</p>}
+      <button type="submit" disabled={busy} className="mt-3 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60">
+        {busy ? "..." : "Modifier le mot de passe"}
+      </button>
+    </form>
   );
 }
