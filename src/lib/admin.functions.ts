@@ -45,6 +45,7 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
       pool_count?: number | undefined;
       start_score: number;
       double_out: boolean;
+      pool_double_limit?: boolean | undefined;
       location?: string | undefined;
       description?: string | undefined;
       helloasso_url?: string | undefined;
