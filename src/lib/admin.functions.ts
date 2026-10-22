@@ -341,9 +341,17 @@ export const adminListMembers = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: admins } = await supabaseAdmin.from("user_roles").select("user_id").eq("role", "admin");
     const adminIds = new Set((admins ?? []).map((r) => r.user_id));
+    const emails = new Map<string, string>();
+    for (let page = 1; page <= 20; page++) {
+      const { data: list, error: listError } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
+      if (listError) throw new Error(listError.message);
+      for (const u of list.users) if (u.email) emails.set(u.id, u.email);
+      if (list.users.length < 1000) break;
+    }
     return (profiles ?? []).map((p) => ({
       id: p.id,
       name: p.display_name ?? "Joueur",
+      email: emails.get(p.id) ?? "",
       admin: adminIds.has(p.id),
       self: p.id === context.userId,
     }));
@@ -371,5 +379,26 @@ export const adminSetMemberAdmin = createServerFn({ method: "POST" })
       const { error } = await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId).eq("role", "admin");
       if (error) throw new Error(error.message);
     }
+    return { ok: true };
+  });
+
+const ALLOWED_ORIGIN = /^(https:\/\/([a-z0-9-]+\.)*(foxesdarts\.com|lovable\.app|lovableproject\.com)|http:\/\/localhost(:\d+)?)$/i;
+
+export const adminSendPasswordReset = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { userId: string; origin: string }) => {
+    if (typeof input.userId !== "string" || !/^[0-9a-f-]{36}$/i.test(input.userId)) throw new Error("Membre invalide.");
+    const origin = typeof input.origin === "string" && ALLOWED_ORIGIN.test(input.origin) ? input.origin : "https://foxesdarts.com";
+    return { userId: input.userId, origin };
+  })
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: u, error } = await supabaseAdmin.auth.admin.getUserById(data.userId);
+    if (error || !u.user?.email) throw new Error("Adresse e-mail introuvable pour ce membre.");
+    const { error: sendError } = await supabaseAdmin.auth.resetPasswordForEmail(u.user.email, {
+      redirectTo: `${data.origin}/reset-password`,
+    });
+    if (sendError) throw new Error(sendError.message);
     return { ok: true };
   });

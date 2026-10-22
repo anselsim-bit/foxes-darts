@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ClassementsRouteImport } from './routes/classements'
 import { Route as CompteurRouteImport } from './routes/compteur'
 import { Route as GalerieRouteImport } from './routes/galerie'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedMonEspaceRouteImport } from './routes/_authenticated/mon-espace'
 import { Route as TournoisIndexRouteImport } from './routes/tournois.index'
@@ -52,6 +53,11 @@ const CompteurRoute = CompteurRouteImport.update({
 const GalerieRoute = GalerieRouteImport.update({
   id: '/galerie',
   path: '/galerie',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/classements': typeof ClassementsRoute
   '/compteur': typeof CompteurRoute
   '/galerie': typeof GalerieRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/mon-espace': typeof AuthenticatedMonEspaceRoute
   '/tournois/$id': typeof TournoisIdRoute
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/classements': typeof ClassementsRoute
   '/compteur': typeof CompteurRoute
   '/galerie': typeof GalerieRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/mon-espace': typeof AuthenticatedMonEspaceRoute
   '/tournois/$id': typeof TournoisIdRoute
@@ -142,6 +150,7 @@ export interface FileRoutesById {
   '/classements': typeof ClassementsRoute
   '/compteur': typeof CompteurRoute
   '/galerie': typeof GalerieRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/mon-espace': typeof AuthenticatedMonEspaceRoute
   '/tournois/$id': typeof TournoisIdRoute
@@ -160,6 +169,7 @@ export interface FileRouteTypes {
     | '/classements'
     | '/compteur'
     | '/galerie'
+    | '/reset-password'
     | '/admin'
     | '/mon-espace'
     | '/tournois/$id'
@@ -176,6 +186,7 @@ export interface FileRouteTypes {
     | '/classements'
     | '/compteur'
     | '/galerie'
+    | '/reset-password'
     | '/admin'
     | '/mon-espace'
     | '/tournois/$id'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/classements'
     | '/compteur'
     | '/galerie'
+    | '/reset-password'
     | '/_authenticated/admin'
     | '/_authenticated/mon-espace'
     | '/tournois/$id'
@@ -211,6 +223,7 @@ export interface RootRouteChildren {
   ClassementsRoute: typeof ClassementsRoute
   CompteurRoute: typeof CompteurRoute
   GalerieRoute: typeof GalerieRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   TournoisIdRoute: typeof TournoisIdRoute
   TournoisIndexRoute: typeof TournoisIndexRoute
   TournoisIdJouerRoute: typeof TournoisIdJouerRoute
@@ -262,6 +275,13 @@ declare module '@tanstack/react-router' {
       path: '/galerie'
       fullPath: '/galerie'
       preLoaderRoute: typeof GalerieRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -350,6 +370,7 @@ const rootRouteChildren: RootRouteChildren = {
   ClassementsRoute: ClassementsRoute,
   CompteurRoute: CompteurRoute,
   GalerieRoute: GalerieRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   TournoisIdRoute: TournoisIdRoute,
   TournoisIndexRoute: TournoisIndexRoute,
   TournoisIdJouerRoute: TournoisIdJouerRoute,
