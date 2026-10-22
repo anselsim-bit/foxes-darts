@@ -37,7 +37,6 @@ function CompteurPage() {
   const [playing, setPlaying] = useState(false);
   const [password, setPassword] = useState("");
   const [confirming, setConfirming] = useState(false);
-  const [gameKey, setGameKey] = useState(0);
   const [starter, setStarter] = useState<number | null>(null);
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -121,7 +120,6 @@ function CompteurPage() {
   if (playing) {
     return (
       <Game
-        key={gameKey}
         players={players}
         start={start}
         doubleOut={doubleOut}
@@ -130,10 +128,6 @@ function CompteurPage() {
         match={null}
         accessCode={null}
         onExit={() => setPlaying(false)}
-        onRestart={() => {
-          setPlayers((prev) => [...prev].reverse());
-          setGameKey((k) => k + 1);
-        }}
       />
     );
   }

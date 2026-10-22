@@ -37,7 +37,6 @@ export function Game({
   match,
   accessCode,
   onExit,
-  onRestart,
 }: {
   match: { id: string; teamA: string; teamB: string } | null;
   accessCode: string | null;
@@ -48,7 +47,6 @@ export function Game({
   canSave: boolean;
   tournamentId: string | null;
   onExit: () => void;
-  onRestart: () => void;
 }) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [current, setCurrent] = useState<Dart[]>([]);
@@ -222,18 +220,10 @@ export function Game({
                 {reported ? "Tableau mis à jour ✓" : "Envoyer le résultat au tableau du tournoi"}
               </button>
             )}
-            <button onClick={onRestart} className={btn}>
-              <RotateCcw className="mr-1 inline h-4 w-4" /> Recommencer la partie
-            </button>
             <button onClick={undo} className={btn}>
               <Undo2 className="mr-1 inline h-4 w-4" /> Annuler la dernière fléchette
             </button>
           </div>
-          {players.length > 1 && (
-            <p className="mt-2 text-xs text-muted-foreground">
-              Au nouveau départ, l'ordre des joueurs est inversé : {players[1]?.name} commence.
-            </p>
-          )}
         </div>
       ) : (
         <div className="mt-8">
