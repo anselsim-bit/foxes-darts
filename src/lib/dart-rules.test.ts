@@ -1,9 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { isBust, replayTurns, requiresDouble, tournamentRules, type ScoredTurn } from "./dart-rules";
+import { isBust, replayTurns, requiresDouble, tournamentRules, validateFinalLegs, type ScoredTurn } from "./dart-rules";
 
 const misses = (player: number): ScoredTurn => ({ player, darts: Array.from({ length: 3 }, () => ({ value: 0, isDouble: false })), bust: false, total: 0 });
 
 describe("tournament rules", () => {
+  it("requires two winning legs in all knockout rounds but only one in pools", () => {
+    expect(tournamentRules(501, true, "bracket").legsToWin).toBe(2);
+    expect(tournamentRules(301, false, "pool").legsToWin).toBe(1);
+  });
+  it("accepts only 2–0 or 2–1 final results in either direction", () => {
+    for (const [a, b] of [[2, 0], [2, 1], [0, 2], [1, 2]]) expect(validateFinalLegs(a, b)).toEqual({ legsA: a, legsB: b });
+    for (const [a, b] of [[1, 0], [1, 1], [2, 2], [3, 0], [2, -1]]) expect(() => validateFinalLegs(a, b)).toThrow();
+    expect(() => validateFinalLegs(undefined, undefined)).toThrow();
+  });
   it("accepts the admin's 301 or 501 and rejects other starting scores", () => {
     expect(tournamentRules(301, false, "pool").start).toBe(301);
     expect(tournamentRules(501, true, "pool").start).toBe(501);

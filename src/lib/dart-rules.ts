@@ -4,7 +4,14 @@ export type ScoredTurn = { player: number; darts: ScoredDart[]; bust: boolean; t
 export function tournamentRules(startScore: number, doubleOut: boolean, stage: string, limitDoubles = true) {
   if (startScore !== 301 && startScore !== 501) throw new Error("Choisissez une partie en 301 ou 501.");
   if (typeof doubleOut !== "boolean") throw new Error("Choisissez le type de sortie.");
-  return { start: startScore, doubleOut, poolDoubleLimit: stage === "pool" && doubleOut && limitDoubles };
+  return { start: startScore, doubleOut, poolDoubleLimit: stage === "pool" && doubleOut && limitDoubles, legsToWin: stage === "bracket" ? 2 : 1 };
+}
+
+export function validateFinalLegs(a: number | undefined, b: number | undefined) {
+  if (!Number.isInteger(a) || !Number.isInteger(b) || !((a === 2 && (b === 0 || b === 1)) || (b === 2 && (a === 0 || a === 1)))) {
+    throw new Error("La phase finale se joue en deux manches gagnantes : 2–0 ou 2–1.");
+  }
+  return { legsA: a as number, legsB: b as number };
 }
 
 /** A visit counts once if a dart is thrown with 50 or fewer remaining, including bust visits. */

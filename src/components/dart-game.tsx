@@ -21,6 +21,7 @@ export type PlayableMatch = {
   start: number;
   doubleOut: boolean;
   poolDoubleLimit: boolean;
+  legsToWin?: number;
 };
 type Dart = { label: string; value: number; isDouble: boolean };
 type Turn = { player: number; darts: Dart[]; bust: boolean; total: number };
@@ -33,6 +34,7 @@ export function Game({
   start,
   doubleOut,
   poolDoubleLimit = false,
+  legsToWin = 1,
   canSave,
   tournamentId,
   match,
@@ -49,6 +51,7 @@ export function Game({
   start: number;
   doubleOut: boolean;
   poolDoubleLimit?: boolean;
+  legsToWin?: number;
   canSave: boolean;
   tournamentId: string | null;
   onExit: () => void;
@@ -64,17 +67,20 @@ export function Game({
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [reported, setReported] = useState(false);
+  const [completedLegs, setCompletedLegs] = useState(initialProgress?.completedLegs ?? []);
   useEffect(() => {
-    if (!reported) onProgress?.({ turns, current, pendingBust, mult });
-  }, [turns, current, pendingBust, mult, onProgress, reported]);
+    if (!reported) onProgress?.({ turns, current, pendingBust, mult, completedLegs });
+  }, [turns, current, pendingBust, mult, completedLegs, onProgress, reported]);
   const report = async () => {
-    if (winner === null || !match || !accessCode) return;
+    if (winner === null || !matchFinished || !match || !accessCode) return;
     const winningPlayer = players[winner];
     if (!winningPlayer) return;
     const aWon = winningPlayer.name === match.teamA;
     const loserRemaining = scores[winner === 0 ? 1 : 0] ?? 0;
     try {
-      await reportTournamentMatch({ data: { matchId: match.id, scoreA: aWon ? 0 : loserRemaining, scoreB: aWon ? loserRemaining : 0, code: accessCode } });
+      await reportTournamentMatch({ data: { matchId: match.id, scoreA: aWon ? 0 : loserRemaining, scoreB: aWon ? loserRemaining : 0, code: accessCode,
+        ...(legsToWin === 2 ? { legsA: legWins[players[0]?.name === match.teamA ? 0 : 1] ?? 0, legsB: legWins[players[0]?.name === match.teamB ? 0 : 1] ?? 0 } : {}),
+      } });
       setReported(true);
       onReported?.();
       toast.success("Résultat envoyé au tableau du tournoi.");
@@ -90,7 +96,15 @@ export function Game({
     return last && !last.bust && scores[last.player] === 0 ? last.player : null;
   }, [turns, scores]);
 
-  const playerIdx = turns.length % players.length;
+  const legWins = players.map((_, i) => completedLegs.filter(l => l.winner === i).length + (winner === i ? 1 : 0));
+  const matchFinished = winner !== null && (legWins[winner] ?? 0) >= legsToWin;
+  const playerIdx = (turns.length + completedLegs.length) % players.length;
+  const nextLeg = () => {
+    if (winner === null || matchFinished) return;
+    setCompletedLegs([...completedLegs, { winner, remaining: scores[winner === 0 ? 1 : 0] ?? start }]);
+    setTurns([]); setCurrent([]); setPendingBust(null); setMult(1);
+    notifiedSimple.current.clear();
+  };
   const turnComplete = pendingBust !== null;
   const remaining = (scores[playerIdx] ?? start) - (pendingBust === true ? 0 : current.reduce((a, d) => a + d.value, 0));
   const activeDoubleOut = requiresDouble(doubleOut, poolDoubleLimit, doubleAttempts[playerIdx] ?? 0);
@@ -195,7 +209,7 @@ export function Game({
               </p>
               <p className="game-score font-display text-4xl text-primary">{active ? remaining : scores[i]}</p>
               <p className="game-stats mt-1 text-xs text-muted-foreground">
-                Moy. {darts ? (scored / darts).toFixed(1) : "0"} · Meilleure volée {bestVisit(i)}
+                {legsToWin === 2 ? `Manches : ${legWins[i]} / 2` : `Moy. ${darts ? (scored / darts).toFixed(1) : "0"} · Meilleure volée ${bestVisit(i)}`}
               </p>
               {poolDoubleLimit && doubleOut && (
                 <p className="game-attempts mt-1 text-xs text-muted-foreground">
@@ -211,7 +225,7 @@ export function Game({
         <div className="game-winner mt-8 rounded-lg border border-primary bg-card p-6 text-center">
           <p className="font-display text-3xl">
             <span className="text-gradient-ember">{players[winner]?.name}</span>{" "}
-            {players.length === 1 ? "a terminé !" : "gagne !"}
+            {players.length === 1 ? "a terminé !" : matchFinished ? "gagne !" : "remporte la manche !"}
           </p>
           {players.some((p) => p.userId) &&
             (canSave ? (
@@ -228,7 +242,10 @@ export function Game({
               </p>
             ))}
           <div className="mt-4 flex flex-wrap justify-center gap-2">
-            {match && canSave && accessCode && (
+            {!matchFinished && (
+              <Button onClick={nextLeg} className={`${btn} h-auto whitespace-normal`}>Manche suivante <ArrowRight className="h-4 w-4" /></Button>
+            )}
+            {match && canSave && accessCode && matchFinished && (
               <Button onClick={report} disabled={reported} className={`${btn} h-auto whitespace-normal`}>
                 {reported ? "Tableau mis à jour ✓" : "Envoyer le résultat au tableau du tournoi"}
               </Button>

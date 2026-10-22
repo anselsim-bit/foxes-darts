@@ -42,6 +42,12 @@ beforeEach(() => {
 });
 
 describe("Tournament guest access", () => {
+  it("does not write or advance a final with only one winning leg", async () => {
+    mocks.publicRows.push({ id: "match", tournament_id: "test", stage: "bracket", team_a: "a", team_b: "b" }, { status: "started" });
+    mocks.adminRows.push({ code: "FOX123" });
+    await expect(reportTournamentMatch({ data: { matchId: "match", scoreA: 0, scoreB: 42, legsA: 1, legsB: 0, code: "FOX123" } })).rejects.toThrow("deux manches gagnantes");
+    expect(mocks.adminFrom.mock.calls.map(([table]) => table)).toEqual(["tournament_settings_codes"]);
+  });
   it("accepts the current tournament code without a member session", async () => {
     mocks.publicRows.push({ status: "started" });
     mocks.adminRows.push({ code: "FOX123" });

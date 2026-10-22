@@ -145,6 +145,7 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
           start={match.start}
           doubleOut={match.doubleOut}
           poolDoubleLimit={match.poolDoubleLimit}
+          legsToWin={match.legsToWin ?? 1}
           canSave
           tournamentId={tournamentId}
           match={match}
@@ -208,7 +209,7 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
           )}
           {match && (
             <>
-              <p className="text-sm font-medium">{match.start} · {match.doubleOut ? "Sortie double" : "Sortie simple"}</p>
+              <p className="text-sm font-medium">{match.start} · {match.doubleOut ? "Sortie double" : "Sortie simple"} · {(match.legsToWin ?? 1) === 2 ? "2 manches gagnantes" : "1 manche"}</p>
               <div>
                 <p className="mb-2 text-sm font-medium">Qui commence ?</p>
                 <div className="flex flex-wrap gap-2">
@@ -233,6 +234,7 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
                   const nextDraft: TournamentDraft = {
                     version: 1, matchId: match.id, teamAId: match.teamAId, teamBId: match.teamBId,
                     start: match.start, doubleOut: match.doubleOut, poolDoubleLimit: match.poolDoubleLimit,
+                    legsToWin: match.legsToWin ?? 1,
                     players: ordered.map(p => ({ name: p.name, userId: null })),
                     progress: { turns: [], current: [], pendingBust: null, mult: 1 },
                   };
