@@ -1,9 +1,9 @@
 # Foxes Darts — Tâches
 
 ## Phases finales en deux manches gagnantes
-- [ ] Compter les manches, alterner le premier joueur et préserver la reprise du match.
-- [ ] Valider et afficher les résultats 2–0 / 2–1 au tableau, y compris la saisie admin.
-- [ ] Tester les règles et le parcours complet.
+- [x] Compter les manches, alterner le premier joueur et préserver la reprise du match.
+- [x] Valider et afficher les résultats 2–0 / 2–1 au tableau, y compris la saisie admin.
+- [x] Tester les règles et le parcours complet.
 
 ## Compteur sans défilement sur téléphone
 - [x] Adapter l’affichage en jeu à la hauteur disponible, en portrait et paysage.
