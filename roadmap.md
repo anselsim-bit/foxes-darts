@@ -1,8 +1,9 @@
 # Foxes Darts — Tâches
-\n+## Règles de partie des tournois
-- [ ] Réglages admin 301/501 et sortie double/simple, imposés aux matchs.
-- [ ] En poules : cinq tours par équipe à 50 ou moins puis sortie simple avec notification.
-- [ ] Tests des règles et vérification du parcours connecté.
+
+## Règles de partie des tournois
+- [x] Réglages admin 301/501 et sortie double/simple, imposés aux matchs.
+- [x] En poules : cinq tours par équipe à 50 ou moins puis sortie simple avec notification.
+- [x] Tests des règles et vérification du parcours connecté.
 
 - [x] Activer Lovable Cloud
 - [x] Schéma : tournaments, photos, standings, highlights, user_roles, profiles, registrations, player_stats
