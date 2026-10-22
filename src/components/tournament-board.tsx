@@ -11,6 +11,7 @@ import {
   generateFinals,
   reportMatch,
   amIAdmin,
+  adminAddTeam,
   adminRenameTeam,
   adminDeleteTeam,
   adminSendTournamentLink,
