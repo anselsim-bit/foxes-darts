@@ -3,7 +3,7 @@ import { Undo2, Trophy, RotateCcw, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import { suggestNextDarts } from "@/lib/checkout";
 import { saveGameResult } from "@/lib/darts.functions";
-import { reportMatch, setTeamNameWithCode } from "@/lib/tournament.functions";
+import { reportMatch } from "@/lib/tournament.functions";
 
 export type Player = { name: string; userId: string | null; token?: string | undefined };
 export type PlayableMatch = {
@@ -22,44 +22,6 @@ type Turn = { player: number; darts: Dart[]; bust: boolean; total: number };
 const btn =
   "rounded-md border border-border bg-card px-3 py-3 text-sm font-semibold transition-colors hover:border-primary disabled:opacity-40";
 
-export function TeamNamer({ teamId, current, code, onDone }: { teamId: string; current: string; code: string; onDone: (name: string) => void }) {
-  const [value, setValue] = useState("");
-  const [busy, setBusy] = useState(false);
-  const submit = async () => {
-    const name = value.trim();
-    if (name.length < 2) return;
-    if (!window.confirm(`Nommer définitivement l'équipe de ${current} « ${name} » ?`)) return;
-    setBusy(true);
-    try {
-      const res = await setTeamNameWithCode({ data: { teamId, name, code } });
-      toast.success(`Équipe renommée « ${res.name} »`);
-      onDone(res.name);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erreur");
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <div className="flex gap-2">
-      <input
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        maxLength={40}
-        placeholder={`Nom d'équipe pour ${current}`}
-        aria-label={`Nom d'équipe pour ${current}`}
-        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-      />
-      <button
-        onClick={submit}
-        disabled={busy || value.trim().length < 2}
-        className="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
-      >
-        {busy ? "..." : "Valider"}
-      </button>
-    </div>
-  );
-}
 export function Game({
   players,
   start,

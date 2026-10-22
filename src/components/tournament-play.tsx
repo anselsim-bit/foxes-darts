@@ -117,7 +117,7 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
       <h2 className="text-xl">Participer au tournoi</h2>
       {!code ? (
         <div>
-          <p className="mb-2 text-sm text-muted-foreground">Saisissez le code d'accès reçu par email.</p>
+          <p className="mb-2 text-sm text-muted-foreground">Saisissez le code d'accès communiqué par l'organisateur.</p>
           <div className="flex gap-2">
             <input
               value={codeInput}
@@ -129,7 +129,7 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
             />
             <button
               onClick={checkCode}
-              disabled={busy || codeInput.trim().length < 6}
+              disabled={busy || codeInput.trim().length < 1}
               className="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
             >
               {busy ? "..." : "Valider"}
