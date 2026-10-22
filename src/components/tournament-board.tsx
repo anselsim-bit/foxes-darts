@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Play, Trash2, Trophy, Plus, Check, PencilLine, Mail, KeyRound, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { buildBracket, poolStandings, qualifiersFromPools } from "@/lib/bracket";
 import {
@@ -28,6 +29,8 @@ type Match = {
   score_a: number | null;
   score_b: number | null;
   winner: string | null;
+  legs_a?: number | null;
+  legs_b?: number | null;
 };
 
 const poolName = (i: number) => `Poule ${String.fromCharCode(65 + i)}`;
@@ -156,6 +159,7 @@ export function TournamentBoard({
     bracket.length > 0 ? (
       <div>
         <h2 className="text-2xl">Tableau final</h2>
+        <p className="mt-1 text-sm text-muted-foreground">2 manches gagnantes</p>
         {finalMatch?.winner && (
           <p className="mt-2 flex items-center gap-2 text-lg">
             <Trophy className="h-5 w-5 text-primary" /> Vainqueur :{" "}
@@ -176,8 +180,8 @@ export function TournamentBoard({
                       name={name}
                       admin={admin}
                       boxed
-                      onSave={(a, b) =>
-                        run(() => reportMatch({ data: { matchId: m.id, scoreA: a, scoreB: b } }), "Résultat enregistré.")
+                      onSave={(a, b, legsA, legsB) =>
+                        run(() => reportMatch({ data: { matchId: m.id, scoreA: a, scoreB: b, legsA, legsB } }), "Résultat enregistré.")
                       }
                     />
                   ))}
@@ -455,12 +459,14 @@ function MatchRow({
   name: (id: string | null) => string;
   admin: boolean;
   boxed?: boolean;
-  onSave: (a: number, b: number) => void;
+  onSave: (a: number, b: number, legsA?: number, legsB?: number) => void;
 }) {
   const editable = admin && !!m.team_a && !!m.team_b;
   const [picked, setPicked] = useState<string | null>(m.winner);
   const loserScore = picked === m.team_a ? m.score_b : m.score_a;
   const [remaining, setRemaining] = useState(loserScore && loserScore > 0 ? loserScore.toString() : "");
+  const final = m.stage === "bracket";
+  const [loserLegs, setLoserLegs] = useState((m.winner === m.team_a ? m.legs_b : m.legs_a) === 1 ? 1 : 0);
 
   const side = (id: string | null, score: number | null) => {
     const isWinner = m.winner ? m.winner === id : picked === id;
@@ -496,7 +502,7 @@ function MatchRow({
           <span className="flex min-w-0 items-center gap-2">{content}</span>
         )}
         <span className={`shrink-0 text-sm tabular-nums ${isWinner ? "font-semibold" : "text-muted-foreground"}`}>
-          {m.winner ? (m.winner === id ? "0" : (score ?? "")) : editable && picked === id ? "0" : ""}
+          {final ? (m.winner ? ((id === m.team_a ? m.legs_a : m.legs_b) ?? "—") : picked ? (picked === id ? 2 : loserLegs) : "") : m.winner ? (m.winner === id ? "0" : (score ?? "")) : editable && picked === id ? "0" : ""}
         </span>
       </div>
     );
@@ -512,13 +518,16 @@ function MatchRow({
       toast.error("Indiquez les points restants du perdant (au moins 1).");
       return;
     }
-    onSave(picked === m.team_a ? 0 : rest, picked === m.team_b ? 0 : rest);
+    onSave(picked === m.team_a ? 0 : rest, picked === m.team_b ? 0 : rest,
+      final ? (picked === m.team_a ? 2 : loserLegs) : undefined,
+      final ? (picked === m.team_b ? 2 : loserLegs) : undefined);
   };
 
   return (
     <div className={`text-sm ${boxed ? "rounded-lg border border-border bg-card p-3" : "border-t border-border pt-1.5"}`}>
       {side(m.team_a, m.score_a)}
       {side(m.team_b, m.score_b)}
+      {final && m.winner && <p className="mt-1 text-xs text-muted-foreground">Reste au perdant : {m.winner === m.team_a ? m.score_b : m.score_a}</p>}
       {editable && (
         <form
           onSubmit={(e) => {
@@ -527,6 +536,10 @@ function MatchRow({
           }}
           className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-md border-t border-border/60 px-1.5 pt-2 pb-0.5"
         >
+          {final && <div className="flex items-center gap-2 text-xs">
+            <span>Manches du perdant</span>
+            {[0, 1].map(n => <Button key={n} type="button" size="sm" variant={loserLegs === n ? "default" : "outline"} aria-pressed={loserLegs === n} onClick={() => setLoserLegs(n)}>{n}</Button>)}
+          </div>}
           <label className="flex items-center gap-2 text-xs text-foreground/70">
             <span className="leading-none">Reste au perdant</span>
             <input
@@ -542,10 +555,10 @@ function MatchRow({
               aria-label="Points restants du perdant"
             />
           </label>
-          <button type="submit" disabled={!picked || !remaining} className="btn-ember px-3 py-1.5 text-xs">
+          <Button type="submit" disabled={!picked || !remaining} className="btn-ember px-3 py-1.5 text-xs">
             {m.winner ? <PencilLine className="h-3.5 w-3.5" /> : <Check className="h-3.5 w-3.5" />}
             {m.winner ? "Corriger" : "Valider"}
-          </button>
+          </Button>
         </form>
       )}
     </div>
