@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Undo2, Trophy, RotateCcw, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import { suggestNextDarts } from "@/lib/checkout";
 import { saveGameResult } from "@/lib/darts.functions";
 import { reportMatch } from "@/lib/tournament.functions";
+import { isBust, replayTurns, requiresDouble } from "@/lib/dart-rules";
 
 export type Player = { name: string; userId: string | null; token?: string | undefined };
 export type PlayableMatch = {
@@ -15,6 +16,9 @@ export type PlayableMatch = {
   teamBId: string;
   canNameA: boolean;
   canNameB: boolean;
+  start: number;
+  doubleOut: boolean;
+  poolDoubleLimit: boolean;
 };
 type Dart = { label: string; value: number; isDouble: boolean };
 type Turn = { player: number; darts: Dart[]; bust: boolean; total: number };
@@ -26,6 +30,7 @@ export function Game({
   players,
   start,
   doubleOut,
+  poolDoubleLimit = false,
   canSave,
   tournamentId,
   match,
@@ -38,6 +43,7 @@ export function Game({
   players: Player[];
   start: number;
   doubleOut: boolean;
+  poolDoubleLimit?: boolean;
   canSave: boolean;
   tournamentId: string | null;
   onExit: () => void;
@@ -51,7 +57,9 @@ export function Game({
   const [reported, setReported] = useState(false);
   const report = async () => {
     if (winner === null || !match) return;
-    const aWon = players[winner]!.name === match.teamA;
+    const winningPlayer = players[winner];
+    if (!winningPlayer) return;
+    const aWon = winningPlayer.name === match.teamA;
     const loserRemaining = scores[winner === 0 ? 1 : 0] ?? 0;
     try {
       await reportMatch({ data: { matchId: match.id, scoreA: aWon ? 0 : loserRemaining, scoreB: aWon ? loserRemaining : 0, code: accessCode ?? undefined } });
@@ -62,11 +70,7 @@ export function Game({
     }
   };
 
-  const scores = useMemo(() => {
-    const s = players.map(() => start);
-    for (const t of turns) if (!t.bust) s[t.player]! -= t.total;
-    return s;
-  }, [turns, players, start]);
+  const { scores, doubleAttempts } = useMemo(() => replayTurns(start, players.length, turns), [turns, players.length, start]);
 
   const winner = useMemo(() => {
     const last = turns[turns.length - 1];
@@ -74,7 +78,17 @@ export function Game({
   }, [turns, scores]);
 
   const playerIdx = turns.length % players.length;
-  const remaining = scores[playerIdx]! - current.reduce((a, d) => a + d.value, 0);
+  const remaining = (scores[playerIdx] ?? start) - current.reduce((a, d) => a + d.value, 0);
+  const activeDoubleOut = requiresDouble(doubleOut, poolDoubleLimit, doubleAttempts[playerIdx] ?? 0);
+  const notifiedSimple = useRef(new Set<number>());
+  useEffect(() => {
+    for (const index of notifiedSimple.current) {
+      if ((doubleAttempts[index] ?? 0) < 5) notifiedSimple.current.delete(index);
+    }
+    if (winner !== null || !doubleOut || !poolDoubleLimit || activeDoubleOut || notifiedSimple.current.has(playerIdx)) return;
+    notifiedSimple.current.add(playerIdx);
+    toast.info(`${players[playerIdx]?.name ?? "Équipe"} : 5 tours d'essais terminés, passage en sortie simple.`, { duration: 7000 });
+  }, [playerIdx, activeDoubleOut, doubleAttempts, doubleOut, poolDoubleLimit, winner, players]);
 
   const bestVisit = (i: number) =>
     turns.filter((t) => t.player === i && !t.bust).reduce((m, t) => Math.max(m, t.total), 0);
@@ -93,8 +107,8 @@ export function Game({
     const label = base === 0 ? "Raté" : base === 25 ? (m === 2 ? "Bull" : "25") : `${["", "S", "D", "T"][m]}${base}`;
     const dart: Dart = { label, value, isDouble: m === 2 && base !== 0 };
     const darts = [...current, dart];
-    const left = scores[playerIdx]! - darts.reduce((a, d) => a + d.value, 0);
-    const bust = left < 0 || (doubleOut && left === 1) || (left === 0 && doubleOut && !dart.isDouble);
+    const left = (scores[playerIdx] ?? start) - darts.reduce((a, d) => a + d.value, 0);
+    const bust = isBust(left, dart, activeDoubleOut);
     if (bust) return endTurn(darts, true);
     if (left === 0 || darts.length === 3) return endTurn(darts, false);
     setCurrent(darts);
@@ -142,7 +156,7 @@ export function Game({
       <div className="flex items-center justify-between">
         <h1 className="text-2xl">
           Partie <span className="text-gradient-ember">{start}</span>
-          {doubleOut && <span className="ml-2 text-sm text-muted-foreground">· sortie double</span>}
+          <span className="ml-2 text-sm text-muted-foreground">· {activeDoubleOut ? "sortie double" : "sortie simple"}</span>
         </h1>
         <button onClick={onExit} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <RotateCcw className="h-4 w-4" /> Nouvelle partie
@@ -153,7 +167,7 @@ export function Game({
         {players.map((p, i) => {
           const active = winner === null && i === playerIdx;
           const darts = turns.filter((t) => t.player === i).length;
-          const scored = start - scores[i]!;
+          const scored = start - (scores[i] ?? start);
           return (
             <div
               key={i}
@@ -167,6 +181,11 @@ export function Game({
               <p className="mt-1 text-xs text-muted-foreground">
                 Moy. {darts ? (scored / darts).toFixed(1) : "0"} · Meilleure volée {bestVisit(i)}
               </p>
+              {poolDoubleLimit && doubleOut && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {requiresDouble(doubleOut, poolDoubleLimit, doubleAttempts[i] ?? 0) ? `Essais double : ${Math.min(doubleAttempts[i] ?? 0, 5)}/5 tours` : "Sortie simple"}
+                </p>
+              )}
             </div>
           );
         })}
@@ -175,7 +194,7 @@ export function Game({
       {winner !== null ? (
         <div className="mt-8 rounded-xl border border-primary bg-card p-6 text-center">
           <p className="font-display text-3xl">
-            <span className="text-gradient-ember">{players[winner]!.name}</span>{" "}
+            <span className="text-gradient-ember">{players[winner]?.name}</span>{" "}
             {players.length === 1 ? "a terminé !" : "gagne !"}
           </p>
           {players.some((p) => p.userId) &&
@@ -207,15 +226,20 @@ export function Game({
           </div>
           {players.length > 1 && (
             <p className="mt-2 text-xs text-muted-foreground">
-              Au nouveau départ, l'ordre des joueurs est inversé : {players[1]!.name} commence.
+              Au nouveau départ, l'ordre des joueurs est inversé : {players[1]?.name} commence.
             </p>
           )}
         </div>
       ) : (
         <div className="mt-8">
+          {poolDoubleLimit && doubleOut && !activeDoubleOut && (
+            <p role="status" className="mb-4 border-l-4 border-primary bg-primary/10 px-4 py-3 text-sm font-semibold">
+              {players[playerIdx]?.name} : les 5 tours d'essais de double sont terminés. Sortie simple à partir de ce tour.
+            </p>
+          )}
           <div className="mb-3 flex items-center justify-between gap-3 text-sm">
             <span>
-              Au tour de <strong>{players[playerIdx]!.name}</strong> — fléchette {current.length + 1}/3
+              Au tour de <strong>{players[playerIdx]?.name}</strong> — fléchette {current.length + 1}/3
             </span>
             <div className="flex gap-2">
               {[0, 1, 2].map((i) => {
@@ -241,7 +265,7 @@ export function Game({
             </div>
           </div>
           {(() => {
-            const tip = suggestNextDarts(remaining, 3 - current.length, doubleOut);
+            const tip = suggestNextDarts(remaining, 3 - current.length, activeDoubleOut);
             if (!tip.note) return null;
             return (
               <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-4 py-2 text-sm">

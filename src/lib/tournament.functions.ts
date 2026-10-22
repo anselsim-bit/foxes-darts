@@ -13,6 +13,7 @@ import {
   type MatchDraft,
 } from "@/lib/bracket";
 import { publicClient } from "@/lib/public.functions";
+import { tournamentRules } from "@/lib/dart-rules";
 
 type Ctx = { supabase: SupabaseClient<Database>; userId: string };
 
@@ -207,7 +208,8 @@ export const listPlayableMatches = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { tournamentId: string }) => input)
   .handler(async ({ data, context }) => {
-    const [{ data: teams }, { data: matches }] = await Promise.all([
+    const [{ data: tournament, error: tournamentError }, { data: teams }, { data: matches }] = await Promise.all([
+      context.supabase.from("tournaments").select("start_score, double_out").eq("id", data.tournamentId).single(),
       context.supabase.from("tournament_teams").select("id, name").eq("tournament_id", data.tournamentId),
       context.supabase
         .from("tournament_matches")
@@ -218,17 +220,22 @@ export const listPlayableMatches = createServerFn({ method: "GET" })
         .not("team_b", "is", null)
         .order("round"),
     ]);
+    if (tournamentError || !tournament) throw new Error("Réglages du tournoi introuvables.");
     const name = new Map((teams ?? []).map((t) => [t.id, t.name]));
-    return (matches ?? []).map((m) => ({
+    return (matches ?? []).flatMap((m) => {
+      if (!m.team_a || !m.team_b) return [];
+      return [{
       id: m.id,
-      label: `${m.stage === "pool" ? `Poule ${String.fromCharCode(65 + (m.pool_index ?? 0))}` : `Tour ${m.round}`} — ${name.get(m.team_a!)} vs ${name.get(m.team_b!)}`,
-      teamA: name.get(m.team_a!) ?? "Équipe A",
-      teamB: name.get(m.team_b!) ?? "Équipe B",
-      teamAId: m.team_a!,
-      teamBId: m.team_b!,
+      ...tournamentRules(tournament.start_score, tournament.double_out, m.stage),
+      label: `${m.stage === "pool" ? `Poule ${String.fromCharCode(65 + (m.pool_index ?? 0))}` : `Tour ${m.round}`} — ${name.get(m.team_a)} vs ${name.get(m.team_b)}`,
+      teamA: name.get(m.team_a) ?? "Équipe A",
+      teamB: name.get(m.team_b) ?? "Équipe B",
+      teamAId: m.team_a,
+      teamBId: m.team_b,
       canNameA: false,
       canNameB: false,
-    }));
+    }];
+    });
   });
 
 /**

@@ -522,6 +522,7 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          double_out: boolean
           end_time: string | null
           event_date: string
           format: string
@@ -531,6 +532,7 @@ export type Database = {
           location: string | null
           max_participants: number | null
           pool_count: number
+          start_score: number
           start_time: string | null
           status: string
           team_size: number
@@ -539,6 +541,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          double_out?: boolean
           end_time?: string | null
           event_date: string
           format?: string
@@ -548,6 +551,7 @@ export type Database = {
           location?: string | null
           max_participants?: number | null
           pool_count?: number
+          start_score?: number
           start_time?: string | null
           status?: string
           team_size?: number
@@ -556,6 +560,7 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          double_out?: boolean
           end_time?: string | null
           event_date?: string
           format?: string
@@ -565,6 +570,7 @@ export type Database = {
           location?: string | null
           max_participants?: number | null
           pool_count?: number
+          start_score?: number
           start_time?: string | null
           status?: string
           team_size?: number

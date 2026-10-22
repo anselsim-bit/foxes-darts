@@ -1,0 +1,3 @@
+ALTER TABLE public.tournaments ADD COLUMN start_score integer NOT NULL DEFAULT 501 CHECK (start_score IN (301, 501)), ADD COLUMN double_out boolean NOT NULL DEFAULT true;
+COMMENT ON COLUMN public.tournaments.start_score IS 'Score de départ imposé aux matchs du tournoi : 301 ou 501.';
+COMMENT ON COLUMN public.tournaments.double_out IS 'Sortie double ; en poules, chaque équipe passe en sortie simple après cinq tours avec un essai à 50 points ou moins.';

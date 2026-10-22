@@ -33,8 +33,6 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
   const [busy, setBusy] = useState(false);
   const [matches, setMatches] = useState<PlayableMatch[]>([]);
   const [match, setMatch] = useState<PlayableMatch | null>(null);
-  const [start, setStart] = useState(501);
-  const [doubleOut, setDoubleOut] = useState(true);
   const [starter, setStarter] = useState<number | null>(null);
   const [players, setPlayers] = useState<Player[] | null>(null);
   const [gameKey, setGameKey] = useState(0);
@@ -85,8 +83,9 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
         <Game
           key={gameKey}
           players={players}
-          start={start}
-          doubleOut={doubleOut}
+          start={match.start}
+          doubleOut={match.doubleOut}
+          poolDoubleLimit={match.poolDoubleLimit}
           canSave
           tournamentId={tournamentId}
           match={match}
@@ -162,16 +161,7 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
           )}
           {match && (
             <>
-              <div className="flex flex-wrap gap-2">
-                {[301, 501, 701].map((s) => (
-                  <button key={s} onClick={() => setStart(s)} className={choice(start === s)}>
-                    {s}
-                  </button>
-                ))}
-                <label className="ml-2 flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={doubleOut} onChange={(e) => setDoubleOut(e.target.checked)} /> Sortie double
-                </label>
-              </div>
+              <p className="text-sm font-medium">{match.start} · {match.doubleOut ? "Sortie double" : "Sortie simple"}</p>
               <div>
                 <p className="mb-2 text-sm font-medium">Qui commence ?</p>
                 <div className="flex flex-wrap gap-2">
