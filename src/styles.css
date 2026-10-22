@@ -205,11 +205,11 @@
 
 @media (max-height: 500px) and (orientation: landscape) and (max-width: 1023px) {
   .dart-game { grid-template-columns: minmax(160px, 0.8fr) minmax(0, 2fr); grid-template-rows: 40px minmax(0, 1fr); gap: 6px 12px; }
-  .game-heading { grid-column: 1 / -1; }
-  .game-scores { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; align-content: start; }
+  .game-heading { grid-column: 1; }
+  .game-scores { grid-column: 1; grid-row: 2; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; align-content: start; }
   .game-stats { display: none; }
   .game-player-name { white-space: normal; overflow-wrap: anywhere; }
-  .game-play { gap: 5px; }
+  .game-play { grid-column: 2; grid-row: 1 / span 2; gap: 5px; }
   .game-visit { min-height: 44px; }
   .game-dart { height: 40px; }
   .game-advice { height: 36px; flex-basis: 36px; }
@@ -218,5 +218,5 @@
   .game-multipliers button { height: 40px; }
   .game-keypad { grid-template-columns: repeat(7, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 4px; }
   .game-keypad button:last-child { grid-column: span 5; }
-  .game-winner { padding: 10px; }
+  .game-winner { grid-column: 2; grid-row: 1 / span 2; padding: 10px; }
 }
