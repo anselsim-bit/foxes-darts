@@ -26,6 +26,7 @@ import {
   adminSyncHelloAsso,
   adminListMembers,
   adminSetMemberAdmin,
+  adminSendPasswordReset,
 } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -1182,7 +1183,21 @@ function MembersTab() {
   const [filter, setFilter] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
   const { data: members = [] } = useQuery({ queryKey: ["admin-members"], queryFn: () => adminListMembers() });
-  const shown = members.filter((m) => m.name.toLowerCase().includes(filter.trim().toLowerCase()));
+  const q = filter.trim().toLowerCase();
+  const shown = members.filter((m) => m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q));
+
+  const resetPassword = async (m: (typeof members)[number]) => {
+    if (!window.confirm(`Envoyer à ${m.name} (${m.email}) un e-mail pour réinitialiser son mot de passe ?`)) return;
+    setBusyId(m.id);
+    try {
+      await adminSendPasswordReset({ data: { userId: m.id, origin: window.location.origin } });
+      toast.success(`E-mail de réinitialisation envoyé à ${m.email}.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Envoi impossible.");
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   const toggle = async (m: (typeof members)[number]) => {
     const next = !m.admin;
@@ -1205,7 +1220,7 @@ function MembersTab() {
       <input
         value={filter}
         onChange={(e) => setFilter(e.target.value)}
-        placeholder="Rechercher un membre"
+        placeholder="Rechercher par nom ou e-mail"
         aria-label="Rechercher un membre"
         className="w-full max-w-sm rounded-md border border-input bg-background px-3 py-2 text-sm"
       />
@@ -1214,8 +1229,18 @@ function MembersTab() {
           <li key={m.id} className="flex items-center justify-between gap-3 px-4 py-3">
             <div>
               <p className="font-medium">{m.name}{m.self && <span className="ml-2 text-xs text-muted-foreground">(vous)</span>}</p>
+              <p className="text-sm text-muted-foreground break-all">{m.email || "E-mail inconnu"}</p>
               <p className="text-xs text-muted-foreground">{m.admin ? "Administrateur" : "Membre"}</p>
             </div>
+            <div className="flex flex-wrap justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={busyId === m.id || !m.email}
+              onClick={() => resetPassword(m)}
+            >
+              Réinitialiser le mot de passe
+            </Button>
             <Button
               variant={m.admin ? "outline" : "default"}
               size="sm"
@@ -1224,6 +1249,7 @@ function MembersTab() {
             >
               {m.admin ? "Retirer admin" : "Rendre admin"}
             </Button>
+            </div>
           </li>
         ))}
         {shown.length === 0 && <li className="px-4 py-3 text-sm text-muted-foreground">Aucun membre trouvé.</li>}
