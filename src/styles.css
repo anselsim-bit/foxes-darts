@@ -144,3 +144,81 @@
     radial-gradient(ellipse 80% 60% at 50% -10%, color-mix(in oklab, var(--ember) 22%, transparent), transparent),
     radial-gradient(ellipse 40% 30% at 85% 110%, color-mix(in oklab, var(--ember) 12%, transparent), transparent);
 }
+
+/* An active board owns the phone viewport; setup pages keep the normal site layout. */
+@media (max-width: 1023px), (max-height: 600px) and (pointer: coarse) {
+  body:has(.dart-game) { overflow: hidden; }
+  .dart-game {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+    display: grid;
+    grid-template-rows: 40px auto minmax(0, 1fr);
+    gap: 8px;
+    overflow: hidden;
+    letter-spacing: 0;
+  }
+  .dart-game h1 { font-size: 20px; line-height: 1.1; letter-spacing: 0; }
+  .game-rule { display: block; margin-left: 0; font-family: var(--font-body); font-size: 12px; line-height: 1.2; text-transform: none; }
+  .game-scores { margin-top: 0; gap: 6px; }
+  .game-player { padding: 8px 4px; }
+  .game-player-name { font-size: 13px; line-height: 18px; }
+  .game-score { font-size: 36px; line-height: 1.1; letter-spacing: 0; }
+  .game-stats { font-size: 10px; line-height: 12px; }
+  .game-attempts { font-size: 10px; line-height: 12px; }
+  .game-play { min-height: 0; margin-top: 0; display: flex; flex-direction: column; gap: 8px; }
+  .game-visit { margin-bottom: 0; min-height: 52px; }
+  .game-turn { font-size: 13px; line-height: 17px; overflow-wrap: anywhere; }
+  .game-darts { gap: 4px; }
+  .game-dart { width: 42px; height: 48px; }
+  .game-dart .font-display { font-size: 16px; letter-spacing: 0; }
+  .game-advice { height: 48px; flex: 0 0 48px; margin-bottom: 0; }
+  .game-tip { padding: 4px 8px; gap: 4px; align-content: center; font-size: 12px; line-height: 14px; }
+  .game-tip-note { flex-basis: 100%; font-size: 11px; line-height: 12px; }
+  .game-next { height: 100%; width: 100%; }
+  .game-multipliers { margin-bottom: 0; gap: 6px; flex: 0 0 44px; }
+  .game-multipliers button { height: 44px; padding: 0; font-size: 14px; }
+  .game-keypad { flex: 1; min-height: 0; grid-template-columns: repeat(5, minmax(0, 1fr)); grid-template-rows: repeat(5, minmax(0, 1fr)); gap: 6px; }
+  .game-keypad button { min-width: 0; padding: 0; font-size: 18px; height: 100%; touch-action: manipulation; }
+  .game-keypad button:nth-last-child(2) { font-size: 14px; }
+  .game-keypad button:last-child { grid-column: span 3; }
+  .game-simple-notice { margin-bottom: 0; padding: 4px 8px; font-size: 11px; line-height: 14px; }
+  .game-winner { min-height: 0; align-self: center; margin-top: 0; padding: 16px; }
+  .game-winner > p:first-child { font-size: 24px; line-height: 1.2; overflow-wrap: anywhere; }
+  .game-winner button { min-height: 44px; }
+  .game-scores[data-many="true"] .game-stats { display: none; }
+  .game-scores[data-many="true"] .game-player { padding-top: 4px; padding-bottom: 4px; }
+  .game-scores[data-many="true"] .game-score { font-size: 28px; }
+}
+
+@media (max-width: 1023px) and (max-height: 650px) and (orientation: portrait) {
+  .dart-game { gap: 5px; padding-top: max(4px, env(safe-area-inset-top)); padding-bottom: max(4px, env(safe-area-inset-bottom)); }
+  .game-play { gap: 5px; }
+  .game-player { padding-top: 4px; padding-bottom: 4px; }
+  .game-stats { display: none; }
+  .game-advice { height: 44px; flex-basis: 44px; }
+  .game-tip-note { display: none; }
+  .game-keypad { gap: 4px; }
+}
+
+@media (max-height: 500px) and (orientation: landscape) and (max-width: 1023px) {
+  .dart-game { grid-template-columns: minmax(160px, 0.8fr) minmax(0, 2fr); grid-template-rows: 40px minmax(0, 1fr); gap: 6px 12px; }
+  .game-heading { grid-column: 1; }
+  .game-scores { grid-column: 1; grid-row: 2; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; align-content: start; }
+  .game-stats { display: none; }
+  .game-player-name { white-space: normal; overflow-wrap: anywhere; }
+  .game-play { grid-column: 2; grid-row: 1 / span 2; gap: 5px; }
+  .game-visit { min-height: 44px; }
+  .game-dart { height: 40px; }
+  .game-advice { height: 36px; flex-basis: 36px; }
+  .game-tip-note { display: none; }
+  .game-multipliers { flex-basis: 40px; }
+  .game-multipliers button { height: 40px; }
+  .game-keypad { grid-template-columns: repeat(7, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 4px; }
+  .game-keypad button:last-child { grid-column: span 5; }
+  .game-winner { grid-column: 2; grid-row: 1 / span 2; padding: 10px; }
+}

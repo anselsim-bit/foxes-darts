@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Undo2, Trophy, RotateCcw, Lightbulb, ArrowRight } from "lucide-react";
+import { Undo2, Trophy, RotateCcw, Lightbulb, ArrowRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { suggestNextDarts } from "@/lib/checkout";
@@ -168,18 +168,18 @@ export function Game({
   };
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl">
+    <div className="dart-game mx-auto max-w-4xl bg-background px-4 py-8" aria-label="Compteur de fléchettes">
+      <div className="game-heading grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+        <h1 className="min-w-0 text-2xl">
           Partie <span className="text-gradient-ember">{start}</span>
-          <span className="ml-2 text-sm text-muted-foreground">· {activeDoubleOut ? "sortie double" : "sortie simple"}</span>
+          <span className="game-rule ml-2 text-sm text-muted-foreground">· {activeDoubleOut ? "sortie double" : "sortie simple"}</span>
         </h1>
-        <button onClick={onExit} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <RotateCcw className="h-4 w-4" /> Nouvelle partie
-        </button>
+        <Button variant="ghost" size="icon" onClick={onExit} aria-label="Nouvelle partie" title="Quitter le compteur" className="shrink-0 text-muted-foreground">
+          <X className="h-5 w-5" />
+        </Button>
       </div>
 
-      <div className="mt-6 grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(players.length, 4)}, minmax(0, 1fr))` }}>
+      <div className="game-scores mt-6 grid gap-3" data-many={players.length > 4} style={{ gridTemplateColumns: `repeat(${Math.min(players.length, 4)}, minmax(0, 1fr))` }}>
         {players.map((p, i) => {
           const active = winner === null && i === playerIdx;
           const darts = turns.filter((t) => t.player === i).length;
@@ -187,18 +187,18 @@ export function Game({
           return (
             <div
               key={i}
-              className={`rounded-xl border p-4 text-center ${active ? "border-primary bg-primary/10" : "border-border bg-card"}`}
+              className={`game-player min-w-0 rounded-lg border p-4 text-center ${active ? "border-primary bg-primary/10" : "border-border bg-card"}`}
             >
-              <p className="truncate text-sm font-medium">
+              <p className="game-player-name truncate text-sm font-medium" title={p.name}>
                 {winner === i && <Trophy className="mr-1 inline h-4 w-4 text-primary" />}
                 {p.name}
               </p>
-              <p className="font-display text-4xl text-primary">{active ? remaining : scores[i]}</p>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="game-score font-display text-4xl text-primary">{active ? remaining : scores[i]}</p>
+              <p className="game-stats mt-1 text-xs text-muted-foreground">
                 Moy. {darts ? (scored / darts).toFixed(1) : "0"} · Meilleure volée {bestVisit(i)}
               </p>
               {poolDoubleLimit && doubleOut && (
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="game-attempts mt-1 text-xs text-muted-foreground">
                   {requiresDouble(doubleOut, poolDoubleLimit, doubleAttempts[i] ?? 0) ? `Essais double : ${Math.min(doubleAttempts[i] ?? 0, 5)}/5 tours` : "Sortie simple"}
                 </p>
               )}
@@ -208,20 +208,20 @@ export function Game({
       </div>
 
       {winner !== null ? (
-        <div className="mt-8 rounded-xl border border-primary bg-card p-6 text-center">
+        <div className="game-winner mt-8 rounded-lg border border-primary bg-card p-6 text-center">
           <p className="font-display text-3xl">
             <span className="text-gradient-ember">{players[winner]?.name}</span>{" "}
             {players.length === 1 ? "a terminé !" : "gagne !"}
           </p>
           {players.some((p) => p.userId) &&
             (canSave ? (
-              <button
+              <Button
                 onClick={save}
                 disabled={saved || saving}
                 className="mt-4 rounded-md bg-primary px-5 py-2 font-semibold text-primary-foreground disabled:opacity-60"
               >
                 {saved ? "Statistiques enregistrées ✓" : saving ? "..." : "Enregistrer les statistiques des membres"}
-              </button>
+              </Button>
             ) : (
               <p className="mt-3 text-sm text-muted-foreground">
                 Pour enregistrer les statistiques, un membre doit être connecté sur cet appareil.
@@ -229,18 +229,18 @@ export function Game({
             ))}
           <div className="mt-4 flex flex-wrap justify-center gap-2">
             {match && canSave && accessCode && (
-              <button onClick={report} disabled={reported} className={btn}>
+              <Button onClick={report} disabled={reported} className={`${btn} h-auto whitespace-normal`}>
                 {reported ? "Tableau mis à jour ✓" : "Envoyer le résultat au tableau du tournoi"}
-              </button>
+              </Button>
             )}
             {onRestart && (
-              <button onClick={onRestart} className={btn}>
+              <Button onClick={onRestart} variant="outline" className={`${btn} h-auto whitespace-normal`}>
                 <RotateCcw className="mr-1 inline h-4 w-4" /> Recommencer la partie
-              </button>
+              </Button>
             )}
-            <button onClick={undo} disabled={reported} className={btn}>
+            <Button onClick={undo} disabled={reported} variant="outline" className={`${btn} h-auto whitespace-normal`}>
               <Undo2 className="mr-1 inline h-4 w-4" /> Annuler la dernière fléchette
-            </button>
+            </Button>
           </div>
           {onRestart && players.length > 1 && (
             <p className="mt-2 text-xs text-muted-foreground">
@@ -249,23 +249,23 @@ export function Game({
           )}
         </div>
       ) : (
-        <div className="mt-8">
+        <div className="game-play mt-8">
           {poolDoubleLimit && doubleOut && !activeDoubleOut && (
-            <p role="status" className="mb-4 border-l-4 border-primary bg-primary/10 px-4 py-3 text-sm font-semibold">
+            <p role="status" className="game-simple-notice mb-4 border-l-4 border-primary bg-primary/10 px-4 py-3 text-sm font-semibold">
               {players[playerIdx]?.name} : les 5 tours d'essais de double sont terminés. Sortie simple à partir de ce tour.
             </p>
           )}
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-3 text-sm">
-            <span>
+          <div className="game-visit mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 text-sm">
+            <span className="game-turn min-w-0">
               Au tour de <strong>{players[playerIdx]?.name}</strong> — {turnComplete ? (pendingBust ? "Volée annulée" : "Volée terminée") : `fléchette ${current.length + 1}/3`}
             </span>
-            <div className="flex gap-2">
+            <div className="game-darts flex shrink-0 gap-2">
               {[0, 1, 2].map((i) => {
                 const d = current[i];
                 return (
                   <div
                     key={i}
-                    className={`flex h-14 w-16 flex-col items-center justify-center rounded-md border ${
+                    className={`game-dart flex h-14 w-16 flex-col items-center justify-center rounded-md border ${
                       d ? "border-primary bg-primary/10" : "border-border bg-card"
                     }`}
                   >
@@ -282,34 +282,36 @@ export function Game({
               })}
             </div>
           </div>
-          {turnComplete && (
-            <div className="mb-4 flex justify-end">
-              <Button size="lg" onClick={() => endTurn(current, pendingBust === true)}>
+          <div className="game-advice mb-3" aria-live="polite">
+          {turnComplete ? (
+            <div className="flex h-full justify-end">
+              <Button size="lg" className="game-next" onClick={() => endTurn(current, pendingBust === true)}>
                 Suivant <ArrowRight />
               </Button>
             </div>
-          )}
-          {(() => {
-            if (turnComplete) return null;
+          ) : (() => {
             const tip = suggestNextDarts(remaining, 3 - current.length, activeDoubleOut);
             if (!tip.note) return null;
             return (
-              <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-4 py-2 text-sm">
-                <Lightbulb className="h-4 w-4 text-primary" />
-                <span className="font-semibold">Conseil :</span>
+              <div className="game-tip flex h-full flex-wrap items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-4 py-2 text-sm">
+                <Lightbulb className="h-4 w-4 shrink-0 text-primary" />
+                <span className="game-tip-label font-semibold">Conseil :</span>
                 {tip.darts.map((d, i) => (
                   <span key={i} className="rounded bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">
                     {d}
                   </span>
                 ))}
-                <span className="text-muted-foreground">{tip.note}</span>
+                <span className="game-tip-note min-w-0 text-muted-foreground">{tip.note}</span>
               </div>
             );
           })()}
-          <div className="mb-3 grid grid-cols-3 gap-2">
+          </div>
+          <div className="game-multipliers mb-3 grid grid-cols-3 gap-2">
             {([1, 2, 3] as const).map((m) => (
-              <button
+              <Button
                 key={m}
+                variant={mult === m ? "default" : "outline"}
+                aria-pressed={mult === m}
                 disabled={turnComplete}
                 onClick={() => setMult(m)}
                 className={
@@ -319,24 +321,24 @@ export function Game({
                 }
               >
                 {["", "Simple", "Double", "Triple"][m]}
-              </button>
+              </Button>
             ))}
           </div>
-          <div className="grid grid-cols-5 gap-2 sm:grid-cols-7">
+          <div className="game-keypad grid grid-cols-5 gap-2 sm:grid-cols-7">
             {Array.from({ length: 20 }, (_, i) => i + 1).map((n) => (
-              <button key={n} onClick={() => throwDart(n)} disabled={turnComplete} className={btn}>
+              <Button variant="outline" key={n} onClick={() => throwDart(n)} disabled={turnComplete} className={`${btn} h-auto`}>
                 {n}
-              </button>
+              </Button>
             ))}
-            <button onClick={() => throwDart(25)} disabled={turnComplete} className={btn}>
+            <Button variant="outline" onClick={() => throwDart(25)} disabled={turnComplete} className={`${btn} h-auto`}>
               {mult === 1 ? "25" : "Bull"}
-            </button>
-            <button onClick={() => throwDart(0)} disabled={turnComplete} className={btn}>
+            </Button>
+            <Button variant="outline" onClick={() => throwDart(0)} disabled={turnComplete} className={`${btn} h-auto`}>
               Raté
-            </button>
-            <button onClick={undo} className={btn} aria-label="Annuler">
+            </Button>
+            <Button variant="outline" onClick={undo} className={`${btn} h-auto`} aria-label="Annuler" title="Annuler la dernière fléchette">
               <Undo2 className="mx-auto h-4 w-4" />
-            </button>
+            </Button>
           </div>
         </div>
       )}
