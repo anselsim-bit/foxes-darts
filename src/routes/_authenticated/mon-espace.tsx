@@ -102,6 +102,12 @@ function MonEspace() {
               id="displayName"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  if (!saving) void saveProfile();
+                }
+              }}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             />
           </div>

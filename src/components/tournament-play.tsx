@@ -171,6 +171,12 @@ export function TournamentPlay({ tournamentId, signedIn, qrCode }: { tournamentI
             <input
               value={codeInput}
               onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  if (!busy && codeInput.trim().length > 0) void checkCode();
+                }
+              }}
               placeholder="Code d'accès"
               maxLength={20}
               aria-label="Code d'accès du tournoi"
