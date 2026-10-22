@@ -1,8 +1,8 @@
 # Foxes Darts — Tâches
 
 ## Compteur sans défilement sur téléphone
-- [ ] Adapter l’affichage en jeu à la hauteur disponible, en portrait et paysage.
-- [ ] Vérifier les touches, le troisième tir et la fin de partie sur plusieurs tailles d’écran.
+- [x] Adapter l’affichage en jeu à la hauteur disponible, en portrait et paysage.
+- [x] Vérifier les touches, le troisième tir et la fin de partie sur plusieurs tailles d’écran.
 
 ## Reprise sur le même appareil
 - [x] Mémoriser le code du tournoi et le revérifier au retour, y compris sans compte.
