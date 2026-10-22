@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Play, Trash2, Trophy, Plus, Check, PencilLine, Mail, KeyRound, ChevronDown } from "lucide-react";
+import { Play, Trash2, Trophy, Plus, Check, Pencil, PencilLine, Mail, KeyRound, ChevronDown, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
