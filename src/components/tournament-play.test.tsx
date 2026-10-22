@@ -17,10 +17,10 @@ async function begin() {
   fireEvent.change(await screen.findByRole("textbox", { name: "Code d'accès du tournoi" }), { target: { value: "FOXES" } });
   fireEvent.click(screen.getByRole("button", { name: "Valider" }));
   fireEvent.change(await screen.findByRole("combobox"), { target: { value: match.id } });
-  fireEvent.click(screen.getByRole("button", { name: "A", exact: true }));
+  fireEvent.click(screen.getByRole("button", { name: "A" }));
   fireEvent.click(screen.getByRole("button", { name: "Commencer le match" }));
 }
-const shoot = (n: number) => fireEvent.click(screen.getByRole("button", { name: n === 0 ? "Raté" : String(n), exact: true }));
+const shoot = (n: number) => fireEvent.click(screen.getByRole("button", { name: n === 0 ? "Raté" : String(n) }));
 beforeEach(() => {
   localStorage.clear(); vi.clearAllMocks();
   vi.mocked(validateTournamentCode).mockResolvedValue({ valid: true, active: true, participantName: null } as Awaited<ReturnType<typeof validateTournamentCode>>);

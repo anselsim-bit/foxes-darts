@@ -117,7 +117,7 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
       if (!res.valid) setCodeMsg("Ce code n'existe pas pour ce tournoi.");
       else if (!res.active) setCodeMsg("Les codes ne sont pas encore activés par l'organisateur.");
       else {
-        await openTournament(codeInput.trim().toUpperCase());
+        await openTournament(codeInput.trim().toUpperCase().replace(/\s+/g, "").slice(0, 20));
         toast.success(res.participantName ? `Code validé, bon tournoi ${res.participantName} !` : "Code validé !");
       }
     } catch {
