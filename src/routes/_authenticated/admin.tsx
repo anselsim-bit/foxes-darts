@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Check, Pencil, Plus, Trash2, Upload, Users, X } from "lucide-react";
 import { getTournamentBoard, adminAddTeam, adminDeleteTeam, adminRenameTeam } from "@/lib/tournament.functions";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { listTournaments, listPhotos, listStandings, listHighlights } from "@/lib/public.functions";
 import {
@@ -29,6 +30,11 @@ export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
       { title: "Administration — Foxes Darts" },
+      { name: "description", content: "Gestion des tournois et des membres Foxes Darts." },
+      { property: "og:title", content: "Administration — Foxes Darts" },
+      { property: "og:description", content: "Gestion des tournois et des membres Foxes Darts." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -133,6 +139,8 @@ function TournamentsTab() {
     team_size: "2",
     with_pools: false,
     pool_count: "4",
+    start_score: 501,
+    double_out: true,
     venue: DEFAULT_VENUE.venue,
     street: DEFAULT_VENUE.street,
     postal_code: DEFAULT_VENUE.postal_code,
@@ -167,6 +175,8 @@ function TournamentsTab() {
       team_size: String(Math.max(2, t.team_size ?? 2)),
       with_pools: (t.pool_count ?? 0) > 0,
       pool_count: String(t.pool_count || 4),
+      start_score: t.start_score,
+      double_out: t.double_out,
       venue: parts[0] ?? "",
       street: parts[1] ?? "",
       postal_code: m ? m[1]! : "",
@@ -210,6 +220,8 @@ function TournamentsTab() {
           max_participants: form.max_participants ? Math.max(1, parseInt(form.max_participants, 10)) : undefined,
           team_size: form.format === "equipe" ? Math.max(2, parseInt(form.team_size, 10) || 2) : 1,
           pool_count: form.with_pools ? Math.max(1, parseInt(form.pool_count, 10) || 1) : 0,
+          start_score: form.start_score,
+          double_out: form.double_out,
           location: location || undefined,
           description: form.description,
           helloasso_url: form.helloasso_url,
@@ -314,6 +326,21 @@ function TournamentsTab() {
             />
           </div>
         </div>
+        <fieldset className="space-y-3">
+          <legend className="mb-2 text-sm font-medium">Parties du tournoi</legend>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex gap-2" role="group" aria-label="Score de départ">
+              {[301, 501].map((score) => (
+                <Button key={score} type="button" variant={form.start_score === score ? "default" : "outline"} aria-pressed={form.start_score === score} onClick={() => setForm({ ...form, start_score: score })}>
+                  {score}
+                </Button>
+              ))}
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={form.double_out} onChange={(e) => setForm({ ...form, double_out: e.target.checked })} /> Sortie double
+            </label>
+          </div>
+        </fieldset>
         <div className="grid grid-cols-2 gap-3">
           {form.format === "equipe" && (
             <div>

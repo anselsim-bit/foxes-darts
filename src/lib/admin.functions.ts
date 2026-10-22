@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
+import { tournamentRules } from "@/lib/dart-rules";
 
 type AdminContext = {
   supabase: SupabaseClient<Database>;
@@ -42,6 +43,8 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
       max_participants?: number | undefined;
       team_size?: number | undefined;
       pool_count?: number | undefined;
+      start_score: number;
+      double_out: boolean;
       location?: string | undefined;
       description?: string | undefined;
       helloasso_url?: string | undefined;
@@ -50,6 +53,7 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
+    const rules = tournamentRules(data.start_score, data.double_out, "bracket");
     const row = {
       title: data.title,
       event_date: data.event_date,
@@ -60,6 +64,8 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
         data.max_participants && data.max_participants > 0 ? Math.floor(data.max_participants) : null,
       team_size: Math.max(1, Math.floor(data.team_size ?? 1)),
       pool_count: Math.max(0, Math.floor(data.pool_count ?? 0)),
+      start_score: rules.start,
+      double_out: rules.doubleOut,
       location: data.location || null,
       description: data.description || null,
       helloasso_url: data.helloasso_url || null,
