@@ -251,16 +251,54 @@ export function TournamentBoard({
         </div>
         {showTeams && (
           <div className="mt-3 flex flex-wrap gap-2">
-            {teams.map((t) => (
-              <span key={t.id} className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm">
-                {t.name}
-                {admin && status === "open" && (
-                  <button aria-label="Retirer" onClick={() => run(() => adminDeleteTeam({ data: { id: t.id } }), "Retiré.")}>
-                    <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
+            {teams.map((t) =>
+              renaming?.id === t.id ? (
+                <span key={t.id} className="inline-flex items-center gap-2 rounded-md border border-primary/60 bg-card px-3 py-1.5 text-sm">
+                  <input
+                    value={renaming.name}
+                    autoFocus
+                    aria-label="Nouveau nom de l'équipe"
+                    onChange={(e) => setRenaming({ id: t.id, name: e.target.value })}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        void run(() => adminRenameTeam({ data: { id: t.id, name: renaming.name } }), "Nom modifié.").then(() => setRenaming(null));
+                      }
+                      if (e.key === "Escape") setRenaming(null);
+                    }}
+                    className="w-40 bg-transparent outline-none"
+                  />
+                  <button
+                    aria-label="Valider le nouveau nom"
+                    onClick={() =>
+                      void run(() => adminRenameTeam({ data: { id: t.id, name: renaming.name } }), "Nom modifié.").then(() => setRenaming(null))
+                    }
+                  >
+                    <Check className="h-3.5 w-3.5 text-primary" />
                   </button>
-                )}
-              </span>
-            ))}
+                  <button aria-label="Annuler" onClick={() => setRenaming(null)}>
+                    <X className="h-3.5 w-3.5 text-muted-foreground" />
+                  </button>
+                </span>
+              ) : (
+                <span key={t.id} className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm">
+                  {t.name}
+                  {admin && status === "open" && (
+                    <>
+                      <button
+                        aria-label="Renommer"
+                        onClick={() => setRenaming({ id: t.id, name: t.name })}
+                      >
+                        <Pencil className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                      </button>
+                      <button aria-label="Retirer" onClick={() => run(() => adminDeleteTeam({ data: { id: t.id } }), "Retiré.")}>
+                        <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
+                      </button>
+                    </>
+                  )}
+                </span>
+              )
+            )}
             {teams.length === 0 && <p className="text-sm text-muted-foreground">Aucun inscrit pour le moment.</p>}
           </div>
         )}
