@@ -209,7 +209,7 @@ export const listPlayableMatches = createServerFn({ method: "GET" })
   .inputValidator((input: { tournamentId: string }) => input)
   .handler(async ({ data, context }) => {
     const [{ data: tournament, error: tournamentError }, { data: teams }, { data: matches }] = await Promise.all([
-      context.supabase.from("tournaments").select("start_score, double_out").eq("id", data.tournamentId).single(),
+      context.supabase.from("tournaments").select("start_score, double_out, pool_double_limit").eq("id", data.tournamentId).single(),
       context.supabase.from("tournament_teams").select("id, name").eq("tournament_id", data.tournamentId),
       context.supabase
         .from("tournament_matches")
@@ -226,7 +226,7 @@ export const listPlayableMatches = createServerFn({ method: "GET" })
       if (!m.team_a || !m.team_b) return [];
       return [{
       id: m.id,
-      ...tournamentRules(tournament.start_score, tournament.double_out, m.stage),
+      ...tournamentRules(tournament.start_score, tournament.double_out, m.stage, tournament.pool_double_limit ?? true),
       label: `${m.stage === "pool" ? `Poule ${String.fromCharCode(65 + (m.pool_index ?? 0))}` : `Tour ${m.round}`} — ${name.get(m.team_a)} vs ${name.get(m.team_b)}`,
       teamA: name.get(m.team_a) ?? "Équipe A",
       teamB: name.get(m.team_b) ?? "Équipe B",

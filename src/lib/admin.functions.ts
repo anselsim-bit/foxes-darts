@@ -54,7 +54,7 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
-    const rules = tournamentRules(data.start_score, data.double_out, "bracket");
+    const rules = tournamentRules(data.start_score, data.double_out, "bracket", data.pool_double_limit ?? true);
     const row = {
       title: data.title,
       event_date: data.event_date,
@@ -67,6 +67,7 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
       pool_count: Math.max(0, Math.floor(data.pool_count ?? 0)),
       start_score: rules.start,
       double_out: rules.doubleOut,
+      pool_double_limit: data.pool_double_limit ?? true,
       location: data.location || null,
       description: data.description || null,
       helloasso_url: data.helloasso_url || null,
