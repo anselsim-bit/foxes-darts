@@ -4,7 +4,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Target } from "lucide-react";
 import { toast } from "sonner";
 import { Game, type PlayableMatch, type Player } from "@/components/dart-game";
-import { getMyTournamentCode, listPlayableMatches, validateTournamentCode } from "@/lib/tournament.functions";
+import { getMyTournamentCode, listPlayableMatches, validateTournamentCode, rememberTournamentCode } from "@/lib/tournament.functions";
+import { Button } from "@/components/ui/button";
 
 const choice = (on: boolean) =>
   on
@@ -38,7 +39,11 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
   const [gameKey, setGameKey] = useState(0);
 
   const loadMatches = () =>
-    listPlayableMatches({ data: { tournamentId } }).then(setMatches).catch(() => setMatches([]));
+    code && listPlayableMatches({ data: { tournamentId, code } }).then(setMatches).catch(() => {
+      setCode(null);
+      setMatches([]);
+      setCodeMsg("Code d'accès invalide ou tournoi inactif.");
+    });
 
   useEffect(() => {
     if (!signedIn) return;
@@ -56,7 +61,8 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
     setBusy(true);
     setCodeMsg(null);
     try {
-      const res = await validateTournamentCode({ data: { tournamentId, code: codeInput } });
+      const validate = signedIn ? rememberTournamentCode : validateTournamentCode;
+      const res = await validate({ data: { tournamentId, code: codeInput } });
       if (!res.valid) setCodeMsg("Ce code n'existe pas pour ce tournoi.");
       else if (!res.active) setCodeMsg("Les codes ne sont pas encore activés par l'organisateur.");
       else {
@@ -100,17 +106,6 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
     );
   }
 
-  if (!signedIn) {
-    return (
-      <div className="mt-8 rounded-xl border border-border bg-card p-5 text-sm">
-        Connectez-vous pour participer au tournoi.{" "}
-        <Link to="/auth" search={{ redirect: `/tournois/${tournamentId}/jouer` }} className="font-semibold text-primary">
-          Se connecter
-        </Link>
-      </div>
-    );
-  }
-
   return (
     <div className="mt-8 space-y-4 rounded-xl border border-border bg-card p-5">
       <h2 className="text-xl">Participer au tournoi</h2>
@@ -122,17 +117,17 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
               value={codeInput}
               onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
               placeholder="Code d'accès"
-              maxLength={6}
+              maxLength={20}
               aria-label="Code d'accès du tournoi"
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm uppercase tracking-widest"
             />
-            <button
+            <Button
               onClick={checkCode}
               disabled={busy || codeInput.trim().length < 1}
               className="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
             >
               {busy ? "..." : "Valider"}
-            </button>
+            </Button>
           </div>
           {codeMsg && <p className="mt-1 text-sm text-destructive">{codeMsg}</p>}
         </div>

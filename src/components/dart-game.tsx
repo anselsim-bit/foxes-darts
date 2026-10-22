@@ -3,7 +3,7 @@ import { Undo2, Trophy, RotateCcw, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import { suggestNextDarts } from "@/lib/checkout";
 import { saveGameResult } from "@/lib/darts.functions";
-import { reportMatch } from "@/lib/tournament.functions";
+import { reportTournamentMatch } from "@/lib/tournament.functions";
 import { isBust, replayTurns, requiresDouble } from "@/lib/dart-rules";
 
 export type Player = { name: string; userId: string | null; token?: string | undefined };
@@ -56,13 +56,13 @@ export function Game({
   const [saving, setSaving] = useState(false);
   const [reported, setReported] = useState(false);
   const report = async () => {
-    if (winner === null || !match) return;
+    if (winner === null || !match || !accessCode) return;
     const winningPlayer = players[winner];
     if (!winningPlayer) return;
     const aWon = winningPlayer.name === match.teamA;
     const loserRemaining = scores[winner === 0 ? 1 : 0] ?? 0;
     try {
-      await reportMatch({ data: { matchId: match.id, scoreA: aWon ? 0 : loserRemaining, scoreB: aWon ? loserRemaining : 0, code: accessCode ?? undefined } });
+      await reportTournamentMatch({ data: { matchId: match.id, scoreA: aWon ? 0 : loserRemaining, scoreB: aWon ? loserRemaining : 0, code: accessCode } });
       setReported(true);
       toast.success("Résultat envoyé au tableau du tournoi.");
     } catch (e) {

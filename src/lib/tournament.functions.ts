@@ -122,6 +122,8 @@ async function currentCode(tournamentId: string) {
 async function hasValidCode(tournamentId: string, code: string | undefined) {
   const c = normalizeCode(code);
   if (!c) return false;
+  const { data: tournament } = await publicClient().from("tournaments").select("status").eq("id", tournamentId).maybeSingle();
+  if (tournament?.status !== "started") return false;
   return (await currentCode(tournamentId)) === c;
 }
 
@@ -129,26 +131,36 @@ async function hasValidCode(tournamentId: string, code: string | undefined) {
 export const reportMatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { matchId: string; scoreA: number; scoreB: number; code?: string | undefined }) => input)
-  .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: m, error } = await supabaseAdmin
+  .handler(async ({ data, context }) => reportAuthorizedMatch(data, context));
+
+/** Code-only entry point: does not grant member statistics or admin access. */
+export const reportTournamentMatch = createServerFn({ method: "POST" })
+  .inputValidator((input: { matchId: string; scoreA: number; scoreB: number; code: string }) => input)
+  .handler(async ({ data }) => reportAuthorizedMatch(data));
+
+async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; scoreB: number; code?: string }, context?: Ctx) {
+    const { data: m, error } = await publicClient()
       .from("tournament_matches")
       .select("id, tournament_id, stage, round, position, team_a, team_b")
       .eq("id", data.matchId)
       .single();
     if (error || !m) throw new Error("Match introuvable.");
     if (!m.team_a || !m.team_b) throw new Error("Les deux adversaires ne sont pas encore connus.");
-    if (!(await isAdmin(context)) && !(await hasValidCode(m.tournament_id, data.code))) {
-      const { data: caps } = await supabaseAdmin.from("tournament_teams").select("captain_id").in("id", [m.team_a, m.team_b]);
+    if (!(context && await isAdmin(context)) && !(await hasValidCode(m.tournament_id, data.code))) {
+      if (!context) throw new Error("Code d'accès invalide ou tournoi inactif.");
+      const { data: caps } = await context.supabase.from("tournament_teams").select("captain_id").in("id", [m.team_a, m.team_b]);
       if (!(caps ?? []).some((c) => c.captain_id === context.userId))
         throw new Error("Seul un administrateur, un joueur du match ou un code d'accès actif permet de saisir le résultat.");
     }
+    if (!Number.isFinite(data.scoreA) || !Number.isFinite(data.scoreB)) throw new Error("Scores invalides.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const a = Math.max(0, Math.floor(data.scoreA));
     const b = Math.max(0, Math.floor(data.scoreB));
     if (a === b) throw new Error("Il faut un vainqueur (scores différents).");
     // Aux fléchettes, le vainqueur est celui qui a le moins de points restants (0).
     const winner = a < b ? m.team_a : m.team_b;
-    await supabaseAdmin.from("tournament_matches").update({ score_a: a, score_b: b, winner }).eq("id", m.id);
+    const { error: saveError } = await supabaseAdmin.from("tournament_matches").update({ score_a: a, score_b: b, winner }).eq("id", m.id);
+    if (saveError) throw new Error("Impossible d'enregistrer le résultat.");
     if (m.stage === "bracket") {
       const s = nextSlot(m.round, m.position);
       const { data: next } = await supabaseAdmin
@@ -163,7 +175,7 @@ export const reportMatch = createServerFn({ method: "POST" })
       else await supabaseAdmin.from("tournaments").update({ status: "finished" }).eq("id", m.tournament_id);
     }
     return { ok: true };
-  });
+}
 
 export const amIAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -204,14 +216,15 @@ export const adminDeleteTeam = createServerFn({ method: "POST" })
   });
 
 /** Matchs jouables (adversaires connus, sans résultat) pour le compteur. */
-export const listPlayableMatches = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: { tournamentId: string }) => input)
-  .handler(async ({ data, context }) => {
+export const listPlayableMatches = createServerFn({ method: "POST" })
+  .inputValidator((input: { tournamentId: string; code: string }) => input)
+  .handler(async ({ data }) => {
+    if (!(await hasValidCode(data.tournamentId, data.code))) throw new Error("Code d'accès invalide ou tournoi inactif.");
+    const sb = publicClient();
     const [{ data: tournament, error: tournamentError }, { data: teams }, { data: matches }] = await Promise.all([
-      context.supabase.from("tournaments").select("start_score, double_out, pool_double_limit").eq("id", data.tournamentId).single(),
-      context.supabase.from("tournament_teams").select("id, name").eq("tournament_id", data.tournamentId),
-      context.supabase
+      sb.from("tournaments").select("start_score, double_out, pool_double_limit").eq("id", data.tournamentId).single(),
+      sb.from("tournament_teams").select("id, name").eq("tournament_id", data.tournamentId),
+      sb
         .from("tournament_matches")
         .select("id, stage, pool_index, round, team_a, team_b, winner")
         .eq("tournament_id", data.tournamentId)
@@ -328,8 +341,16 @@ export const getTournamentCodeAdmin = createServerFn({ method: "GET" })
     return { code: await currentCode(data.tournamentId) };
   });
 
-/** Vérifie un code d'accès saisi par un participant et le mémorise pour ce membre. */
-export const validateTournamentCode = createServerFn({ method: "GET" })
+/** Vérification accessible sans compte, sans exposer le code enregistré. */
+export const validateTournamentCode = createServerFn({ method: "POST" })
+  .inputValidator((input: { tournamentId: string; code: string }) => input)
+  .handler(async ({ data }) => {
+    const valid = await hasValidCode(data.tournamentId, data.code);
+    return { valid, active: valid, participantName: null as string | null };
+  });
+
+/** Vérifie et mémorise le code pour le membre connecté uniquement. */
+export const rememberTournamentCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { tournamentId: string; code: string }) => input)
   .handler(async ({ data, context }) => {
