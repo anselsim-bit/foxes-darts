@@ -1,5 +1,10 @@
 # Foxes Darts — Tâches
 
+## Reprise sur le même appareil
+- [x] Mémoriser le code du tournoi et le revérifier au retour, y compris sans compte.
+- [x] Sauvegarder et restaurer le match, les tirs et le passage de main ; protéger une sortie volontaire.
+- [x] Tester le rechargement, la reprise et le refus d'un ancien code.
+
 ## Accès aux tournois sans compte
 - [x] Autoriser la saisie du code, les matchs et leurs résultats sans connexion, avec contrôle serveur du code.
 - [x] Préserver la mémorisation du code pour les membres et vérifier le parcours invité.

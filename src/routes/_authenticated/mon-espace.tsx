@@ -30,6 +30,10 @@ export const Route = createFileRoute("/_authenticated/mon-espace")({
     meta: [
       { title: "Mon espace — Foxes Darts" },
       { name: "description", content: "Vos inscriptions aux tournois et vos statistiques de jeu." },
+      { property: "og:title", content: "Mon espace — Foxes Darts" },
+      { property: "og:description", content: "Vos inscriptions aux tournois et vos statistiques de jeu." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),

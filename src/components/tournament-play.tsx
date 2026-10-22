@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Target } from "lucide-react";
@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Game, type PlayableMatch, type Player } from "@/components/dart-game";
 import { getMyTournamentCode, listPlayableMatches, validateTournamentCode, rememberTournamentCode } from "@/lib/tournament.functions";
 import { Button } from "@/components/ui/button";
+import { deviceCodeKey, deviceDraftKey, draftMatches, readDeviceCode, readTournamentDraft, writeDeviceValue, type GameProgress, type TournamentDraft } from "@/lib/tournament-device";
 
 const choice = (on: boolean) =>
   on
@@ -36,6 +37,23 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
   const [match, setMatch] = useState<PlayableMatch | null>(null);
   const [starter, setStarter] = useState<number | null>(null);
   const [players, setPlayers] = useState<Player[] | null>(null);
+  const [draft, setDraft] = useState<TournamentDraft | null>(null);
+  const [restoring, setRestoring] = useState(true);
+  const restored = useRef(false);
+  const storageWarning = useRef(false);
+
+  const persistProgress = useCallback((progress: GameProgress) => {
+    if (!draft) return;
+    const ok = writeDeviceValue(deviceDraftKey(tournamentId), JSON.stringify({ ...draft, progress }));
+    if (!ok && !storageWarning.current) {
+      storageWarning.current = true;
+      toast.error("Cet appareil ne permet pas de sauvegarder la partie. Ne fermez pas cette page.");
+    }
+  }, [draft, tournamentId]);
+
+  const clearDraft = useCallback(() => {
+    writeDeviceValue(deviceDraftKey(tournamentId), null);
+  }, [tournamentId]);
 
   const loadMatches = () =>
     code && listPlayableMatches({ data: { tournamentId, code } }).then(setMatches).catch(() => {
@@ -45,16 +63,50 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
     });
 
   useEffect(() => {
-    if (!signedIn) return;
-    getMyTournamentCode({ data: { tournamentId } })
-      .then((r) => r.code && setCode(r.code))
-      .catch(() => {});
+    let active = true;
+    if (restored.current) return;
+    const restore = async () => {
+      try {
+        const remembered = readDeviceCode(tournamentId) ?? (signedIn ? (await getMyTournamentCode({ data: { tournamentId } })).code : null);
+        if (!remembered || !active) return;
+        const res = await validateTournamentCode({ data: { tournamentId, code: remembered } });
+        if (!active) return;
+        if (!res.valid || !res.active) {
+          writeDeviceValue(deviceCodeKey(tournamentId), null);
+          setCodeMsg("Le code d'accès a changé ou le tournoi est inactif. Saisissez le code actuel.");
+          return;
+        }
+        await openTournament(remembered, () => active);
+      } catch {
+        if (active) setCodeMsg("Vérification impossible pour le moment. Réessayez avec votre code.");
+      } finally {
+        if (active) setRestoring(false);
+      }
+    };
+    void restore();
+    return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signedIn, tournamentId]);
 
-  useEffect(() => {
-    if (code) loadMatches();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [code]);
+  const openTournament = async (validCode: string, isActive = () => true) => {
+    const available = await listPlayableMatches({ data: { tournamentId, code: validCode } });
+    if (!isActive()) return;
+    restored.current = true;
+    setCode(validCode);
+    writeDeviceValue(deviceCodeKey(tournamentId), validCode);
+    setMatches(available);
+    const savedDraft = readTournamentDraft(tournamentId);
+    if (!savedDraft) return;
+    const savedMatch = available.find(m => draftMatches(savedDraft, m));
+    if (!savedMatch) {
+      clearDraft();
+      toast.info("Le match sauvegardé n'est plus disponible ou ses réglages ont changé.");
+      return;
+    }
+    setDraft(savedDraft);
+    setMatch(savedMatch);
+    setPlayers(savedDraft.players);
+  };
 
   const checkCode = async () => {
     setBusy(true);
@@ -65,7 +117,7 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
       if (!res.valid) setCodeMsg("Ce code n'existe pas pour ce tournoi.");
       else if (!res.active) setCodeMsg("Les codes ne sont pas encore activés par l'organisateur.");
       else {
-        setCode(codeInput.trim().toUpperCase());
+        await openTournament(codeInput.trim().toUpperCase().replace(/\s+/g, "").slice(0, 20));
         toast.success(res.participantName ? `Code validé, bon tournoi ${res.participantName} !` : "Code validé !");
       }
     } catch {
@@ -76,6 +128,9 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
   };
 
   const exitGame = () => {
+    if (readTournamentDraft(tournamentId) && !window.confirm("Quitter ce match et effacer sa sauvegarde ?")) return;
+    clearDraft();
+    setDraft(null);
     setPlayers(null);
     setMatch(null);
     loadMatches();
@@ -95,6 +150,9 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
           match={match}
           accessCode={code}
           onExit={exitGame}
+          initialProgress={draft?.progress}
+          onProgress={persistProgress}
+          onReported={clearDraft}
         />
       </div>
     );
@@ -103,7 +161,7 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
   return (
     <div className="mt-8 space-y-4 rounded-xl border border-border bg-card p-5">
       <h2 className="text-xl">Participer au tournoi</h2>
-      {!code ? (
+      {restoring ? <p role="status" className="text-sm text-muted-foreground">Vérification de l'accès…</p> : !code ? (
         <div>
           <p className="mb-2 text-sm text-muted-foreground">Saisissez le code d'accès communiqué par l'organisateur.</p>
           <div className="flex gap-2">
@@ -171,7 +229,16 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
                     { name: match.teamB, userId: null },
                   ];
                   const idx = starter === null ? Math.floor(Math.random() * 2) : starter;
-                  setPlayers(idx === 1 ? list.reverse() : list);
+                  const ordered = idx === 1 ? list.reverse() : list;
+                  const nextDraft: TournamentDraft = {
+                    version: 1, matchId: match.id, teamAId: match.teamAId, teamBId: match.teamBId,
+                    start: match.start, doubleOut: match.doubleOut, poolDoubleLimit: match.poolDoubleLimit,
+                    players: ordered.map(p => ({ name: p.name, userId: null })),
+                    progress: { turns: [], current: [], pendingBust: null, mult: 1 },
+                  };
+                  setDraft(nextDraft);
+                  writeDeviceValue(deviceDraftKey(tournamentId), JSON.stringify(nextDraft));
+                  setPlayers(ordered);
                 }}
                 className="w-full rounded-md bg-primary px-4 py-3 font-semibold text-primary-foreground hover:bg-primary/90"
               >

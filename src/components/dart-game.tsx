@@ -6,6 +6,7 @@ import { suggestNextDarts } from "@/lib/checkout";
 import { saveGameResult } from "@/lib/darts.functions";
 import { reportTournamentMatch } from "@/lib/tournament.functions";
 import { isBust, replayTurns, requiresDouble } from "@/lib/dart-rules";
+import type { GameProgress } from "@/lib/tournament-device";
 
 export type Player = { name: string; userId: string | null; token?: string | undefined };
 export type PlayableMatch = {
@@ -38,6 +39,9 @@ export function Game({
   accessCode,
   onExit,
   onRestart,
+  initialProgress,
+  onProgress,
+  onReported,
 }: {
   match: { id: string; teamA: string; teamB: string } | null;
   accessCode: string | null;
@@ -49,14 +53,20 @@ export function Game({
   tournamentId: string | null;
   onExit: () => void;
   onRestart?: () => void;
+  initialProgress?: GameProgress | undefined;
+  onProgress?: (progress: GameProgress) => void;
+  onReported?: () => void;
 }) {
-  const [turns, setTurns] = useState<Turn[]>([]);
-  const [current, setCurrent] = useState<Dart[]>([]);
-  const [pendingBust, setPendingBust] = useState<boolean | null>(null);
-  const [mult, setMult] = useState<1 | 2 | 3>(1);
+  const [turns, setTurns] = useState<Turn[]>(initialProgress?.turns ?? []);
+  const [current, setCurrent] = useState<Dart[]>(initialProgress?.current ?? []);
+  const [pendingBust, setPendingBust] = useState<boolean | null>(initialProgress?.pendingBust ?? null);
+  const [mult, setMult] = useState<1 | 2 | 3>(initialProgress?.mult ?? 1);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [reported, setReported] = useState(false);
+  useEffect(() => {
+    if (!reported) onProgress?.({ turns, current, pendingBust, mult });
+  }, [turns, current, pendingBust, mult, onProgress, reported]);
   const report = async () => {
     if (winner === null || !match || !accessCode) return;
     const winningPlayer = players[winner];
@@ -66,6 +76,7 @@ export function Game({
     try {
       await reportTournamentMatch({ data: { matchId: match.id, scoreA: aWon ? 0 : loserRemaining, scoreB: aWon ? loserRemaining : 0, code: accessCode } });
       setReported(true);
+      onReported?.();
       toast.success("Résultat envoyé au tableau du tournoi.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erreur");
@@ -227,7 +238,7 @@ export function Game({
                 <RotateCcw className="mr-1 inline h-4 w-4" /> Recommencer la partie
               </button>
             )}
-            <button onClick={undo} className={btn}>
+            <button onClick={undo} disabled={reported} className={btn}>
               <Undo2 className="mr-1 inline h-4 w-4" /> Annuler la dernière fléchette
             </button>
           </div>

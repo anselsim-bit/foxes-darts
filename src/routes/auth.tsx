@@ -16,6 +16,7 @@ export const Route = createFileRoute("/auth")({
       { title: "Connexion — Foxes Darts" },
       { name: "description", content: "Connectez-vous ou créez votre compte joueur Foxes Darts." },
       { property: "og:title", content: "Connexion — Foxes Darts" },
+      { property: "og:description", content: "Connectez-vous ou créez votre compte joueur Foxes Darts." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
