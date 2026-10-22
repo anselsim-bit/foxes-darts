@@ -569,6 +569,15 @@ function TeamsManager({ tournamentId, isTeam }: { tournamentId: string; isTeam: 
                     value={editing.name}
                     autoFocus
                     onChange={(e) => setEditing({ id: tm.id, name: e.target.value })}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        void run(() => adminRenameTeam({ data: editing }), "Nom modifié.").then(() =>
+                          setEditing(null),
+                        );
+                      }
+                      if (e.key === "Escape") setEditing(null);
+                    }}
                   />
                   <button
                     className={btnPrimary}

@@ -190,6 +190,12 @@ function TournamentDetail() {
               <input
                 value={teamName}
                 onChange={(e) => setTeamName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (!busy) void toggleRegistration();
+                  }
+                }}
                 placeholder="Nom de votre équipe"
                 className="rounded-md border border-input bg-background px-3 py-3 text-sm"
               />

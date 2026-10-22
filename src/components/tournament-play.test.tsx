@@ -103,3 +103,14 @@ describe("Tournament device recovery", () => {
     expect(reportTournamentMatch).toHaveBeenCalledWith({ data: { matchId: "match-1", scoreA: 0, scoreB: 301, code: "FOXES" } });
   });
 });
+
+describe("Keyboard shortcuts", () => {
+  it("validates the access code when Enter is pressed in the code field", async () => {
+    open();
+    const input = await screen.findByRole("textbox", { name: "Code d'accès du tournoi" });
+    fireEvent.change(input, { target: { value: "foxes" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    await waitFor(() => expect(validateTournamentCode).toHaveBeenCalledWith({ data: { tournamentId: "test", code: "FOXES" } }));
+    expect(await screen.findByText("Code d'accès validé ✓")).toBeInTheDocument();
+  });
+});
