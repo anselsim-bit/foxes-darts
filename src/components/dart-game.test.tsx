@@ -8,7 +8,7 @@ vi.mock("sonner", () => ({ toast: { info: vi.fn(), success: vi.fn(), error: vi.f
 afterEach(cleanup);
 
 function startGame(count = 2, start = 301) {
-  render(<Game players={[{ name: "Équipe A", userId: null }, { name: "Équipe B", userId: null }].slice(0, count)} start={start} doubleOut={false} canSave={false} tournamentId={null} match={null} accessCode={null} onExit={vi.fn()} onRestart={vi.fn()} />);
+  render(<Game players={[{ name: "Équipe A", userId: null }, { name: "Équipe B", userId: null }].slice(0, count)} start={start} doubleOut={false} canSave={false} tournamentId={null} match={null} accessCode={null} onExit={vi.fn()} />);
 }
 const shoot = (score: number) => fireEvent.click(screen.getByRole("button", { name: String(score) }));
 const next = () => fireEvent.click(screen.getByRole("button", { name: "Suivant" }));

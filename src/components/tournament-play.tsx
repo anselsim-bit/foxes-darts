@@ -36,7 +36,6 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
   const [match, setMatch] = useState<PlayableMatch | null>(null);
   const [starter, setStarter] = useState<number | null>(null);
   const [players, setPlayers] = useState<Player[] | null>(null);
-  const [gameKey, setGameKey] = useState(0);
 
   const loadMatches = () =>
     code && listPlayableMatches({ data: { tournamentId, code } }).then(setMatches).catch(() => {
@@ -87,7 +86,6 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
     return (
       <div className="mt-8 rounded-xl border border-primary/40">
         <Game
-          key={gameKey}
           players={players}
           start={match.start}
           doubleOut={match.doubleOut}
@@ -97,10 +95,6 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
           match={match}
           accessCode={code}
           onExit={exitGame}
-          onRestart={() => {
-            setPlayers((p) => (p ? [...p].reverse() : p));
-            setGameKey((k) => k + 1);
-          }}
         />
       </div>
     );
