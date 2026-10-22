@@ -1,8 +1,8 @@
 # Foxes Darts — Tâches
 
 ## Accès aux tournois sans compte
-- [ ] Autoriser la saisie du code, les matchs et leurs résultats sans connexion, avec contrôle serveur du code.
-- [ ] Préserver la mémorisation du code pour les membres et vérifier le parcours invité.
+- [x] Autoriser la saisie du code, les matchs et leurs résultats sans connexion, avec contrôle serveur du code.
+- [x] Préserver la mémorisation du code pour les membres et vérifier le parcours invité.
 
 ## Règles de partie des tournois
 - [x] Réglages admin 301/501 et sortie double/simple, imposés aux matchs.
