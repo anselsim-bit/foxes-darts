@@ -12,6 +12,8 @@ const tournamentQuery = (id: string) =>
   });
 
 export const Route = createFileRoute("/tournois_/$id/jouer")({
+  validateSearch: (search: Record<string, unknown>): { code?: string } =>
+    typeof search.code === "string" ? { code: search.code } : {},
   loader: ({ context, params }) =>
     context.queryClient.ensureQueryData(tournamentQuery(params.id)),
   head: ({ loaderData }) => ({
@@ -35,6 +37,7 @@ export const Route = createFileRoute("/tournois_/$id/jouer")({
 
 function TournamentPlayPage() {
   const { id } = Route.useParams();
+  const { code: qrCode } = Route.useSearch();
   const { data: tournament } = useSuspenseQuery(tournamentQuery(id));
   const [signedIn, setSignedIn] = useState(false);
 
@@ -60,7 +63,7 @@ function TournamentPlayPage() {
           Le tournoi n'a pas encore commencé. Revenez une fois qu'il sera lancé par l'organisateur.
         </p>
       ) : (
-        <TournamentPlay key={id} tournamentId={id} signedIn={signedIn} />
+        <TournamentPlay key={id} tournamentId={id} signedIn={signedIn} qrCode={qrCode} />
       )}
     </div>
   );

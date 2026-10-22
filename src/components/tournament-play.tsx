@@ -27,7 +27,7 @@ export function TournamentPlayButton({ tournamentId }: { tournamentId: string })
   );
 }
 
-export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: string; signedIn: boolean }) {
+export function TournamentPlay({ tournamentId, signedIn, qrCode }: { tournamentId: string; signedIn: boolean; qrCode?: string | undefined }) {
   const queryClient = useQueryClient();
   const [code, setCode] = useState<string | null>(null);
   const [codeInput, setCodeInput] = useState("");
@@ -67,7 +67,9 @@ export function TournamentPlay({ tournamentId, signedIn }: { tournamentId: strin
     if (restored.current) return;
     const restore = async () => {
       try {
-        const remembered = readDeviceCode(tournamentId) ?? (signedIn ? (await getMyTournamentCode({ data: { tournamentId } })).code : null);
+        const fromQr = qrCode?.trim().toUpperCase().replace(/\s+/g, "").slice(0, 20) || null;
+        if (fromQr) window.history.replaceState(window.history.state, "", window.location.pathname);
+        const remembered = fromQr ?? readDeviceCode(tournamentId) ?? (signedIn ? (await getMyTournamentCode({ data: { tournamentId } })).code : null);
         if (!remembered || !active) return;
         const res = await validateTournamentCode({ data: { tournamentId, code: remembered } });
         if (!active) return;
