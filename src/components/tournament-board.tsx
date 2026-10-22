@@ -395,6 +395,21 @@ export function TournamentBoard({
               <Mail className="h-4 w-4" /> Envoyer le lien aux participants
             </button>
           </form>
+          {accessCode && typeof window !== "undefined" && (
+            <div className="mt-4 flex flex-wrap items-center gap-4">
+              <div className="rounded-lg bg-foreground p-3">
+                <QRCodeSVG
+                  value={`${window.location.origin}/tournois/${tournamentId}/jouer?code=${encodeURIComponent(accessCode)}`}
+                  size={160}
+                  aria-label="QR code d'accès au tournoi"
+                />
+              </div>
+              <p className="max-w-xs text-xs text-muted-foreground">
+                QR code d'accès (visible uniquement par les admins). Le scanner ouvre le tournoi sans saisir le code ;
+                il devra être scanné à nouveau seulement si vous modifiez le code.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
