@@ -12,6 +12,8 @@ const tournamentQuery = (id: string) =>
   });
 
 export const Route = createFileRoute("/tournois_/$id/jouer")({
+  validateSearch: (search: Record<string, unknown>): { code?: string } =>
+    typeof search["code"] === "string" ? { code: search["code"] } : {},
   loader: ({ context, params }) =>
     context.queryClient.ensureQueryData(tournamentQuery(params.id)),
   head: ({ loaderData }) => ({
@@ -30,11 +32,19 @@ export const Route = createFileRoute("/tournois_/$id/jouer")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  notFoundComponent: () => (
+    <div className="mx-auto max-w-4xl px-4 py-12">
+      <h1 className="text-3xl">Tournoi introuvable</h1>
+      <p className="mt-3 text-muted-foreground">Ce tournoi n'existe plus ou a été supprimé.</p>
+      <Link to="/tournois" className="mt-6 inline-block text-primary">Voir les tournois</Link>
+    </div>
+  ),
   component: TournamentPlayPage,
 });
 
 function TournamentPlayPage() {
   const { id } = Route.useParams();
+  const { code: qrCode } = Route.useSearch();
   const { data: tournament } = useSuspenseQuery(tournamentQuery(id));
   const [signedIn, setSignedIn] = useState(false);
 
@@ -60,7 +70,7 @@ function TournamentPlayPage() {
           Le tournoi n'a pas encore commencé. Revenez une fois qu'il sera lancé par l'organisateur.
         </p>
       ) : (
-        <TournamentPlay key={id} tournamentId={id} signedIn={signedIn} />
+        <TournamentPlay key={id} tournamentId={id} signedIn={signedIn} qrCode={qrCode} />
       )}
     </div>
   );
