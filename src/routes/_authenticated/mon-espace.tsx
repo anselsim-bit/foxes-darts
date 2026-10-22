@@ -230,7 +230,7 @@ function PasswordChange() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (next !== next2) return toast.error("Les deux nouveaux mots de passe ne sont pas identiques.");
+    if (next !== next2) { toast.error("Les deux nouveaux mots de passe ne sont pas identiques."); return; }
     setBusy(true);
     try {
       const { data: u } = await supabase.auth.getUser();

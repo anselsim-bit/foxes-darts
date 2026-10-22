@@ -38,7 +38,7 @@ function ResetPassword() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== password2) return toast.error("Les deux mots de passe ne sont pas identiques.");
+    if (password !== password2) { toast.error("Les deux mots de passe ne sont pas identiques."); return; }
     setBusy(true);
     try {
       const { error } = await supabase.auth.updateUser({ password });
