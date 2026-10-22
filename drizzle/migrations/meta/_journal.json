@@ -120,6 +120,13 @@
       "when": 1792659827085,
       "tag": "0016_tournament_optional_double_limit",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792662577810,
+      "tag": "0017_tournament_final_legs",
+      "breakpoints": true
     }
   ]
 }

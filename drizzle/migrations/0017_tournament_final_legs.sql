@@ -1,0 +1,3 @@
+ALTER TABLE public.tournament_matches ADD COLUMN legs_a integer DEFAULT NULL CHECK (legs_a BETWEEN 0 AND 2), ADD COLUMN legs_b integer DEFAULT NULL CHECK (legs_b BETWEEN 0 AND 2);
+COMMENT ON COLUMN public.tournament_matches.legs_a IS 'Winning legs for team A in best-of-three knockout matches; null for pools and historical results.';
+COMMENT ON COLUMN public.tournament_matches.legs_b IS 'Winning legs for team B in best-of-three knockout matches; null for pools and historical results.';

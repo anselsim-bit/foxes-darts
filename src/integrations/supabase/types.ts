@@ -384,6 +384,8 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          legs_a: number | null
+          legs_b: number | null
           pool_index: number | null
           position: number
           round: number
@@ -398,6 +400,8 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          legs_a?: number | null
+          legs_b?: number | null
           pool_index?: number | null
           position?: number
           round?: number
@@ -412,6 +416,8 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          legs_a?: number | null
+          legs_b?: number | null
           pool_index?: number | null
           position?: number
           round?: number
