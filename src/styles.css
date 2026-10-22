@@ -191,6 +191,8 @@
   .game-winner > p:first-child { font-size: 24px; line-height: 1.2; overflow-wrap: anywhere; }
   .game-winner button { min-height: 44px; }
   .game-scores[data-many="true"] .game-stats { display: none; }
+  .game-scores[data-many="true"] .game-player { padding-top: 4px; padding-bottom: 4px; }
+  .game-scores[data-many="true"] .game-score { font-size: 28px; }
 }
 
 @media (max-width: 1023px) and (max-height: 650px) and (orientation: portrait) {
