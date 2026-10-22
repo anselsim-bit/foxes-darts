@@ -351,6 +351,35 @@ export type Database = {
           },
         ]
       }
+      tournament_code_claims: {
+        Row: {
+          code: string
+          created_at: string
+          tournament_id: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          tournament_id: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          tournament_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_code_claims_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tournament_matches: {
         Row: {
           created_at: string
@@ -421,6 +450,32 @@ export type Database = {
             columns: ["winner"]
             isOneToOne: false
             referencedRelation: "tournament_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournament_settings_codes: {
+        Row: {
+          code: string
+          tournament_id: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          tournament_id: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          tournament_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_settings_codes_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: true
+            referencedRelation: "tournaments"
             referencedColumns: ["id"]
           },
         ]
