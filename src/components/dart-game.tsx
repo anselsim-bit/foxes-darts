@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Undo2, Trophy, RotateCcw, Lightbulb } from "lucide-react";
+import { Undo2, Trophy, RotateCcw, Lightbulb, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { suggestNextDarts } from "@/lib/checkout";
 import { saveGameResult } from "@/lib/darts.functions";
@@ -51,6 +52,7 @@ export function Game({
 }) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [current, setCurrent] = useState<Dart[]>([]);
+  const [pendingBust, setPendingBust] = useState<boolean | null>(null);
   const [mult, setMult] = useState<1 | 2 | 3>(1);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -78,7 +80,8 @@ export function Game({
   }, [turns, scores]);
 
   const playerIdx = turns.length % players.length;
-  const remaining = (scores[playerIdx] ?? start) - current.reduce((a, d) => a + d.value, 0);
+  const turnComplete = pendingBust !== null;
+  const remaining = (scores[playerIdx] ?? start) - (pendingBust === true ? 0 : current.reduce((a, d) => a + d.value, 0));
   const activeDoubleOut = requiresDouble(doubleOut, poolDoubleLimit, doubleAttempts[playerIdx] ?? 0);
   const notifiedSimple = useRef(new Set<number>());
   useEffect(() => {
@@ -97,11 +100,12 @@ export function Game({
     const total = darts.reduce((a, d) => a + d.value, 0);
     setTurns([...turns, { player: playerIdx, darts, bust, total }]);
     setCurrent([]);
+    setPendingBust(null);
     setMult(1);
   };
 
   const throwDart = (base: number) => {
-    if (winner !== null) return;
+    if (winner !== null || turnComplete) return;
     const m = base === 25 && mult === 3 ? 2 : base === 0 ? 1 : mult;
     const value = base * m;
     const label = base === 0 ? "Raté" : base === 25 ? (m === 2 ? "Bull" : "25") : `${["", "S", "D", "T"][m]}${base}`;
@@ -109,13 +113,14 @@ export function Game({
     const darts = [...current, dart];
     const left = (scores[playerIdx] ?? start) - darts.reduce((a, d) => a + d.value, 0);
     const bust = isBust(left, dart, activeDoubleOut);
-    if (bust) return endTurn(darts, true);
-    if (left === 0 || darts.length === 3) return endTurn(darts, false);
+    if (!bust && left === 0) return endTurn(darts, false);
+    if (bust || darts.length === 3) setPendingBust(bust);
     setCurrent(darts);
     setMult(1);
   };
 
   const undo = () => {
+    setPendingBust(null);
     if (current.length > 0) return setCurrent(current.slice(0, -1));
     const last = turns[turns.length - 1];
     if (!last) return;
@@ -237,9 +242,9 @@ export function Game({
               {players[playerIdx]?.name} : les 5 tours d'essais de double sont terminés. Sortie simple à partir de ce tour.
             </p>
           )}
-          <div className="mb-3 flex items-center justify-between gap-3 text-sm">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3 text-sm">
             <span>
-              Au tour de <strong>{players[playerIdx]?.name}</strong> — fléchette {current.length + 1}/3
+              Au tour de <strong>{players[playerIdx]?.name}</strong> — {turnComplete ? (pendingBust ? "Volée annulée" : "Volée terminée") : `fléchette ${current.length + 1}/3`}
             </span>
             <div className="flex gap-2">
               {[0, 1, 2].map((i) => {
@@ -264,7 +269,15 @@ export function Game({
               })}
             </div>
           </div>
+          {turnComplete && (
+            <div className="mb-4 flex justify-end">
+              <Button size="lg" onClick={() => endTurn(current, pendingBust === true)}>
+                Suivant <ArrowRight />
+              </Button>
+            </div>
+          )}
           {(() => {
+            if (turnComplete) return null;
             const tip = suggestNextDarts(remaining, 3 - current.length, activeDoubleOut);
             if (!tip.note) return null;
             return (
@@ -284,6 +297,7 @@ export function Game({
             {([1, 2, 3] as const).map((m) => (
               <button
                 key={m}
+                disabled={turnComplete}
                 onClick={() => setMult(m)}
                 className={
                   mult === m
@@ -297,14 +311,14 @@ export function Game({
           </div>
           <div className="grid grid-cols-5 gap-2 sm:grid-cols-7">
             {Array.from({ length: 20 }, (_, i) => i + 1).map((n) => (
-              <button key={n} onClick={() => throwDart(n)} className={btn}>
+              <button key={n} onClick={() => throwDart(n)} disabled={turnComplete} className={btn}>
                 {n}
               </button>
             ))}
-            <button onClick={() => throwDart(25)} className={btn}>
+            <button onClick={() => throwDart(25)} disabled={turnComplete} className={btn}>
               {mult === 1 ? "25" : "Bull"}
             </button>
-            <button onClick={() => throwDart(0)} className={btn}>
+            <button onClick={() => throwDart(0)} disabled={turnComplete} className={btn}>
               Raté
             </button>
             <button onClick={undo} className={btn} aria-label="Annuler">
