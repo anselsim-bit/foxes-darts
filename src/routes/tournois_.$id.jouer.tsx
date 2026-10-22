@@ -12,8 +12,11 @@ const tournamentQuery = (id: string) =>
   });
 
 export const Route = createFileRoute("/tournois_/$id/jouer")({
-  validateSearch: (search: Record<string, unknown>): { code?: string } =>
-    typeof search["code"] === "string" ? { code: search["code"] } : {},
+  validateSearch: (search: Record<string, unknown>): { code?: string } => {
+    const c = search["code"];
+    // Numeric-looking codes are parsed as numbers by the router; accept both.
+    return typeof c === "string" || typeof c === "number" ? { code: String(c) } : {};
+  },
   loader: ({ context, params }) =>
     context.queryClient.ensureQueryData(tournamentQuery(params.id)),
   head: ({ loaderData }) => ({

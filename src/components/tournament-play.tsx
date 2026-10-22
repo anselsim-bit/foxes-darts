@@ -62,13 +62,16 @@ export function TournamentPlay({ tournamentId, signedIn, qrCode }: { tournamentI
       setCodeMsg("Code d'accès invalide ou tournoi inactif.");
     });
 
+  // Keep the scanned code even after it is stripped from the address bar (effect may re-run when sign-in state resolves).
+  const qrRef = useRef<string | null>(qrCode?.trim().toUpperCase().replace(/\s+/g, "").slice(0, 20) || null);
+
   useEffect(() => {
     let active = true;
     if (restored.current) return;
     const restore = async () => {
       try {
-        const fromQr = qrCode?.trim().toUpperCase().replace(/\s+/g, "").slice(0, 20) || null;
-        if (fromQr) window.history.replaceState(window.history.state, "", window.location.pathname);
+        const fromQr = qrRef.current;
+        if (fromQr && window.location.search) window.history.replaceState(window.history.state, "", window.location.pathname);
         const remembered = fromQr ?? readDeviceCode(tournamentId) ?? (signedIn ? (await getMyTournamentCode({ data: { tournamentId } })).code : null);
         if (!remembered || !active) return;
         const res = await validateTournamentCode({ data: { tournamentId, code: remembered } });
