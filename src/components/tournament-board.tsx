@@ -79,6 +79,23 @@ export function TournamentBoard({
     });
   }, [tournamentId]);
 
+  // Mise à jour en direct : dès qu'un match, une équipe ou le tournoi change, le tableau se recharge tout seul.
+  useEffect(() => {
+    const reload = () => {
+      qc.invalidateQueries({ queryKey: ["board", tournamentId] });
+      qc.invalidateQueries({ queryKey: ["tournament", tournamentId] });
+    };
+    const channel = supabase
+      .channel(`tournament-board-${tournamentId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "tournament_matches", filter: `tournament_id=eq.${tournamentId}` }, reload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "tournament_teams", filter: `tournament_id=eq.${tournamentId}` }, reload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "tournaments", filter: `id=eq.${tournamentId}` }, reload)
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qc, tournamentId]);
+
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["board", tournamentId] });
     qc.invalidateQueries({ queryKey: ["tournament", tournamentId] });
