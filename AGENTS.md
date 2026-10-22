@@ -21,3 +21,4 @@
 - The shared active Game uses a safe-area-aware dynamic-height viewport layout on phones, with a dedicated landscape grid; setup screens retain normal navigation — keeps all scoring controls visible without changing game rules.
 - Admin role changes go through admin-verified server functions using the service client (user_roles has no client write policies); admins cannot remove their own admin role — avoids lockout and privilege escalation.
 - Tournament QR codes encode the play URL with `?code=`; the play page treats it exactly like a typed code (server validation, device memory) and strips it from the address bar — a code change invalidates scanned access too.
+- Every text input that has an associated action (add, rename, register, validate, save) must trigger that action on Enter — use a real `<form>` with a submit button where possible, otherwise an Enter key handler — so typing never needs a mouse.
