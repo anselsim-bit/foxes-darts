@@ -13,7 +13,7 @@ import {
   type MatchDraft,
 } from "@/lib/bracket";
 import { publicClient } from "@/lib/public.functions";
-import { tournamentRules } from "@/lib/dart-rules";
+import { tournamentRules, validateFinalLegs } from "@/lib/dart-rules";
 
 type Ctx = { supabase: SupabaseClient<Database>; userId: string };
 
@@ -33,7 +33,7 @@ export const getTournamentBoard = createServerFn({ method: "GET" })
       sb.from("tournament_teams").select("id, name, captain_id").eq("tournament_id", data.id).order("created_at"),
       sb
         .from("tournament_matches")
-        .select("id, stage, pool_index, round, position, team_a, team_b, score_a, score_b, winner")
+        .select("id, stage, pool_index, round, position, team_a, team_b, score_a, score_b, legs_a, legs_b, winner")
         .eq("tournament_id", data.id)
         .order("round")
         .order("position"),
@@ -130,15 +130,15 @@ async function hasValidCode(tournamentId: string, code: string | undefined) {
 /** Enregistre le résultat d'un match. Admin, capitaine d'une des deux équipes, ou code d'accès actif. */
 export const reportMatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { matchId: string; scoreA: number; scoreB: number; code?: string | undefined }) => input)
+  .inputValidator((input: { matchId: string; scoreA: number; scoreB: number; legsA?: number; legsB?: number; code?: string | undefined }) => input)
   .handler(async ({ data, context }) => reportAuthorizedMatch(data, context));
 
 /** Code-only entry point: does not grant member statistics or admin access. */
 export const reportTournamentMatch = createServerFn({ method: "POST" })
-  .inputValidator((input: { matchId: string; scoreA: number; scoreB: number; code: string }) => input)
+  .inputValidator((input: { matchId: string; scoreA: number; scoreB: number; legsA?: number; legsB?: number; code: string }) => input)
   .handler(async ({ data }) => reportAuthorizedMatch(data));
 
-async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; scoreB: number; code?: string | undefined }, context?: Ctx) {
+async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; scoreB: number; legsA?: number; legsB?: number; code?: string | undefined }, context?: Ctx) {
     const { data: m, error } = await publicClient()
       .from("tournament_matches")
       .select("id, tournament_id, stage, round, position, team_a, team_b")
@@ -157,9 +157,11 @@ async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; sc
     const a = Math.max(0, Math.floor(data.scoreA));
     const b = Math.max(0, Math.floor(data.scoreB));
     if (a === b) throw new Error("Il faut un vainqueur (scores différents).");
+    const legs = m.stage === "bracket" ? validateFinalLegs(data.legsA, data.legsB) : null;
+    if (legs && ((a < b) !== (legs.legsA > legs.legsB))) throw new Error("Le gagnant doit avoir remporté deux manches.");
     // Aux fléchettes, le vainqueur est celui qui a le moins de points restants (0).
     const winner = a < b ? m.team_a : m.team_b;
-    const { error: saveError } = await supabaseAdmin.from("tournament_matches").update({ score_a: a, score_b: b, winner }).eq("id", m.id);
+    const { error: saveError } = await supabaseAdmin.from("tournament_matches").update({ score_a: a, score_b: b, legs_a: legs?.legsA ?? null, legs_b: legs?.legsB ?? null, winner }).eq("id", m.id);
     if (saveError) throw new Error("Impossible d'enregistrer le résultat.");
     if (m.stage === "bracket") {
       const s = nextSlot(m.round, m.position);

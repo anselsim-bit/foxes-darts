@@ -6,11 +6,13 @@ export const gameProgressSchema = z.object({
   current: z.array(dartSchema).max(3),
   pendingBust: z.boolean().nullable(),
   mult: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  completedLegs: z.array(z.object({ winner: z.number().int().min(0).max(1), remaining: z.number().int().min(1) })).max(2).optional(),
 });
 export type GameProgress = z.infer<typeof gameProgressSchema>;
 const draftSchema = z.object({
   version: z.literal(1), matchId: z.string(), teamAId: z.string(), teamBId: z.string(),
   start: z.number(), doubleOut: z.boolean(), poolDoubleLimit: z.boolean(),
+  legsToWin: z.number().int().min(1).max(2).optional(),
   players: z.array(z.object({ name: z.string(), userId: z.null() })).length(2),
   progress: gameProgressSchema,
 });
@@ -33,8 +35,9 @@ export function writeDeviceValue(key: string, value: string | null) {
     return true;
   } catch { return false; }
 }
-export function draftMatches(draft: TournamentDraft, match: { id: string; teamAId: string; teamBId: string; teamA: string; teamB: string; start: number; doubleOut: boolean; poolDoubleLimit: boolean }) {
+export function draftMatches(draft: TournamentDraft, match: { id: string; teamAId: string; teamBId: string; teamA: string; teamB: string; start: number; doubleOut: boolean; poolDoubleLimit: boolean; legsToWin?: number }) {
   return draft.matchId === match.id && draft.teamAId === match.teamAId && draft.teamBId === match.teamBId
     && draft.start === match.start && draft.doubleOut === match.doubleOut && draft.poolDoubleLimit === match.poolDoubleLimit
+    && (draft.legsToWin ?? 1) === (match.legsToWin ?? 1)
     && draft.players.some(p => p.name === match.teamA) && draft.players.some(p => p.name === match.teamB);
 }
