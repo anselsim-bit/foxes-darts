@@ -24,6 +24,8 @@ import {
   adminUpsertPlayerStats,
   adminListHelloAsso,
   adminSyncHelloAsso,
+  adminListMembers,
+  adminSetMemberAdmin,
 } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -48,6 +50,7 @@ const TABS = [
   { key: "actions", label: "Grandes actions" },
   { key: "inscriptions", label: "Inscriptions" },
   { key: "stats", label: "Stats joueurs" },
+  { key: "membres", label: "Membres" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -116,6 +119,7 @@ function AdminPage() {
         {tab === "actions" && <HighlightsTab />}
         {tab === "inscriptions" && <RegistrationsTab />}
         {tab === "stats" && <PlayerStatsTab />}
+        {tab === "membres" && <MembersTab />}
       </div>
     </div>
   );
