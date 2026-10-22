@@ -1161,3 +1161,60 @@ function PlayerStatsTab() {
     </div>
   );
 }
+
+// ---------- Membres & droits ----------
+
+function MembersTab() {
+  const queryClient = useQueryClient();
+  const [filter, setFilter] = useState("");
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const { data: members = [] } = useQuery({ queryKey: ["admin-members"], queryFn: () => adminListMembers() });
+  const shown = members.filter((m) => m.name.toLowerCase().includes(filter.trim().toLowerCase()));
+
+  const toggle = async (m: (typeof members)[number]) => {
+    const next = !m.admin;
+    if (!window.confirm(next ? `Donner les droits d'administrateur à ${m.name} ?` : `Retirer les droits d'administrateur de ${m.name} ?`)) return;
+    setBusyId(m.id);
+    try {
+      await adminSetMemberAdmin({ data: { userId: m.id, admin: next } });
+      toast.success(next ? `${m.name} est maintenant administrateur.` : `${m.name} n'est plus administrateur.`);
+      await queryClient.invalidateQueries({ queryKey: ["admin-members"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Modification impossible.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-2xl">Membres et droits</h2>
+      <input
+        value={filter}
+        onChange={(e) => setFilter(e.target.value)}
+        placeholder="Rechercher un membre"
+        aria-label="Rechercher un membre"
+        className="w-full max-w-sm rounded-md border border-input bg-background px-3 py-2 text-sm"
+      />
+      <ul className="divide-y divide-border rounded-xl border border-border bg-card">
+        {shown.map((m) => (
+          <li key={m.id} className="flex items-center justify-between gap-3 px-4 py-3">
+            <div>
+              <p className="font-medium">{m.name}{m.self && <span className="ml-2 text-xs text-muted-foreground">(vous)</span>}</p>
+              <p className="text-xs text-muted-foreground">{m.admin ? "Administrateur" : "Membre"}</p>
+            </div>
+            <Button
+              variant={m.admin ? "outline" : "default"}
+              size="sm"
+              disabled={busyId === m.id || (m.self && m.admin)}
+              onClick={() => toggle(m)}
+            >
+              {m.admin ? "Retirer admin" : "Rendre admin"}
+            </Button>
+          </li>
+        ))}
+        {shown.length === 0 && <li className="px-4 py-3 text-sm text-muted-foreground">Aucun membre trouvé.</li>}
+      </ul>
+    </div>
+  );
+}
