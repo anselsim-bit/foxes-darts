@@ -57,3 +57,9 @@
 
 ## Bouton « Recommencer la partie »
 - [x] Retiré pendant les matchs de tournoi, conservé dans les parties libres du Compteur.
+
+## Synchro HelloAsso et tournois complets
+- [x] La mise à jour automatique hourly ignore totalement un tournoi complet (aucun appel, aucune inscription rafraîchie).
+- [x] Le bouton « Importer maintenant » rafraîchit quand même un tournoi complet, à la demande de l'admin.
+- [x] Corriger l'initiale ajoutée à tort à tous les prénoms : une équipe compte une seule fois dans la détection d'homonymes.
+- [x] Tester les deux cas et vérifier les noms sur les tournois réels.
