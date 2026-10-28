@@ -1034,7 +1034,7 @@ function HelloAssoSection() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl">Inscrits via HelloAsso</h2>
-          <p className="text-sm text-muted-foreground">Mis à jour automatiquement toutes les heures.</p>
+          <p className="text-sm text-muted-foreground">Mis à jour automatiquement toutes les heures, sauf pour les tournois complets.</p>
         </div>
         <button
           onClick={sync}
