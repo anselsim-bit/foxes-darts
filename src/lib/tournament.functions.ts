@@ -84,7 +84,7 @@ export const generateFinals = createServerFn({ method: "POST" })
   .inputValidator((input: { id: string }) => input)
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
-    const { data: t } = await context.supabase.from("tournaments").select("pool_count").eq("id", data.id).single();
+    const { data: t } = await context.supabase.from("tournaments").select("pool_count, consolation").eq("id", data.id).single();
     const { data: matches } = await context.supabase
       .from("tournament_matches")
       .select("stage, pool_index, team_a, team_b, score_a, score_b, winner")
@@ -106,7 +106,7 @@ export const generateFinals = createServerFn({ method: "POST" })
       drafts.push({ stage: "small_final", pool_index: null, round: 1, position: 0, team_a: null, team_b: null, winner: null });
     }
     // Consolante : les non qualifiés des poules (3es, puis 4es…) s'affrontent dans leur propre tableau.
-    const losers = consolationFromPools(standings, 2);
+    const losers = t?.consolation === false ? [] : consolationFromPools(standings, 2);
     if (losers.length >= 2) {
       drafts.push(...buildBracket(losers).map((d) => ({ ...d, stage: "consolation" as const })));
     }
