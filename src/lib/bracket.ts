@@ -1,7 +1,7 @@
 // Logique pure de génération de tableau (poules + élimination directe).
 
 export type MatchDraft = {
-  stage: "pool" | "bracket";
+  stage: "pool" | "bracket" | "consolation" | "small_final";
   pool_index: number | null;
   round: number;
   position: number;
