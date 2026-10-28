@@ -397,6 +397,17 @@ export function TournamentBoard({
             <button
               disabled={!full || busy}
               onClick={() => {
+                // Code déjà défini : le lancement l'utilise sans le redemander.
+                const existing = accessCode?.trim();
+                if (existing && existing.length >= 4) {
+                  void run(async () => {
+                    await startTournament({ data: { id: tournamentId, accessCode: existing } });
+                    const r = await getTournamentCodeAdmin({ data: { tournamentId } });
+                    setAccessCode(r.code);
+                    setCodeDraft(r.code ?? "");
+                  }, "Tournoi lancé !");
+                  return;
+                }
                 const c = window.prompt("Code d'accès des participants (au moins 4 caractères, modifiable ensuite) :", accessCode ?? "");
                 if (c === null) return;
                 if (c.trim().length < 4) {

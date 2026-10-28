@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Target } from "lucide-react";
 import { toast } from "sonner";
@@ -29,6 +29,7 @@ export function TournamentPlayButton({ tournamentId }: { tournamentId: string })
 
 export function TournamentPlay({ tournamentId, signedIn, qrCode }: { tournamentId: string; signedIn: boolean; qrCode?: string | undefined }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [code, setCode] = useState<string | null>(null);
   const [codeInput, setCodeInput] = useState("");
   const [codeMsg, setCodeMsg] = useState<string | null>(null);
@@ -158,7 +159,15 @@ export function TournamentPlay({ tournamentId, signedIn, qrCode }: { tournamentI
           onExit={exitGame}
           initialProgress={draft?.progress}
           onProgress={persistProgress}
-          onReported={clearDraft}
+          onReported={() => {
+            clearDraft();
+            // Après l'envoi du résultat, on emmène le joueur directement au tableau du tournoi.
+            try {
+              void navigate({ to: "/tournois/$id", params: { id: tournamentId } });
+            } catch {
+              window.location.assign(`/tournois/${tournamentId}`);
+            }
+          }}
         />
       </div>
     );
