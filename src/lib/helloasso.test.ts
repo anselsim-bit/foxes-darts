@@ -9,23 +9,34 @@ const mocks = vi.hoisted(() => {
     then: (res: (v: unknown) => void, rej?: (e: unknown) => void) => Promise.resolve(result).then(res, rej),
   });
   const from = (table: string) => {
+    type Chain = {
+      select: (...args: unknown[]) => Chain;
+      not: () => Chain;
+      in: () => Chain;
+      eq: () => Chain;
+      upsert: (payload: unknown) => unknown;
+      insert: (payload: unknown) => unknown;
+      update: (payload: unknown) => Chain;
+      then: (res: (v: unknown) => void, rej?: (e: unknown) => void) => Promise<unknown>;
+    };
     let selectArgs: unknown[] = [];
-    const chain: Record<string, unknown> = {};
-    chain.select = (...args: unknown[]) => { selectArgs = args; return chain; };
-    chain.not = () => chain;
-    chain.in = () => chain;
-    chain.eq = () => chain;
-    chain.upsert = (payload: unknown) => { ops.push({ table, op: "upsert", payload }); return thenable({ data: null, error: null }); };
-    chain.insert = (payload: unknown) => { ops.push({ table, op: "insert", payload }); return thenable({ data: null, error: null }); };
-    chain.update = (payload: unknown) => { ops.push({ table, op: "update", payload }); return chain; };
-    chain.then = (res: (v: unknown) => void, rej?: (e: unknown) => void) => {
-      let result: unknown = { data: null, error: null };
-      if (table === "tournaments") result = { data: state.tournaments, error: null };
-      else if (table === "tournament_teams") {
-        const head = (selectArgs[1] as { head?: boolean } | undefined)?.head;
-        result = head ? { data: null, error: null, count: state.teamCount } : { data: state.existingTeams, error: null };
-      }
-      return Promise.resolve(result).then(res, rej);
+    const chain: Chain = {
+      select: (...args: unknown[]) => { selectArgs = args; return chain; },
+      not: () => chain,
+      in: () => chain,
+      eq: () => chain,
+      upsert: (payload: unknown) => { ops.push({ table, op: "upsert", payload }); return thenable({ data: null, error: null }); },
+      insert: (payload: unknown) => { ops.push({ table, op: "insert", payload }); return thenable({ data: null, error: null }); },
+      update: (payload: unknown) => { ops.push({ table, op: "update", payload }); return chain; },
+      then: (res: (v: unknown) => void, rej?: (e: unknown) => void) => {
+        let result: unknown = { data: null, error: null };
+        if (table === "tournaments") result = { data: state.tournaments, error: null };
+        else if (table === "tournament_teams") {
+          const head = (selectArgs[1] as { head?: boolean } | undefined)?.head;
+          result = head ? { data: null, error: null, count: state.teamCount } : { data: state.existingTeams, error: null };
+        }
+        return Promise.resolve(result).then(res, rej);
+      },
     };
     return chain;
   };
