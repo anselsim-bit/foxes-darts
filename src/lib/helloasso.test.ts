@@ -4,7 +4,7 @@ import { extractPartner, teamNameOf, syncHelloAsso } from "./helloasso.server";
 const mocks = vi.hoisted(() => {
   type Op = { table: string; op: string; payload?: unknown };
   const ops: Op[] = [];
-  const state = { tournaments: [] as unknown[], existingTeams: [] as unknown[], teamCount: 0 };
+  const state = { tournaments: [] as unknown[], existingTeams: [] as unknown[], teamNames: [] as { name: string }[], teamCount: 0 };
   const thenable = (result: unknown) => ({
     then: (res: (v: unknown) => void, rej?: (e: unknown) => void) => Promise.resolve(result).then(res, rej),
   });
@@ -32,8 +32,9 @@ const mocks = vi.hoisted(() => {
         let result: unknown = { data: null, error: null };
         if (table === "tournaments") result = { data: state.tournaments, error: null };
         else if (table === "tournament_teams") {
-          const head = (selectArgs[1] as { head?: boolean } | undefined)?.head;
-          result = head ? { data: null, error: null, count: state.teamCount } : { data: state.existingTeams, error: null };
+          result = selectArgs[0] === "name"
+            ? { data: state.teamNames, error: null, count: state.teamCount }
+            : { data: state.existingTeams, error: null };
         }
         return Promise.resolve(result).then(res, rej);
       },
