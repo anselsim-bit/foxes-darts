@@ -154,12 +154,20 @@ describe("syncHelloAsso capacity", () => {
   });
   afterEach(() => vi.unstubAllGlobals());
 
-  it("ne crée aucune nouvelle équipe quand le tournoi est complet", async () => {
+  it("laisse un tournoi complet totalement tranquille", async () => {
     mocks.state.teamCount = 16;
     mocks.state.existingTeams = [{ id: "team-1", name: "Alice", name_locked: false, helloasso_item_id: 1 }];
     await syncHelloAsso();
+    // Aucune inscription rapatriée, aucune équipe créée, aucun nom recomplété.
+    expect(mocks.ops).toEqual([]);
+  });
+
+  it("le bouton d'import manuel rafraîchit quand même un tournoi complet", async () => {
+    mocks.state.teamCount = 16;
+    mocks.state.existingTeams = [{ id: "team-1", name: "Alice", name_locked: false, helloasso_item_id: 1 }];
+    await syncHelloAsso({ force: true });
+    expect(mocks.ops.filter((o) => o.op === "upsert")).toHaveLength(1);
     expect(mocks.ops.filter((o) => o.op === "insert")).toEqual([]);
-    // Le coéquipier découvert complète quand même le nom de l'équipe existante.
     expect(mocks.ops.filter((o) => o.op === "update")).toEqual([{ table: "tournament_teams", op: "update", payload: { name: "Alice & Coéquipier" } }]);
   });
 
@@ -170,6 +178,12 @@ describe("syncHelloAsso capacity", () => {
       { table: "tournament_teams", op: "insert", payload: { tournament_id: "t1", name: "Alice & Coéquipier", captain_id: null, helloasso_item_id: 1 } },
       { table: "tournament_teams", op: "insert", payload: { tournament_id: "t1", name: "Bob", captain_id: null, helloasso_item_id: 2 } },
     ]);
+  });
+
+  it("sync un tournoi sans limite de participants", async () => {
+    mocks.state.tournaments = [{ ...tournamentRow, max_participants: null }];
+    await syncHelloAsso();
+    expect(mocks.ops.filter((o) => o.op === "insert")).toHaveLength(2);
   });
 
   it("distingue les homonymes avec l'initiale du nom", async () => {
