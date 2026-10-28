@@ -175,17 +175,6 @@ export function TournamentBoard({
     return left === 0 ? "Finale" : left === 1 ? "Demi-finales" : left === 2 ? "Quarts de finale" : `Tour ${r}`;
   };
 
-  const genBtn =
-    admin && poolsDone && bracket.length === 0 ? (
-      <button
-        disabled={busy}
-        onClick={() => run(() => generateFinals({ data: { id: tournamentId } }), "Phase finale générée.")}
-        className="btn-ember mt-4 px-4 py-2 text-sm"
-      >
-        Générer la phase finale (2 premiers de chaque poule)
-      </button>
-    ) : null;
-
   const finalSection =
     bracket.length > 0 ? (
       <div>
@@ -277,7 +266,6 @@ export function TournamentBoard({
             </div>
           ))}
         </div>
-        {genBtn}
       </div>
     ) : null;
 
@@ -570,15 +558,6 @@ export function TournamentBoard({
               );
             })}
           </div>
-          {admin && poolsDone && bracket.length === 0 && (
-            <button
-              disabled={busy}
-              onClick={() => run(() => generateFinals({ data: { id: tournamentId } }), "Phase finale générée.")}
-              className="btn-ember mt-4 px-4 py-2 text-sm"
-            >
-              Générer la phase finale (2 premiers de chaque poule)
-            </button>
-          )}
         </div>
       )}
 
