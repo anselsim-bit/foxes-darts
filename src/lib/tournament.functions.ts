@@ -175,18 +175,43 @@ async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; sc
     const winner = a < b ? m.team_a : m.team_b;
     const { error: saveError } = await supabaseAdmin.from("tournament_matches").update({ score_a: a, score_b: b, legs_a: legs?.legsA ?? null, legs_b: legs?.legsB ?? null, winner }).eq("id", m.id);
     if (saveError) throw new Error("Impossible d'enregistrer le résultat.");
-    if (m.stage === "bracket") {
+    if (m.stage === "bracket" || m.stage === "consolation") {
       const s = nextSlot(m.round, m.position);
       const { data: next } = await supabaseAdmin
         .from("tournament_matches")
         .select("id")
         .eq("tournament_id", m.tournament_id)
-        .eq("stage", "bracket")
+        .eq("stage", m.stage)
         .eq("round", s.round)
         .eq("position", s.position)
         .maybeSingle();
       if (next) await supabaseAdmin.from("tournament_matches").update(s.side === "team_a" ? { team_a: winner } : { team_b: winner }).eq("id", next.id);
-      else await supabaseAdmin.from("tournaments").update({ status: "finished" }).eq("id", m.tournament_id);
+      else if (m.stage === "bracket") await supabaseAdmin.from("tournaments").update({ status: "finished" }).eq("id", m.tournament_id);
+      // Petite finale : le perdant d'une demi-finale du tableau principal y prend place.
+      if (m.stage === "bracket") {
+        const { data: lastRound } = await supabaseAdmin
+          .from("tournament_matches")
+          .select("round")
+          .eq("tournament_id", m.tournament_id)
+          .eq("stage", "bracket")
+          .order("round", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (lastRound && m.round === lastRound.round - 1) {
+          const loser = winner === m.team_a ? m.team_b : m.team_a;
+          const { data: smallFinal } = await supabaseAdmin
+            .from("tournament_matches")
+            .select("id")
+            .eq("tournament_id", m.tournament_id)
+            .eq("stage", "small_final")
+            .maybeSingle();
+          if (smallFinal)
+            await supabaseAdmin
+              .from("tournament_matches")
+              .update(m.position % 2 === 0 ? { team_a: loser } : { team_b: loser })
+              .eq("id", smallFinal.id);
+        }
+      }
     }
     return { ok: true };
 }
