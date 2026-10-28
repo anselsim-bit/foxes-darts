@@ -156,14 +156,20 @@ export async function syncHelloAsso() {
           const known = new Map((existing ?? []).map((e) => [e.helloasso_item_id, e]));
           // Tournoi complet ou déjà lancé : aucune nouvelle équipe n'est importée
           // (la complétion du nom du coéquipier reste possible sur les équipes existantes).
-          const { count } = await supabaseAdmin
+          const { data: names, count } = await supabaseAdmin
             .from("tournament_teams")
-            .select("id", { count: "exact", head: true })
+            .select("name", { count: "exact" })
             .eq("tournament_id", t.id);
           const canAdd = t.status === "open" && (t.max_participants == null || (count ?? 0) < t.max_participants);
+          // Prénoms en jeu (billets + équipes du tournoi) pour repérer les homonymes.
+          const seen = new Map<string, number>();
+          const bump = (f: string | null) => { const k = (f ?? "").trim().toLowerCase(); if (k) seen.set(k, (seen.get(k) ?? 0) + 1); };
+          for (const r of rows) { bump(r.first_name); bump(r.partner_first_name); }
+          for (const n of names ?? []) for (const part of (n.name ?? "").split("&")) bump(part.trim().split(/\s+/)[0] ?? null);
+          const dup = new Set([...seen].filter(([, c]) => c > 1).map(([k]) => k));
           for (const r of rows) {
             if (!ids.includes(r.item_id)) continue;
-            const name = teamNameOf(r);
+            const name = teamNameOf(r, dup);
             const team = known.get(r.item_id);
             if (!team) {
               if (!canAdd) continue;
