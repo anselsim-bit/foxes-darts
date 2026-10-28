@@ -176,14 +176,27 @@ export async function syncHelloAsso(opts: { force?: boolean } = {}) {
           // (la complétion du nom du coéquipier reste possible sur les équipes existantes).
           const { data: names, count } = await supabaseAdmin
             .from("tournament_teams")
-            .select("name", { count: "exact" })
+            .select("name, helloasso_item_id", { count: "exact" })
             .eq("tournament_id", t.id);
           const canAdd = t.status === "open" && (t.max_participants == null || (count ?? 0) < t.max_participants);
-          // Prénoms en jeu (billets + équipes du tournoi) pour repérer les homonymes.
+          // Prénoms en jeu, comptés une seule fois par équipe (un billet = une équipe ;
+          // les équipes déjà là qui ne correspondent à aucun billet de la page sont
+          // comptées depuis leur nom) pour repérer les homonymes.
           const seen = new Map<string, number>();
-          const bump = (f: string | null) => { const k = (f ?? "").trim().toLowerCase(); if (k) seen.set(k, (seen.get(k) ?? 0) + 1); };
-          for (const r of rows) { bump(r.first_name); bump(r.partner_first_name); }
-          for (const n of names ?? []) for (const part of (n.name ?? "").split("&")) bump(part.trim().split(/\s+/)[0] ?? null);
+          const bump = (k: string) => { if (k) seen.set(k, (seen.get(k) ?? 0) + 1); };
+          for (const r of rows) {
+            const slots = new Set([
+              (r.first_name ?? "").trim().toLowerCase(),
+              (r.partner_first_name ?? "").trim().toLowerCase(),
+            ]);
+            slots.delete("");
+            for (const s of slots) bump(s);
+          }
+          const pageIds = new Set(ids);
+          for (const n of names ?? []) {
+            if (n.helloasso_item_id != null && pageIds.has(n.helloasso_item_id)) continue;
+            for (const part of (n.name ?? "").split("&")) bump(part.trim().split(/\s+/)[0] ?? "");
+          }
           const dup = new Set([...seen].filter(([, c]) => c > 1).map(([k]) => k));
           for (const r of rows) {
             if (!ids.includes(r.item_id)) continue;
