@@ -70,16 +70,25 @@ export function extractPartner(fields?: CustomField[]) {
   return firstName || lastName ? { firstName, lastName } : null;
 }
 
-/** Nom d'équipe par défaut : les deux joueurs de la doublette, sinon le titulaire seul. */
+/** Prénom seul, ou prénom + initiale du nom quand un homonyme existe (ex. « Patrice A. »). */
+export function shortName(first: string | null, last: string | null, dup: Set<string> = new Set()) {
+  const f = (first ?? "").trim();
+  const l = (last ?? "").trim();
+  if (!f) return l || "";
+  if (!dup.has(f.toLowerCase())) return f;
+  return l ? `${f} ${l[0]!.toUpperCase()}.` : f;
+}
+
+/** Nom d'équipe : les prénoms des deux joueurs, avec initiale du nom en cas d'homonyme. */
 export function teamNameOf(r: {
   first_name: string | null;
   last_name: string | null;
   partner_first_name?: string | null;
   partner_last_name?: string | null;
   item_id: number;
-}) {
-  const holder = [r.first_name, r.last_name].filter(Boolean).join(" ").trim();
-  const partner = [r.partner_first_name, r.partner_last_name].filter(Boolean).join(" ").trim();
+}, dup: Set<string> = new Set()) {
+  const holder = shortName(r.first_name, r.last_name, dup);
+  const partner = shortName(r.partner_first_name ?? null, r.partner_last_name ?? null, dup);
   if (holder && partner) return `${holder} & ${partner}`;
   return holder || `Participant HelloAsso #${r.item_id}`;
 }
