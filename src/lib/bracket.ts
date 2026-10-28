@@ -1,7 +1,7 @@
 // Logique pure de génération de tableau (poules + élimination directe).
 
 export type MatchDraft = {
-  stage: "pool" | "bracket";
+  stage: "pool" | "bracket" | "consolation" | "small_final";
   pool_index: number | null;
   round: number;
   position: number;
@@ -102,17 +102,26 @@ export function poolStandings(teams: string[], matches: MatchResult[]): PoolRow[
     const a = rows.get(m.team_a);
     const b = rows.get(m.team_b);
     if (!a || !b) continue;
-    const d = (m.score_a ?? 0) - (m.score_b ?? 0);
     a.played++; b.played++;
-    a.diff += d; b.diff -= d;
-    if (m.winner === m.team_a) { a.wins++; b.losses++; } else { b.wins++; a.losses++; }
+    // Seul le perdant marque des points : ses points restants. Le gagnant n'en prend aucun.
+    // Moins on a de points, plus on est haut au classement.
+    if (m.winner === m.team_a) { a.wins++; b.losses++; b.diff += m.score_b ?? 0; }
+    else { b.wins++; a.losses++; a.diff += m.score_a ?? 0; }
   }
-  return [...rows.values()].sort((x, y) => y.wins - x.wins || y.diff - x.diff);
+  return [...rows.values()].sort((x, y) => y.wins - x.wins || x.diff - y.diff);
 }
 
 /** Qualifiés des poules : tous les 1ers, puis tous les 2es… */
 export function qualifiersFromPools(standings: PoolRow[][], perPool: number): string[] {
   const out: string[] = [];
   for (let rank = 0; rank < perPool; rank++) for (const s of standings) if (s[rank]) out.push(s[rank]!.team);
+  return out;
+}
+
+/** Non qualifiés des poules (consolante) : tous les 3es, puis tous les 4es… */
+export function consolationFromPools(standings: PoolRow[][], qualifiedPerPool: number): string[] {
+  const max = Math.max(0, ...standings.map((s) => s.length));
+  const out: string[] = [];
+  for (let rank = qualifiedPerPool; rank < max; rank++) for (const s of standings) if (s[rank]) out.push(s[rank]!.team);
   return out;
 }

@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
 import {
   buildBracket,
+  consolationFromPools,
   distributePools,
   nextSlot,
   poolStandings,
@@ -89,7 +90,8 @@ export const generateFinals = createServerFn({ method: "POST" })
       .select("stage, pool_index, team_a, team_b, score_a, score_b, winner")
       .eq("tournament_id", data.id);
     const all = matches ?? [];
-    if (all.some((m) => m.stage === "bracket")) throw new Error("La phase finale existe déjà.");
+    if (all.some((m) => m.stage === "bracket" || m.stage === "consolation" || m.stage === "small_final"))
+      throw new Error("La phase finale existe déjà.");
     const pool = all.filter((m) => m.stage === "pool");
     if (pool.some((m) => !m.winner)) throw new Error("Tous les matchs de poule ne sont pas terminés.");
     const standings = Array.from({ length: t?.pool_count ?? 0 }, (_, i) => {
@@ -97,7 +99,17 @@ export const generateFinals = createServerFn({ method: "POST" })
       const teams = [...new Set(ms.flatMap((m) => [m.team_a!, m.team_b!]))];
       return poolStandings(teams, ms);
     });
-    const drafts = buildBracket(qualifiersFromPools(standings, 2));
+    const drafts: MatchDraft[] = buildBracket(qualifiersFromPools(standings, 2));
+    // Petite finale pour la 3e place : les perdants des demi-finales (créée dès qu'il y a des demies).
+    const bracketRounds = Math.max(...drafts.map((d) => d.round), 0);
+    if (bracketRounds >= 2) {
+      drafts.push({ stage: "small_final", pool_index: null, round: 1, position: 0, team_a: null, team_b: null, winner: null });
+    }
+    // Consolante : les non qualifiés des poules (3es, puis 4es…) s'affrontent dans leur propre tableau.
+    const losers = consolationFromPools(standings, 2);
+    if (losers.length >= 2) {
+      drafts.push(...buildBracket(losers).map((d) => ({ ...d, stage: "consolation" as const })));
+    }
     const { error } = await context.supabase.from("tournament_matches").insert(drafts.map(toRow(data.id)));
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -163,18 +175,43 @@ async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; sc
     const winner = a < b ? m.team_a : m.team_b;
     const { error: saveError } = await supabaseAdmin.from("tournament_matches").update({ score_a: a, score_b: b, legs_a: legs?.legsA ?? null, legs_b: legs?.legsB ?? null, winner }).eq("id", m.id);
     if (saveError) throw new Error("Impossible d'enregistrer le résultat.");
-    if (m.stage === "bracket") {
+    if (m.stage === "bracket" || m.stage === "consolation") {
       const s = nextSlot(m.round, m.position);
       const { data: next } = await supabaseAdmin
         .from("tournament_matches")
         .select("id")
         .eq("tournament_id", m.tournament_id)
-        .eq("stage", "bracket")
+        .eq("stage", m.stage)
         .eq("round", s.round)
         .eq("position", s.position)
         .maybeSingle();
       if (next) await supabaseAdmin.from("tournament_matches").update(s.side === "team_a" ? { team_a: winner } : { team_b: winner }).eq("id", next.id);
-      else await supabaseAdmin.from("tournaments").update({ status: "finished" }).eq("id", m.tournament_id);
+      else if (m.stage === "bracket") await supabaseAdmin.from("tournaments").update({ status: "finished" }).eq("id", m.tournament_id);
+      // Petite finale : le perdant d'une demi-finale du tableau principal y prend place.
+      if (m.stage === "bracket") {
+        const { data: lastRound } = await supabaseAdmin
+          .from("tournament_matches")
+          .select("round")
+          .eq("tournament_id", m.tournament_id)
+          .eq("stage", "bracket")
+          .order("round", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (lastRound && m.round === lastRound.round - 1) {
+          const loser = winner === m.team_a ? m.team_b : m.team_a;
+          const { data: smallFinal } = await supabaseAdmin
+            .from("tournament_matches")
+            .select("id")
+            .eq("tournament_id", m.tournament_id)
+            .eq("stage", "small_final")
+            .maybeSingle();
+          if (smallFinal)
+            await supabaseAdmin
+              .from("tournament_matches")
+              .update(m.position % 2 === 0 ? { team_a: loser } : { team_b: loser })
+              .eq("id", smallFinal.id);
+        }
+      }
     }
     return { ok: true };
 }
@@ -239,10 +276,18 @@ export const listPlayableMatches = createServerFn({ method: "POST" })
     const name = new Map((teams ?? []).map((t) => [t.id, t.name]));
     return (matches ?? []).flatMap((m) => {
       if (!m.team_a || !m.team_b) return [];
+      const stageLabel =
+        m.stage === "pool"
+          ? `Poule ${String.fromCharCode(65 + (m.pool_index ?? 0))}`
+          : m.stage === "consolation"
+            ? `Consolante — Tour ${m.round}`
+            : m.stage === "small_final"
+              ? "Petite finale"
+              : `Tour ${m.round}`;
       return [{
       id: m.id,
       ...tournamentRules(tournament.start_score, tournament.double_out, m.stage, tournament.pool_double_limit ?? true),
-      label: `${m.stage === "pool" ? `Poule ${String.fromCharCode(65 + (m.pool_index ?? 0))}` : `Tour ${m.round}`} — ${name.get(m.team_a)} vs ${name.get(m.team_b)}`,
+      label: `${stageLabel} — ${name.get(m.team_a)} vs ${name.get(m.team_b)}`,
       teamA: name.get(m.team_a) ?? "Équipe A",
       teamB: name.get(m.team_b) ?? "Équipe B",
       teamAId: m.team_a,

@@ -60,7 +60,7 @@ export function TournamentBoard({
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
   const [showTeams, setShowTeams] = useState(false);
   const [poolView, setPoolView] = useState<"all" | number>("all");
-  const [view, setView] = useState<"pools" | "final">("pools");
+  const [view, setView] = useState<"pools" | "final" | "consolation">("pools");
   const [busy, setBusy] = useState(false);
   const [accessCode, setAccessCode] = useState<string | null>(null);
   const [codeDraft, setCodeDraft] = useState("");
@@ -123,6 +123,10 @@ export function TournamentBoard({
   const bracket = matches.filter((m) => m.stage === "bracket");
   const rounds = [...new Set(bracket.map((m) => m.round))].sort((a, b) => a - b);
   const finalMatch = bracket.find((m) => m.round === rounds[rounds.length - 1]);
+  const consolation = matches.filter((m) => m.stage === "consolation");
+  const consolationRounds = [...new Set(consolation.map((m) => m.round))].sort((a, b) => a - b);
+  const consolationFinal = consolation.find((m) => m.round === consolationRounds[consolationRounds.length - 1]);
+  const smallFinal = matches.find((m) => m.stage === "small_final");
   const poolsDone = poolMatches.length > 0 && poolMatches.every((m) => m.winner);
 
   const poolData = Array.from({ length: poolCount }, (_, i) => {
@@ -160,9 +164,16 @@ export function TournamentBoard({
 
   const showPools = poolCount > 0 && poolMatches.length > 0;
   const hasFinal = bracket.length > 0 || preview.length > 0;
-  const both = showPools && hasFinal;
-  const showPoolsView = showPools && (!both || view === "pools");
-  const showFinalView = hasFinal && (!both || view === "final");
+  const hasConsolation = consolation.length > 0;
+  const several = [showPools, hasFinal, hasConsolation].filter(Boolean).length > 1;
+  const showPoolsView = showPools && (!several || view === "pools");
+  const showFinalView = hasFinal && (!several || view === "final");
+  const showConsolationView = hasConsolation && (!several || view === "consolation");
+
+  const consolationRoundName = (r: number) => {
+    const left = consolationRounds.length - r;
+    return left === 0 ? "Finale" : left === 1 ? "Demi-finales" : left === 2 ? "Quarts de finale" : `Tour ${r}`;
+  };
 
   const genBtn =
     admin && poolsDone && bracket.length === 0 ? (
@@ -204,11 +215,30 @@ export function TournamentBoard({
                         run(() => reportMatch({ data: { matchId: m.id, scoreA: a, scoreB: b, ...(legsA !== undefined && legsB !== undefined ? { legsA, legsB } : {}) } }), "Résultat enregistré.")
                       }
                     />
-                  ))}
+                ))}
               </div>
             </div>
           ))}
         </div>
+        {smallFinal && (
+          <div className="mt-6 max-w-md">
+            <h3 className="text-sm font-semibold text-primary">Petite finale — 3e place</h3>
+            <div className="mt-2">
+              <MatchRow
+                m={smallFinal}
+                name={name}
+                admin={admin}
+                boxed
+                onSave={(a, b) => run(() => reportMatch({ data: { matchId: smallFinal.id, scoreA: a, scoreB: b } }), "Résultat enregistré.")}
+              />
+            </div>
+            {smallFinal.winner && (
+              <p className="mt-2 text-sm">
+                3e du tournoi : <span className="font-semibold text-primary">{name(smallFinal.winner)}</span>
+              </p>
+            )}
+          </div>
+        )}
       </div>
     ) : preview.length > 0 ? (
       <div>
@@ -248,6 +278,41 @@ export function TournamentBoard({
           ))}
         </div>
         {genBtn}
+      </div>
+    ) : null;
+
+  const consolationSection =
+    consolation.length > 0 ? (
+      <div>
+        <h2 className="text-2xl">Consolante</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Tableau des équipes non qualifiées pour le tableau final.</p>
+        {consolationFinal?.winner && (
+          <p className="mt-2 flex items-center gap-2 text-lg">
+            <Trophy className="h-5 w-5 text-primary" /> Vainqueur de la consolante :{" "}
+            <span className="text-gradient-ember font-semibold">{name(consolationFinal.winner)}</span>
+          </p>
+        )}
+        <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:gap-4">
+          {consolationRounds.map((r) => (
+            <div key={r} className="min-w-0 flex-1 space-y-3">
+              <h3 className="text-sm font-semibold text-primary">{consolationRoundName(r)}</h3>
+              <div className="flex h-full flex-col justify-around gap-3">
+                {consolation
+                  .filter((m) => m.round === r)
+                  .map((m) => (
+                    <MatchRow
+                      key={m.id}
+                      m={m}
+                      name={name}
+                      admin={admin}
+                      boxed
+                      onSave={(a, b) => run(() => reportMatch({ data: { matchId: m.id, scoreA: a, scoreB: b } }), "Résultat enregistré.")}
+                    />
+                  ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     ) : null;
 
@@ -431,13 +496,14 @@ export function TournamentBoard({
         </div>
       )}
 
-      {both && (
+      {several && (
         <div className="flex flex-wrap gap-1.5">
           {(
             [
-              ["pools", "Poules"],
-              ["final", "Tableau final"],
-            ] as const
+              ...(showPools ? [["pools", "Poules"] as const] : []),
+              ...(hasFinal ? [["final", "Tableau final"] as const] : []),
+              ...(hasConsolation ? [["consolation", "Consolante"] as const] : []),
+            ]
           ).map(([v, lbl]) => (
             <button
               key={v}
@@ -479,7 +545,7 @@ export function TournamentBoard({
                         <th>J</th>
                         <th>V</th>
                         <th>D</th>
-                        <th>+/-</th>
+                        <th title="Points restants cumulés sur les matchs perdus — le moins possible">Pts</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -517,6 +583,8 @@ export function TournamentBoard({
       )}
 
       {showFinalView && finalSection}
+
+      {showConsolationView && consolationSection}
     </section>
   );
 }
