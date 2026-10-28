@@ -29,6 +29,7 @@ export function TournamentPlayButton({ tournamentId }: { tournamentId: string })
 
 export function TournamentPlay({ tournamentId, signedIn, qrCode }: { tournamentId: string; signedIn: boolean; qrCode?: string | undefined }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [code, setCode] = useState<string | null>(null);
   const [codeInput, setCodeInput] = useState("");
   const [codeMsg, setCodeMsg] = useState<string | null>(null);
