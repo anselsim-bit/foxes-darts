@@ -84,7 +84,7 @@ export const startTournament = createServerFn({ method: "POST" })
  * Ne fait rien (renvoie false) si la phase finale existe déjà ou si des matchs de poule
  * ne sont pas terminés : sûre à appeler après chaque résultat de poule.
  */
-async function generateFinalsIfPoolsDone(supabase: SupabaseLike, tournamentId: string): Promise<boolean> {
+async function generateFinalsIfPoolsDone(supabase: SupabaseClient<Database>, tournamentId: string): Promise<boolean> {
   const { data: t } = await supabase.from("tournaments").select("pool_count, consolation").eq("id", tournamentId).single();
   const { data: matches } = await supabase
     .from("tournament_matches")
@@ -175,6 +175,9 @@ async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; sc
     const winner = a < b ? m.team_a : m.team_b;
     const { error: saveError } = await supabaseAdmin.from("tournament_matches").update({ score_a: a, score_b: b, legs_a: legs?.legsA ?? null, legs_b: legs?.legsB ?? null, winner }).eq("id", m.id);
     if (saveError) throw new Error("Impossible d'enregistrer le résultat.");
+    // Dès que le dernier match de poule est enregistré, le tableau final, la petite finale
+    // et la consolante sont générés automatiquement (sans action de l'admin).
+    if (m.stage === "pool") await generateFinalsIfPoolsDone(supabaseAdmin, m.tournament_id);
     if (m.stage === "bracket" || m.stage === "consolation") {
       const s = nextSlot(m.round, m.position);
       const { data: next } = await supabaseAdmin
