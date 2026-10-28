@@ -144,6 +144,7 @@ describe("syncHelloAsso capacity", () => {
     mocks.ops.length = 0;
     mocks.state.tournaments = [tournamentRow];
     mocks.state.existingTeams = [];
+    mocks.state.teamNames = [];
     mocks.state.teamCount = 0;
     vi.stubGlobal("fetch", vi.fn(async (url: string | URL | Request) => {
       const u = String(url);
