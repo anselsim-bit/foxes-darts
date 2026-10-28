@@ -355,11 +355,6 @@ function TournamentsTab() {
                 <input type="checkbox" checked={form.pool_double_limit} onChange={(e) => setForm({ ...form, pool_double_limit: e.target.checked })} /> Limite de 5 tours d'essais de double en poules
               </label>
             )}
-            {form.with_pools && (
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={form.consolation} onChange={(e) => setForm({ ...form, consolation: e.target.checked })} /> Consolante pour les non qualifiés
-              </label>
-            )}
           </div>
         </fieldset>
         <div className="grid grid-cols-2 gap-3">
@@ -393,6 +388,11 @@ function TournamentsTab() {
                 value={form.pool_count}
                 onChange={(e) => setForm({ ...form, pool_count: e.target.value })}
               />
+            )}
+            {form.with_pools && (
+              <label className="mt-2 flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={form.consolation} onChange={(e) => setForm({ ...form, consolation: e.target.checked })} /> Consolante pour les non qualifiés
+              </label>
             )}
           </div>
         </div>
