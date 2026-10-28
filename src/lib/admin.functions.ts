@@ -46,6 +46,7 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
       start_score: number;
       double_out: boolean;
       pool_double_limit?: boolean | undefined;
+      consolation?: boolean | undefined;
       location?: string | undefined;
       description?: string | undefined;
       helloasso_url?: string | undefined;
@@ -68,6 +69,7 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
       start_score: rules.start,
       double_out: rules.doubleOut,
       pool_double_limit: data.pool_double_limit ?? true,
+      consolation: data.consolation ?? true,
       location: data.location || null,
       description: data.description || null,
       helloasso_url: data.helloasso_url || null,

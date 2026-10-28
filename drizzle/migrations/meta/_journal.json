@@ -134,6 +134,13 @@
       "when": 1792684050941,
       "tag": "0018_tournament_realtime",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793179741360,
+      "tag": "0019_tournament_consolation_option",
+      "breakpoints": true
     }
   ]
 }

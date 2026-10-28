@@ -2,7 +2,7 @@
 
 ## Classement poules, consolante et petite finale
 - [x] Points restants additionnés au perdant seul ; classement au moins de points.
-- [x] Tableau de consolante pour les non qualifiés des poules.
+- [x] Tableau de consolante pour les non qualifiés des poules, optionnel à la création du tournoi.
 - [x] Petite finale pour la 3e place (perdants des demi-finales).
 - [x] Tests des règles et vérification de l'affichage.
 
