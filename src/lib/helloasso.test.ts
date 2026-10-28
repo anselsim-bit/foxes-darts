@@ -1,5 +1,65 @@
-import { describe, expect, it } from "vitest";
-import { extractPartner, teamNameOf } from "./helloasso.server";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { extractPartner, teamNameOf, syncHelloAsso } from "./helloasso.server";
+
+const mocks = vi.hoisted(() => {
+  type Op = { table: string; op: string; payload?: unknown };
+  const ops: Op[] = [];
+  const state = { tournaments: [] as unknown[], existingTeams: [] as unknown[], teamCount: 0 };
+  const thenable = (result: unknown) => ({
+    then: (res: (v: unknown) => void, rej?: (e: unknown) => void) => Promise.resolve(result).then(res, rej),
+  });
+  const from = (table: string) => {
+    let selectArgs: unknown[] = [];
+    const chain: Record<string, unknown> = {};
+    chain.select = (...args: unknown[]) => { selectArgs = args; return chain; };
+    chain.not = () => chain;
+    chain.in = () => chain;
+    chain.eq = () => chain;
+    chain.upsert = (payload: unknown) => { ops.push({ table, op: "upsert", payload }); return thenable({ data: null, error: null }); };
+    chain.insert = (payload: unknown) => { ops.push({ table, op: "insert", payload }); return thenable({ data: null, error: null }); };
+    chain.update = (payload: unknown) => { ops.push({ table, op: "update", payload }); return chain; };
+    chain.then = (res: (v: unknown) => void, rej?: (e: unknown) => void) => {
+      let result: unknown = { data: null, error: null };
+      if (table === "tournaments") result = { data: state.tournaments, error: null };
+      else if (table === "tournament_teams") {
+        const head = (selectArgs[1] as { head?: boolean } | undefined)?.head;
+        result = head ? { data: null, error: null, count: state.teamCount } : { data: state.existingTeams, error: null };
+      }
+      return Promise.resolve(result).then(res, rej);
+    };
+    return chain;
+  };
+  return { ops, state, from };
+});
+
+vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: { from: mocks.from } }));
+
+const json = (body: unknown) => ({ ok: true, status: 200, json: async () => body });
+const itemsBody = (items: unknown[]) => ({
+  data: items,
+  pagination: {},
+});
+const ticket = (id: number, extra: Record<string, unknown> = {}) => ({
+  id,
+  amount: 1000,
+  name: "Doublette",
+  state: "Processed",
+  user: { firstName: "Joueur", lastName: `Numéro${id}` },
+  payer: { email: `joueur${id}@x.fr` },
+  order: { date: "2026-10-27T10:00:00Z" },
+  customFields: [],
+  ...extra,
+});
+const tournamentRow = {
+  id: "t1",
+  helloasso_url: "https://www.helloasso.com/associations/asso/evenements/tournoi",
+  status: "open",
+  max_participants: 16,
+};
+const partnerFields = [
+  { name: "Nom partenaire", answer: "Partenaire" },
+  { name: "Prénom partenaire", answer: "Coéquipier" },
+];
 
 describe("extractPartner", () => {
   it("retrouve le coéquipier des questions « Nom / Prénom partenaire »", () => {
