@@ -114,3 +114,43 @@ describe("teamNameOf", () => {
     expect(teamNameOf({ first_name: null, last_name: null, item_id: 42 })).toBe("Participant HelloAsso #42");
   });
 });
+
+describe("syncHelloAsso capacity", () => {
+  beforeEach(() => {
+    mocks.ops.length = 0;
+    mocks.state.tournaments = [tournamentRow];
+    mocks.state.existingTeams = [];
+    mocks.state.teamCount = 0;
+    vi.stubGlobal("fetch", vi.fn(async (url: string | URL | Request) => {
+      const u = String(url);
+      if (u.includes("oauth2/token")) return json({ access_token: "tok" });
+      return json(itemsBody([ticket(1, { customFields: partnerFields, user: { firstName: "Titulaire", lastName: "Seul" } }), ticket(2)]));
+    }));
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("ne crée aucune nouvelle équipe quand le tournoi est complet", async () => {
+    mocks.state.teamCount = 16;
+    mocks.state.existingTeams = [{ id: "team-1", name: "Titulaire Seul", name_locked: false, helloasso_item_id: 1 }];
+    await syncHelloAsso();
+    expect(mocks.ops.filter((o) => o.op === "insert")).toEqual([]);
+    // Le coéquipier découvert complète quand même le nom de l'équipe existante.
+    expect(mocks.ops.filter((o) => o.op === "update")).toEqual([{ table: "tournament_teams", op: "update", payload: { name: "Titulaire Seul & Coéquipier Partenaire" } }]);
+  });
+
+  it("crée l'équipe d'un nouveau billet quand il reste de la place", async () => {
+    mocks.state.teamCount = 15;
+    await syncHelloAsso();
+    expect(mocks.ops.filter((o) => o.op === "insert")).toEqual([
+      { table: "tournament_teams", op: "insert", payload: { tournament_id: "t1", name: "Joueur Numéro1", captain_id: null, helloasso_item_id: 1 } },
+      { table: "tournament_teams", op: "insert", payload: { tournament_id: "t1", name: "Joueur Numéro2", captain_id: null, helloasso_item_id: 2 } },
+    ]);
+  });
+
+  it("n'importe rien dans un tournoi déjà lancé", async () => {
+    mocks.state.tournaments = [{ ...tournamentRow, status: "started" }];
+    mocks.state.teamCount = 4;
+    await syncHelloAsso();
+    expect(mocks.ops.filter((o) => o.op === "insert")).toEqual([]);
+  });
+});
