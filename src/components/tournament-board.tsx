@@ -9,7 +9,6 @@ import { buildBracket, poolStandings, qualifiersFromPools } from "@/lib/bracket"
 import {
   getTournamentBoard,
   startTournament,
-  generateFinals,
   reportMatch,
   amIAdmin,
   adminAddTeam,
