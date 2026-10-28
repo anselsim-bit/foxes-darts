@@ -1,5 +1,11 @@
 # Foxes Darts — Tâches
 
+## Classement poules, consolante et petite finale
+- [x] Points restants additionnés au perdant seul ; classement au moins de points.
+- [x] Tableau de consolante pour les non qualifiés des poules.
+- [x] Petite finale pour la 3e place (perdants des demi-finales).
+- [x] Tests des règles et vérification de l'affichage.
+
 ## Phases finales en deux manches gagnantes
 - [x] Compter les manches, alterner le premier joueur et préserver la reprise du match.
 - [x] Valider et afficher les résultats 2–0 / 2–1 au tableau, y compris la saisie admin.
