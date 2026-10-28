@@ -93,18 +93,36 @@ export function teamNameOf(r: {
   return holder || `Participant HelloAsso #${r.item_id}`;
 }
 
-export async function syncHelloAsso() {
+export async function syncHelloAsso(opts: { force?: boolean } = {}) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: tournaments, error } = await supabaseAdmin
     .from("tournaments")
     .select("id, helloasso_url, status, max_participants")
     .not("helloasso_url", "is", null);
   if (error) throw new Error(error.message);
+
+  // Tournoi complet : la synchro automatique ne le touche plus du tout — aucun
+  // appel à HelloAsso, aucune inscription rafraîchie, aucun nom recomplété.
+  // Le bouton d'import manuel passe force: true pour rafraîchir à la demande.
+  type TournamentRow = NonNullable<typeof tournaments>[number];
+  const pending: TournamentRow[] = [];
+  for (const t of tournaments ?? []) {
+    if (!opts.force && t.max_participants != null) {
+      const { count } = await supabaseAdmin
+        .from("tournament_teams")
+        .select("name", { count: "exact" })
+        .eq("tournament_id", t.id);
+      if ((count ?? 0) >= t.max_participants) continue;
+    }
+    pending.push(t);
+  }
+  if (pending.length === 0) return { imported: 0, failures: [] };
+
   const token = await getToken();
   let imported = 0;
   const failures: string[] = [];
 
-  for (const t of tournaments ?? []) {
+  for (const t of pending) {
     const parsed = parseHelloAssoUrl(t.helloasso_url ?? "");
     if (!parsed) continue;
     try {
