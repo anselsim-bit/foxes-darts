@@ -496,13 +496,14 @@ export function TournamentBoard({
         </div>
       )}
 
-      {both && (
+      {several && (
         <div className="flex flex-wrap gap-1.5">
           {(
             [
-              ["pools", "Poules"],
-              ["final", "Tableau final"],
-            ] as const
+              ...(showPools ? [["pools", "Poules"] as const] : []),
+              ...(hasFinal ? [["final", "Tableau final"] as const] : []),
+              ...(hasConsolation ? [["consolation", "Consolante"] as const] : []),
+            ]
           ).map(([v, lbl]) => (
             <button
               key={v}
@@ -544,7 +545,7 @@ export function TournamentBoard({
                         <th>J</th>
                         <th>V</th>
                         <th>D</th>
-                        <th>+/-</th>
+                        <th title="Points restants cumulés sur les matchs perdus — le moins possible">Pts</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -582,6 +583,8 @@ export function TournamentBoard({
       )}
 
       {showFinalView && finalSection}
+
+      {showConsolationView && consolationSection}
     </section>
   );
 }
