@@ -276,10 +276,18 @@ export const listPlayableMatches = createServerFn({ method: "POST" })
     const name = new Map((teams ?? []).map((t) => [t.id, t.name]));
     return (matches ?? []).flatMap((m) => {
       if (!m.team_a || !m.team_b) return [];
+      const stageLabel =
+        m.stage === "pool"
+          ? `Poule ${String.fromCharCode(65 + (m.pool_index ?? 0))}`
+          : m.stage === "consolation"
+            ? `Consolante — Tour ${m.round}`
+            : m.stage === "small_final"
+              ? "Petite finale"
+              : `Tour ${m.round}`;
       return [{
       id: m.id,
       ...tournamentRules(tournament.start_score, tournament.double_out, m.stage, tournament.pool_double_limit ?? true),
-      label: `${m.stage === "pool" ? `Poule ${String.fromCharCode(65 + (m.pool_index ?? 0))}` : `Tour ${m.round}`} — ${name.get(m.team_a)} vs ${name.get(m.team_b)}`,
+      label: `${stageLabel} — ${name.get(m.team_a)} vs ${name.get(m.team_b)}`,
       teamA: name.get(m.team_a) ?? "Équipe A",
       teamB: name.get(m.team_b) ?? "Équipe B",
       teamAId: m.team_a,
