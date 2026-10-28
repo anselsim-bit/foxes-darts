@@ -159,7 +159,11 @@ export function TournamentPlay({ tournamentId, signedIn, qrCode }: { tournamentI
           onExit={exitGame}
           initialProgress={draft?.progress}
           onProgress={persistProgress}
-          onReported={clearDraft}
+          onReported={() => {
+            clearDraft();
+            // Après l'envoi du résultat, on emmène le joueur directement au tableau du tournoi.
+            void navigate({ to: "/tournois/$id", params: { id: tournamentId } });
+          }}
         />
       </div>
     );
