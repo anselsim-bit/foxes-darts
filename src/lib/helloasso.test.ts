@@ -4,7 +4,7 @@ import { extractPartner, teamNameOf, syncHelloAsso } from "./helloasso.server";
 const mocks = vi.hoisted(() => {
   type Op = { table: string; op: string; payload?: unknown };
   const ops: Op[] = [];
-  const state = { tournaments: [] as unknown[], existingTeams: [] as unknown[], teamNames: [] as { name: string }[], teamCount: 0 };
+  const state = { tournaments: [] as unknown[], existingTeams: [] as unknown[], teamNames: [] as { name: string; helloasso_item_id?: number }[], teamCount: 0 };
   const thenable = (result: unknown) => ({
     then: (res: (v: unknown) => void, rej?: (e: unknown) => void) => Promise.resolve(result).then(res, rej),
   });
