@@ -1,0 +1,2 @@
+ALTER TABLE public.tournaments ADD COLUMN consolation boolean NOT NULL DEFAULT true;
+COMMENT ON COLUMN public.tournaments.consolation IS 'Si vrai, un tableau de consolante est généré pour les non qualifiés des poules.';

@@ -526,6 +526,7 @@ export type Database = {
       }
       tournaments: {
         Row: {
+          consolation: boolean
           created_at: string
           description: string | null
           double_out: boolean
@@ -546,6 +547,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          consolation?: boolean
           created_at?: string
           description?: string | null
           double_out?: boolean
@@ -566,6 +568,7 @@ export type Database = {
           title: string
         }
         Update: {
+          consolation?: boolean
           created_at?: string
           description?: string | null
           double_out?: boolean
