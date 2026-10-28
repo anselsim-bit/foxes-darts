@@ -88,7 +88,7 @@ export async function syncHelloAsso() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: tournaments, error } = await supabaseAdmin
     .from("tournaments")
-    .select("id, helloasso_url")
+    .select("id, helloasso_url, status, max_participants")
     .not("helloasso_url", "is", null);
   if (error) throw new Error(error.message);
   const token = await getToken();
@@ -145,12 +145,20 @@ export async function syncHelloAsso() {
             .select("id, name, name_locked, helloasso_item_id")
             .in("helloasso_item_id", ids);
           const known = new Map((existing ?? []).map((e) => [e.helloasso_item_id, e]));
+          // Tournoi complet ou déjà lancé : aucune nouvelle équipe n'est importée
+          // (la complétion du nom du coéquipier reste possible sur les équipes existantes).
+          const { count } = await supabaseAdmin
+            .from("tournament_teams")
+            .select("id", { count: "exact", head: true })
+            .eq("tournament_id", t.id);
+          const canAdd = t.status === "open" && (t.max_participants == null || (count ?? 0) < t.max_participants);
           for (const r of rows) {
             if (!ids.includes(r.item_id)) continue;
             const name = teamNameOf(r);
             const team = known.get(r.item_id);
             if (!team) {
-              // Trigger rejects when full or started; ignore those.
+              if (!canAdd) continue;
+              // Filet de sécurité : le trigger refuse aussi les insertions hors capacité.
               await supabaseAdmin.from("tournament_teams").insert({
                 tournament_id: t.id, name, captain_id: null, helloasso_item_id: r.item_id,
               });

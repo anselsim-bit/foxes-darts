@@ -1,5 +1,76 @@
-import { describe, expect, it } from "vitest";
-import { extractPartner, teamNameOf } from "./helloasso.server";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { extractPartner, teamNameOf, syncHelloAsso } from "./helloasso.server";
+
+const mocks = vi.hoisted(() => {
+  type Op = { table: string; op: string; payload?: unknown };
+  const ops: Op[] = [];
+  const state = { tournaments: [] as unknown[], existingTeams: [] as unknown[], teamCount: 0 };
+  const thenable = (result: unknown) => ({
+    then: (res: (v: unknown) => void, rej?: (e: unknown) => void) => Promise.resolve(result).then(res, rej),
+  });
+  const from = (table: string) => {
+    type Chain = {
+      select: (...args: unknown[]) => Chain;
+      not: () => Chain;
+      in: () => Chain;
+      eq: () => Chain;
+      upsert: (payload: unknown) => unknown;
+      insert: (payload: unknown) => unknown;
+      update: (payload: unknown) => Chain;
+      then: (res: (v: unknown) => void, rej?: (e: unknown) => void) => Promise<unknown>;
+    };
+    let selectArgs: unknown[] = [];
+    const chain: Chain = {
+      select: (...args: unknown[]) => { selectArgs = args; return chain; },
+      not: () => chain,
+      in: () => chain,
+      eq: () => chain,
+      upsert: (payload: unknown) => { ops.push({ table, op: "upsert", payload }); return thenable({ data: null, error: null }); },
+      insert: (payload: unknown) => { ops.push({ table, op: "insert", payload }); return thenable({ data: null, error: null }); },
+      update: (payload: unknown) => { ops.push({ table, op: "update", payload }); return chain; },
+      then: (res: (v: unknown) => void, rej?: (e: unknown) => void) => {
+        let result: unknown = { data: null, error: null };
+        if (table === "tournaments") result = { data: state.tournaments, error: null };
+        else if (table === "tournament_teams") {
+          const head = (selectArgs[1] as { head?: boolean } | undefined)?.head;
+          result = head ? { data: null, error: null, count: state.teamCount } : { data: state.existingTeams, error: null };
+        }
+        return Promise.resolve(result).then(res, rej);
+      },
+    };
+    return chain;
+  };
+  return { ops, state, from };
+});
+
+vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: { from: mocks.from } }));
+
+const json = (body: unknown) => ({ ok: true, status: 200, json: async () => body });
+const itemsBody = (items: unknown[]) => ({
+  data: items,
+  pagination: {},
+});
+const ticket = (id: number, extra: Record<string, unknown> = {}) => ({
+  id,
+  amount: 1000,
+  name: "Doublette",
+  state: "Processed",
+  user: { firstName: "Joueur", lastName: `Numéro${id}` },
+  payer: { email: `joueur${id}@x.fr` },
+  order: { date: "2026-10-27T10:00:00Z" },
+  customFields: [],
+  ...extra,
+});
+const tournamentRow = {
+  id: "t1",
+  helloasso_url: "https://www.helloasso.com/associations/asso/evenements/tournoi",
+  status: "open",
+  max_participants: 16,
+};
+const partnerFields = [
+  { name: "Nom partenaire", answer: "Partenaire" },
+  { name: "Prénom partenaire", answer: "Coéquipier" },
+];
 
 describe("extractPartner", () => {
   it("retrouve le coéquipier des questions « Nom / Prénom partenaire »", () => {
@@ -52,5 +123,45 @@ describe("teamNameOf", () => {
 
   it("repli sur le numéro de billet si aucun nom n'est connu", () => {
     expect(teamNameOf({ first_name: null, last_name: null, item_id: 42 })).toBe("Participant HelloAsso #42");
+  });
+});
+
+describe("syncHelloAsso capacity", () => {
+  beforeEach(() => {
+    mocks.ops.length = 0;
+    mocks.state.tournaments = [tournamentRow];
+    mocks.state.existingTeams = [];
+    mocks.state.teamCount = 0;
+    vi.stubGlobal("fetch", vi.fn(async (url: string | URL | Request) => {
+      const u = String(url);
+      if (u.includes("oauth2/token")) return json({ access_token: "tok" });
+      return json(itemsBody([ticket(1, { customFields: partnerFields }), ticket(2)]));
+    }));
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("ne crée aucune nouvelle équipe quand le tournoi est complet", async () => {
+    mocks.state.teamCount = 16;
+    mocks.state.existingTeams = [{ id: "team-1", name: "Joueur Numéro1", name_locked: false, helloasso_item_id: 1 }];
+    await syncHelloAsso();
+    expect(mocks.ops.filter((o) => o.op === "insert")).toEqual([]);
+    // Le coéquipier découvert complète quand même le nom de l'équipe existante.
+    expect(mocks.ops.filter((o) => o.op === "update")).toEqual([{ table: "tournament_teams", op: "update", payload: { name: "Joueur Numéro1 & Coéquipier Partenaire" } }]);
+  });
+
+  it("crée l'équipe d'un nouveau billet quand il reste de la place", async () => {
+    mocks.state.teamCount = 15;
+    await syncHelloAsso();
+    expect(mocks.ops.filter((o) => o.op === "insert")).toEqual([
+      { table: "tournament_teams", op: "insert", payload: { tournament_id: "t1", name: "Joueur Numéro1 & Coéquipier Partenaire", captain_id: null, helloasso_item_id: 1 } },
+      { table: "tournament_teams", op: "insert", payload: { tournament_id: "t1", name: "Joueur Numéro2", captain_id: null, helloasso_item_id: 2 } },
+    ]);
+  });
+
+  it("n'importe rien dans un tournoi déjà lancé", async () => {
+    mocks.state.tournaments = [{ ...tournamentRow, status: "started" }];
+    mocks.state.teamCount = 4;
+    await syncHelloAsso();
+    expect(mocks.ops.filter((o) => o.op === "insert")).toEqual([]);
   });
 });
