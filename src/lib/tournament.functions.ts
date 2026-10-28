@@ -79,41 +79,41 @@ export const startTournament = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const generateFinals = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: { id: string }) => input)
-  .handler(async ({ data, context }) => {
-    await requireAdmin(context);
-    const { data: t } = await context.supabase.from("tournaments").select("pool_count, consolation").eq("id", data.id).single();
-    const { data: matches } = await context.supabase
-      .from("tournament_matches")
-      .select("stage, pool_index, team_a, team_b, score_a, score_b, winner")
-      .eq("tournament_id", data.id);
-    const all = matches ?? [];
-    if (all.some((m) => m.stage === "bracket" || m.stage === "consolation" || m.stage === "small_final"))
-      throw new Error("La phase finale existe déjà.");
-    const pool = all.filter((m) => m.stage === "pool");
-    if (pool.some((m) => !m.winner)) throw new Error("Tous les matchs de poule ne sont pas terminés.");
-    const standings = Array.from({ length: t?.pool_count ?? 0 }, (_, i) => {
-      const ms = pool.filter((m) => m.pool_index === i);
-      const teams = [...new Set(ms.flatMap((m) => [m.team_a!, m.team_b!]))];
-      return poolStandings(teams, ms);
-    });
-    const drafts: MatchDraft[] = buildBracket(qualifiersFromPools(standings, 2));
-    // Petite finale pour la 3e place : les perdants des demi-finales (créée dès qu'il y a des demies).
-    const bracketRounds = Math.max(...drafts.map((d) => d.round), 0);
-    if (bracketRounds >= 2) {
-      drafts.push({ stage: "small_final", pool_index: null, round: 1, position: 0, team_a: null, team_b: null, winner: null });
-    }
-    // Consolante : les non qualifiés des poules (3es, puis 4es…) s'affrontent dans leur propre tableau.
-    const losers = t?.consolation === false ? [] : consolationFromPools(standings, 2);
-    if (losers.length >= 2) {
-      drafts.push(...buildBracket(losers).map((d) => ({ ...d, stage: "consolation" as const })));
-    }
-    const { error } = await context.supabase.from("tournament_matches").insert(drafts.map(toRow(data.id)));
-    if (error) throw new Error(error.message);
-    return { ok: true };
+/**
+ * Génère le tableau final, la petite finale et la consolante à partir des poules.
+ * Ne fait rien (renvoie false) si la phase finale existe déjà ou si des matchs de poule
+ * ne sont pas terminés : sûre à appeler après chaque résultat de poule.
+ */
+async function generateFinalsIfPoolsDone(supabase: SupabaseLike, tournamentId: string): Promise<boolean> {
+  const { data: t } = await supabase.from("tournaments").select("pool_count, consolation").eq("id", tournamentId).single();
+  const { data: matches } = await supabase
+    .from("tournament_matches")
+    .select("stage, pool_index, team_a, team_b, score_a, score_b, winner")
+    .eq("tournament_id", tournamentId);
+  const all = matches ?? [];
+  if (all.some((m) => m.stage === "bracket" || m.stage === "consolation" || m.stage === "small_final")) return false;
+  const pool = all.filter((m) => m.stage === "pool");
+  if (pool.length === 0 || pool.some((m) => !m.winner)) return false;
+  const standings = Array.from({ length: t?.pool_count ?? 0 }, (_, i) => {
+    const ms = pool.filter((m) => m.pool_index === i);
+    const teams = [...new Set(ms.flatMap((m) => [m.team_a!, m.team_b!]))];
+    return poolStandings(teams, ms);
   });
+  const drafts: MatchDraft[] = buildBracket(qualifiersFromPools(standings, 2));
+  // Petite finale pour la 3e place : les perdants des demi-finales (créée dès qu'il y a des demies).
+  const bracketRounds = Math.max(...drafts.map((d) => d.round), 0);
+  if (bracketRounds >= 2) {
+    drafts.push({ stage: "small_final", pool_index: null, round: 1, position: 0, team_a: null, team_b: null, winner: null });
+  }
+  // Consolante : les non qualifiés des poules (3es, puis 4es…) s'affrontent dans leur propre tableau.
+  const losers = t?.consolation === false ? [] : consolationFromPools(standings, 2);
+  if (losers.length >= 2) {
+    drafts.push(...buildBracket(losers).map((d) => ({ ...d, stage: "consolation" as const })));
+  }
+  const { error } = await supabase.from("tournament_matches").insert(drafts.map(toRow(tournamentId)));
+  if (error) throw new Error(error.message);
+  return true;
+}
 
 export function normalizeCode(code: string | undefined | null) {
   return String(code ?? "").trim().toUpperCase().replace(/\s+/g, "").slice(0, 20);
