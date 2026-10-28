@@ -162,7 +162,11 @@ export function TournamentPlay({ tournamentId, signedIn, qrCode }: { tournamentI
           onReported={() => {
             clearDraft();
             // Après l'envoi du résultat, on emmène le joueur directement au tableau du tournoi.
-            void navigate({ to: "/tournois/$id", params: { id: tournamentId } });
+            try {
+              void navigate({ to: "/tournois/$id", params: { id: tournamentId } });
+            } catch {
+              window.location.assign(`/tournois/${tournamentId}`);
+            }
           }}
         />
       </div>
