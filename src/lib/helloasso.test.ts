@@ -56,7 +56,7 @@ const ticket = (id: number, extra: Record<string, unknown> = {}) => ({
   amount: 1000,
   name: "Doublette",
   state: "Processed",
-  user: { firstName: "Joueur", lastName: `Numéro${id}` },
+  user: { firstName: id === 1 ? "Alice" : "Bob", lastName: id === 1 ? "Un" : "Deux" },
   payer: { email: `joueur${id}@x.fr` },
   order: { date: "2026-10-27T10:00:00Z" },
   customFields: [],
@@ -98,7 +98,7 @@ describe("extractPartner", () => {
 });
 
 describe("teamNameOf", () => {
-  it("affiche les deux joueurs de la doublette", () => {
+  it("affiche seulement les prénoms des deux joueurs", () => {
     expect(
       teamNameOf({
         first_name: "Simon",
@@ -107,7 +107,19 @@ describe("teamNameOf", () => {
         partner_last_name: "Ansel",
         item_id: 211600264,
       }),
-    ).toBe("Simon Ansel & Patrice Ansel");
+    ).toBe("Simon & Patrice");
+  });
+
+  it("ajoute l'initiale du nom en cas d'homonyme", () => {
+    expect(
+      teamNameOf({
+        first_name: "Patrice",
+        last_name: "Ansel",
+        partner_first_name: "Gautier",
+        partner_last_name: "Deseille",
+        item_id: 211600264,
+      }, new Set(["patrice"])),
+    ).toBe("Patrice A. & Gautier");
   });
 
   it("garde le titulaire seul quand aucun coéquipier n'est déclaré", () => {
@@ -119,7 +131,7 @@ describe("teamNameOf", () => {
         partner_last_name: null,
         item_id: 211600264,
       }),
-    ).toBe("Simon Ansel");
+    ).toBe("Simon");
   });
 
   it("repli sur le numéro de billet si aucun nom n'est connu", () => {
