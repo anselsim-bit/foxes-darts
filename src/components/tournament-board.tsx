@@ -60,7 +60,7 @@ export function TournamentBoard({
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
   const [showTeams, setShowTeams] = useState(false);
   const [poolView, setPoolView] = useState<"all" | number>("all");
-  const [view, setView] = useState<"pools" | "final">("pools");
+  const [view, setView] = useState<"pools" | "final" | "consolation">("pools");
   const [busy, setBusy] = useState(false);
   const [accessCode, setAccessCode] = useState<string | null>(null);
   const [codeDraft, setCodeDraft] = useState("");
@@ -123,6 +123,10 @@ export function TournamentBoard({
   const bracket = matches.filter((m) => m.stage === "bracket");
   const rounds = [...new Set(bracket.map((m) => m.round))].sort((a, b) => a - b);
   const finalMatch = bracket.find((m) => m.round === rounds[rounds.length - 1]);
+  const consolation = matches.filter((m) => m.stage === "consolation");
+  const consolationRounds = [...new Set(consolation.map((m) => m.round))].sort((a, b) => a - b);
+  const consolationFinal = consolation.find((m) => m.round === consolationRounds[consolationRounds.length - 1]);
+  const smallFinal = matches.find((m) => m.stage === "small_final");
   const poolsDone = poolMatches.length > 0 && poolMatches.every((m) => m.winner);
 
   const poolData = Array.from({ length: poolCount }, (_, i) => {
@@ -160,9 +164,16 @@ export function TournamentBoard({
 
   const showPools = poolCount > 0 && poolMatches.length > 0;
   const hasFinal = bracket.length > 0 || preview.length > 0;
-  const both = showPools && hasFinal;
-  const showPoolsView = showPools && (!both || view === "pools");
-  const showFinalView = hasFinal && (!both || view === "final");
+  const hasConsolation = consolation.length > 0;
+  const several = [showPools, hasFinal, hasConsolation].filter(Boolean).length > 1;
+  const showPoolsView = showPools && (!several || view === "pools");
+  const showFinalView = hasFinal && (!several || view === "final");
+  const showConsolationView = hasConsolation && (!several || view === "consolation");
+
+  const consolationRoundName = (r: number) => {
+    const left = consolationRounds.length - r;
+    return left === 0 ? "Finale" : left === 1 ? "Demi-finales" : left === 2 ? "Quarts de finale" : `Tour ${r}`;
+  };
 
   const genBtn =
     admin && poolsDone && bracket.length === 0 ? (
