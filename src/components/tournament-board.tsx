@@ -215,11 +215,30 @@ export function TournamentBoard({
                         run(() => reportMatch({ data: { matchId: m.id, scoreA: a, scoreB: b, ...(legsA !== undefined && legsB !== undefined ? { legsA, legsB } : {}) } }), "Résultat enregistré.")
                       }
                     />
-                  ))}
+                ))}
               </div>
             </div>
           ))}
         </div>
+        {smallFinal && (
+          <div className="mt-6 max-w-md">
+            <h3 className="text-sm font-semibold text-primary">Petite finale — 3e place</h3>
+            <div className="mt-2">
+              <MatchRow
+                m={smallFinal}
+                name={name}
+                admin={admin}
+                boxed
+                onSave={(a, b) => run(() => reportMatch({ data: { matchId: smallFinal.id, scoreA: a, scoreB: b } }), "Résultat enregistré.")}
+              />
+            </div>
+            {smallFinal.winner && (
+              <p className="mt-2 text-sm">
+                3e du tournoi : <span className="font-semibold text-primary">{name(smallFinal.winner)}</span>
+              </p>
+            )}
+          </div>
+        )}
       </div>
     ) : preview.length > 0 ? (
       <div>
