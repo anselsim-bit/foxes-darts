@@ -70,16 +70,25 @@ export function extractPartner(fields?: CustomField[]) {
   return firstName || lastName ? { firstName, lastName } : null;
 }
 
-/** Nom d'équipe par défaut : les deux joueurs de la doublette, sinon le titulaire seul. */
+/** Prénom seul, ou prénom + initiale du nom quand un homonyme existe (ex. « Patrice A. »). */
+export function shortName(first: string | null, last: string | null, dup: Set<string> = new Set()) {
+  const f = (first ?? "").trim();
+  const l = (last ?? "").trim();
+  if (!f) return l || "";
+  if (!dup.has(f.toLowerCase())) return f;
+  return l ? `${f} ${l[0]!.toUpperCase()}.` : f;
+}
+
+/** Nom d'équipe : les prénoms des deux joueurs, avec initiale du nom en cas d'homonyme. */
 export function teamNameOf(r: {
   first_name: string | null;
   last_name: string | null;
   partner_first_name?: string | null;
   partner_last_name?: string | null;
   item_id: number;
-}) {
-  const holder = [r.first_name, r.last_name].filter(Boolean).join(" ").trim();
-  const partner = [r.partner_first_name, r.partner_last_name].filter(Boolean).join(" ").trim();
+}, dup: Set<string> = new Set()) {
+  const holder = shortName(r.first_name, r.last_name, dup);
+  const partner = shortName(r.partner_first_name ?? null, r.partner_last_name ?? null, dup);
   if (holder && partner) return `${holder} & ${partner}`;
   return holder || `Participant HelloAsso #${r.item_id}`;
 }
@@ -147,14 +156,20 @@ export async function syncHelloAsso() {
           const known = new Map((existing ?? []).map((e) => [e.helloasso_item_id, e]));
           // Tournoi complet ou déjà lancé : aucune nouvelle équipe n'est importée
           // (la complétion du nom du coéquipier reste possible sur les équipes existantes).
-          const { count } = await supabaseAdmin
+          const { data: names, count } = await supabaseAdmin
             .from("tournament_teams")
-            .select("id", { count: "exact", head: true })
+            .select("name", { count: "exact" })
             .eq("tournament_id", t.id);
           const canAdd = t.status === "open" && (t.max_participants == null || (count ?? 0) < t.max_participants);
+          // Prénoms en jeu (billets + équipes du tournoi) pour repérer les homonymes.
+          const seen = new Map<string, number>();
+          const bump = (f: string | null) => { const k = (f ?? "").trim().toLowerCase(); if (k) seen.set(k, (seen.get(k) ?? 0) + 1); };
+          for (const r of rows) { bump(r.first_name); bump(r.partner_first_name); }
+          for (const n of names ?? []) for (const part of (n.name ?? "").split("&")) bump(part.trim().split(/\s+/)[0] ?? null);
+          const dup = new Set([...seen].filter(([, c]) => c > 1).map(([k]) => k));
           for (const r of rows) {
             if (!ids.includes(r.item_id)) continue;
-            const name = teamNameOf(r);
+            const name = teamNameOf(r, dup);
             const team = known.get(r.item_id);
             if (!team) {
               if (!canAdd) continue;

@@ -4,7 +4,7 @@ import { extractPartner, teamNameOf, syncHelloAsso } from "./helloasso.server";
 const mocks = vi.hoisted(() => {
   type Op = { table: string; op: string; payload?: unknown };
   const ops: Op[] = [];
-  const state = { tournaments: [] as unknown[], existingTeams: [] as unknown[], teamCount: 0 };
+  const state = { tournaments: [] as unknown[], existingTeams: [] as unknown[], teamNames: [] as { name: string }[], teamCount: 0 };
   const thenable = (result: unknown) => ({
     then: (res: (v: unknown) => void, rej?: (e: unknown) => void) => Promise.resolve(result).then(res, rej),
   });
@@ -32,8 +32,9 @@ const mocks = vi.hoisted(() => {
         let result: unknown = { data: null, error: null };
         if (table === "tournaments") result = { data: state.tournaments, error: null };
         else if (table === "tournament_teams") {
-          const head = (selectArgs[1] as { head?: boolean } | undefined)?.head;
-          result = head ? { data: null, error: null, count: state.teamCount } : { data: state.existingTeams, error: null };
+          result = selectArgs[0] === "name"
+            ? { data: state.teamNames, error: null, count: state.teamCount }
+            : { data: state.existingTeams, error: null };
         }
         return Promise.resolve(result).then(res, rej);
       },
@@ -55,7 +56,7 @@ const ticket = (id: number, extra: Record<string, unknown> = {}) => ({
   amount: 1000,
   name: "Doublette",
   state: "Processed",
-  user: { firstName: "Joueur", lastName: `Numéro${id}` },
+  user: { firstName: id === 1 ? "Alice" : "Bob", lastName: id === 1 ? "Un" : "Deux" },
   payer: { email: `joueur${id}@x.fr` },
   order: { date: "2026-10-27T10:00:00Z" },
   customFields: [],
@@ -97,7 +98,7 @@ describe("extractPartner", () => {
 });
 
 describe("teamNameOf", () => {
-  it("affiche les deux joueurs de la doublette", () => {
+  it("affiche seulement les prénoms des deux joueurs", () => {
     expect(
       teamNameOf({
         first_name: "Simon",
@@ -106,7 +107,19 @@ describe("teamNameOf", () => {
         partner_last_name: "Ansel",
         item_id: 211600264,
       }),
-    ).toBe("Simon Ansel & Patrice Ansel");
+    ).toBe("Simon & Patrice");
+  });
+
+  it("ajoute l'initiale du nom en cas d'homonyme", () => {
+    expect(
+      teamNameOf({
+        first_name: "Patrice",
+        last_name: "Ansel",
+        partner_first_name: "Gautier",
+        partner_last_name: "Deseille",
+        item_id: 211600264,
+      }, new Set(["patrice"])),
+    ).toBe("Patrice A. & Gautier");
   });
 
   it("garde le titulaire seul quand aucun coéquipier n'est déclaré", () => {
@@ -118,7 +131,7 @@ describe("teamNameOf", () => {
         partner_last_name: null,
         item_id: 211600264,
       }),
-    ).toBe("Simon Ansel");
+    ).toBe("Simon");
   });
 
   it("repli sur le numéro de billet si aucun nom n'est connu", () => {
@@ -131,6 +144,7 @@ describe("syncHelloAsso capacity", () => {
     mocks.ops.length = 0;
     mocks.state.tournaments = [tournamentRow];
     mocks.state.existingTeams = [];
+    mocks.state.teamNames = [];
     mocks.state.teamCount = 0;
     vi.stubGlobal("fetch", vi.fn(async (url: string | URL | Request) => {
       const u = String(url);
@@ -142,19 +156,35 @@ describe("syncHelloAsso capacity", () => {
 
   it("ne crée aucune nouvelle équipe quand le tournoi est complet", async () => {
     mocks.state.teamCount = 16;
-    mocks.state.existingTeams = [{ id: "team-1", name: "Joueur Numéro1", name_locked: false, helloasso_item_id: 1 }];
+    mocks.state.existingTeams = [{ id: "team-1", name: "Alice", name_locked: false, helloasso_item_id: 1 }];
     await syncHelloAsso();
     expect(mocks.ops.filter((o) => o.op === "insert")).toEqual([]);
     // Le coéquipier découvert complète quand même le nom de l'équipe existante.
-    expect(mocks.ops.filter((o) => o.op === "update")).toEqual([{ table: "tournament_teams", op: "update", payload: { name: "Joueur Numéro1 & Coéquipier Partenaire" } }]);
+    expect(mocks.ops.filter((o) => o.op === "update")).toEqual([{ table: "tournament_teams", op: "update", payload: { name: "Alice & Coéquipier" } }]);
   });
 
   it("crée l'équipe d'un nouveau billet quand il reste de la place", async () => {
     mocks.state.teamCount = 15;
     await syncHelloAsso();
     expect(mocks.ops.filter((o) => o.op === "insert")).toEqual([
-      { table: "tournament_teams", op: "insert", payload: { tournament_id: "t1", name: "Joueur Numéro1 & Coéquipier Partenaire", captain_id: null, helloasso_item_id: 1 } },
-      { table: "tournament_teams", op: "insert", payload: { tournament_id: "t1", name: "Joueur Numéro2", captain_id: null, helloasso_item_id: 2 } },
+      { table: "tournament_teams", op: "insert", payload: { tournament_id: "t1", name: "Alice & Coéquipier", captain_id: null, helloasso_item_id: 1 } },
+      { table: "tournament_teams", op: "insert", payload: { tournament_id: "t1", name: "Bob", captain_id: null, helloasso_item_id: 2 } },
+    ]);
+  });
+
+  it("distingue les homonymes avec l'initiale du nom", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string | URL | Request) => {
+      const u = String(url);
+      if (u.includes("oauth2/token")) return json({ access_token: "tok" });
+      return json(itemsBody([
+        ticket(1, { user: { firstName: "Patrice", lastName: "Ansel" } }),
+        ticket(2, { user: { firstName: "Patrice", lastName: "Double" } }),
+      ]));
+    }));
+    await syncHelloAsso();
+    expect(mocks.ops.filter((o) => o.op === "insert").map((o) => (o.payload as { name: string }).name)).toEqual([
+      "Patrice A.",
+      "Patrice D.",
     ]);
   });
 
