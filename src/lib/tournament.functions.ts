@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
 import {
   buildBracket,
+  consolationFromPools,
   distributePools,
   nextSlot,
   poolStandings,
@@ -89,7 +90,8 @@ export const generateFinals = createServerFn({ method: "POST" })
       .select("stage, pool_index, team_a, team_b, score_a, score_b, winner")
       .eq("tournament_id", data.id);
     const all = matches ?? [];
-    if (all.some((m) => m.stage === "bracket")) throw new Error("La phase finale existe déjà.");
+    if (all.some((m) => m.stage === "bracket" || m.stage === "consolation" || m.stage === "small_final"))
+      throw new Error("La phase finale existe déjà.");
     const pool = all.filter((m) => m.stage === "pool");
     if (pool.some((m) => !m.winner)) throw new Error("Tous les matchs de poule ne sont pas terminés.");
     const standings = Array.from({ length: t?.pool_count ?? 0 }, (_, i) => {
@@ -97,7 +99,17 @@ export const generateFinals = createServerFn({ method: "POST" })
       const teams = [...new Set(ms.flatMap((m) => [m.team_a!, m.team_b!]))];
       return poolStandings(teams, ms);
     });
-    const drafts = buildBracket(qualifiersFromPools(standings, 2));
+    const drafts: MatchDraft[] = buildBracket(qualifiersFromPools(standings, 2));
+    // Petite finale pour la 3e place : les perdants des demi-finales (créée dès qu'il y a des demies).
+    const bracketRounds = Math.max(...drafts.map((d) => d.round), 0);
+    if (bracketRounds >= 2) {
+      drafts.push({ stage: "small_final", pool_index: null, round: 1, position: 0, team_a: null, team_b: null, winner: null });
+    }
+    // Consolante : les non qualifiés des poules (3es, puis 4es…) s'affrontent dans leur propre tableau.
+    const losers = consolationFromPools(standings, 2);
+    if (losers.length >= 2) {
+      drafts.push(...buildBracket(losers).map((d) => ({ ...d, stage: "consolation" as const })));
+    }
     const { error } = await context.supabase.from("tournament_matches").insert(drafts.map(toRow(data.id)));
     if (error) throw new Error(error.message);
     return { ok: true };
