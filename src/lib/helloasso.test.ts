@@ -202,6 +202,17 @@ describe("syncHelloAsso capacity", () => {
     ]);
   });
 
+  it("ne voit pas un homonyme dans une équipe déjà importée", async () => {
+    // « Alice » existe déjà comme équipe : son prénom ne doit pas être compté deux fois
+    // (une fois par son billet, une fois par son nom) et donc prendre une initiale.
+    mocks.state.teamCount = 2;
+    mocks.state.teamNames = [{ name: "Alice", helloasso_item_id: 1 }];
+    mocks.state.existingTeams = [{ id: "team-1", name: "Alice", name_locked: false, helloasso_item_id: 1 }];
+    await syncHelloAsso();
+    expect(mocks.ops.filter((o) => o.op === "update")).toEqual([{ table: "tournament_teams", op: "update", payload: { name: "Alice & Coéquipier" } }]);
+    expect(mocks.ops.filter((o) => o.op === "insert").map((o) => (o.payload as { name: string }).name)).toEqual(["Bob"]);
+  });
+
   it("n'importe rien dans un tournoi déjà lancé", async () => {
     mocks.state.tournaments = [{ ...tournamentRow, status: "started" }];
     mocks.state.teamCount = 4;
