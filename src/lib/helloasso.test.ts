@@ -4,7 +4,7 @@ import { extractPartner, teamNameOf, syncHelloAsso } from "./helloasso.server";
 const mocks = vi.hoisted(() => {
   type Op = { table: string; op: string; payload?: unknown };
   const ops: Op[] = [];
-  const state = { tournaments: [] as unknown[], existingTeams: [] as unknown[], teamNames: [] as { name: string }[], teamCount: 0 };
+  const state = { tournaments: [] as unknown[], existingTeams: [] as unknown[], teamNames: [] as { name: string; helloasso_item_id?: number }[], teamCount: 0 };
   const thenable = (result: unknown) => ({
     then: (res: (v: unknown) => void, rej?: (e: unknown) => void) => Promise.resolve(result).then(res, rej),
   });
@@ -32,7 +32,7 @@ const mocks = vi.hoisted(() => {
         let result: unknown = { data: null, error: null };
         if (table === "tournaments") result = { data: state.tournaments, error: null };
         else if (table === "tournament_teams") {
-          result = selectArgs[0] === "name"
+          result = String(selectArgs[0]).startsWith("name")
             ? { data: state.teamNames, error: null, count: state.teamCount }
             : { data: state.existingTeams, error: null };
         }
@@ -154,12 +154,20 @@ describe("syncHelloAsso capacity", () => {
   });
   afterEach(() => vi.unstubAllGlobals());
 
-  it("ne crée aucune nouvelle équipe quand le tournoi est complet", async () => {
+  it("laisse un tournoi complet totalement tranquille", async () => {
     mocks.state.teamCount = 16;
     mocks.state.existingTeams = [{ id: "team-1", name: "Alice", name_locked: false, helloasso_item_id: 1 }];
     await syncHelloAsso();
+    // Aucune inscription rapatriée, aucune équipe créée, aucun nom recomplété.
+    expect(mocks.ops).toEqual([]);
+  });
+
+  it("le bouton d'import manuel rafraîchit quand même un tournoi complet", async () => {
+    mocks.state.teamCount = 16;
+    mocks.state.existingTeams = [{ id: "team-1", name: "Alice", name_locked: false, helloasso_item_id: 1 }];
+    await syncHelloAsso({ force: true });
+    expect(mocks.ops.filter((o) => o.op === "upsert")).toHaveLength(1);
     expect(mocks.ops.filter((o) => o.op === "insert")).toEqual([]);
-    // Le coéquipier découvert complète quand même le nom de l'équipe existante.
     expect(mocks.ops.filter((o) => o.op === "update")).toEqual([{ table: "tournament_teams", op: "update", payload: { name: "Alice & Coéquipier" } }]);
   });
 
@@ -170,6 +178,12 @@ describe("syncHelloAsso capacity", () => {
       { table: "tournament_teams", op: "insert", payload: { tournament_id: "t1", name: "Alice & Coéquipier", captain_id: null, helloasso_item_id: 1 } },
       { table: "tournament_teams", op: "insert", payload: { tournament_id: "t1", name: "Bob", captain_id: null, helloasso_item_id: 2 } },
     ]);
+  });
+
+  it("sync un tournoi sans limite de participants", async () => {
+    mocks.state.tournaments = [{ ...tournamentRow, max_participants: null }];
+    await syncHelloAsso();
+    expect(mocks.ops.filter((o) => o.op === "insert")).toHaveLength(2);
   });
 
   it("distingue les homonymes avec l'initiale du nom", async () => {
@@ -186,6 +200,17 @@ describe("syncHelloAsso capacity", () => {
       "Patrice A.",
       "Patrice D.",
     ]);
+  });
+
+  it("ne voit pas un homonyme dans une équipe déjà importée", async () => {
+    // « Alice » existe déjà comme équipe : son prénom ne doit pas être compté deux fois
+    // (une fois par son billet, une fois par son nom) et donc prendre une initiale.
+    mocks.state.teamCount = 2;
+    mocks.state.teamNames = [{ name: "Alice", helloasso_item_id: 1 }];
+    mocks.state.existingTeams = [{ id: "team-1", name: "Alice", name_locked: false, helloasso_item_id: 1 }];
+    await syncHelloAsso();
+    expect(mocks.ops.filter((o) => o.op === "update")).toEqual([{ table: "tournament_teams", op: "update", payload: { name: "Alice & Coéquipier" } }]);
+    expect(mocks.ops.filter((o) => o.op === "insert").map((o) => (o.payload as { name: string }).name)).toEqual(["Bob"]);
   });
 
   it("n'importe rien dans un tournoi déjà lancé", async () => {
