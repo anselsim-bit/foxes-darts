@@ -281,6 +281,41 @@ export function TournamentBoard({
       </div>
     ) : null;
 
+  const consolationSection =
+    consolation.length > 0 ? (
+      <div>
+        <h2 className="text-2xl">Consolante</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Tableau des équipes non qualifiées pour le tableau final.</p>
+        {consolationFinal?.winner && (
+          <p className="mt-2 flex items-center gap-2 text-lg">
+            <Trophy className="h-5 w-5 text-primary" /> Vainqueur de la consolante :{" "}
+            <span className="text-gradient-ember font-semibold">{name(consolationFinal.winner)}</span>
+          </p>
+        )}
+        <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:gap-4">
+          {consolationRounds.map((r) => (
+            <div key={r} className="min-w-0 flex-1 space-y-3">
+              <h3 className="text-sm font-semibold text-primary">{consolationRoundName(r)}</h3>
+              <div className="flex h-full flex-col justify-around gap-3">
+                {consolation
+                  .filter((m) => m.round === r)
+                  .map((m) => (
+                    <MatchRow
+                      key={m.id}
+                      m={m}
+                      name={name}
+                      admin={admin}
+                      boxed
+                      onSave={(a, b) => run(() => reportMatch({ data: { matchId: m.id, scoreA: a, scoreB: b } }), "Résultat enregistré.")}
+                    />
+                  ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ) : null;
+
   return (
     <section className="mt-10 space-y-8">
       <div>
