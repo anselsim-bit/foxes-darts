@@ -32,7 +32,7 @@ const mocks = vi.hoisted(() => {
         let result: unknown = { data: null, error: null };
         if (table === "tournaments") result = { data: state.tournaments, error: null };
         else if (table === "tournament_teams") {
-          result = selectArgs[0] === "name"
+          result = String(selectArgs[0]).startsWith("name")
             ? { data: state.teamNames, error: null, count: state.teamCount }
             : { data: state.existingTeams, error: null };
         }
