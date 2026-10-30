@@ -189,7 +189,7 @@ export function TournamentBoard({
           {rounds.map((r) => (
             <div key={r} className="min-w-0 flex-1 space-y-3">
               <h3 className="text-sm font-semibold text-primary">{roundName(r)}</h3>
-              <div className="flex h-full flex-col justify-around gap-3">
+              <div className="flex flex-col gap-3">
                 {bracket
                   .filter((m) => m.round === r)
                   .map((m) => (
@@ -239,7 +239,7 @@ export function TournamentBoard({
           {previewRounds.map((r) => (
             <div key={r} className="min-w-0 flex-1 space-y-3">
               <h3 className="text-sm font-semibold text-primary">{previewName(r)}</h3>
-              <div className="flex h-full flex-col justify-around gap-3">
+              <div className="flex flex-col gap-3">
                 {preview
                   .filter((m) => m.round === r)
                   .map((m) => (
@@ -283,7 +283,7 @@ export function TournamentBoard({
           {consolationRounds.map((r) => (
             <div key={r} className="min-w-0 flex-1 space-y-3">
               <h3 className="text-sm font-semibold text-primary">{consolationRoundName(r)}</h3>
-              <div className="flex h-full flex-col justify-around gap-3">
+              <div className="flex flex-col gap-3">
                 {consolation
                   .filter((m) => m.round === r)
                   .map((m) => (
@@ -615,10 +615,11 @@ function MatchRow({
   const loserScore = picked === m.team_a ? m.score_b : m.score_a;
   const [remaining, setRemaining] = useState(loserScore && loserScore > 0 ? loserScore.toString() : "");
   const final = m.stage === "bracket";
+  const bye = !!m.winner && (!m.team_a || !m.team_b);
   const [loserLegs, setLoserLegs] = useState((m.winner === m.team_a ? m.legs_b : m.legs_a) === 1 ? 1 : 0);
 
   const side = (id: string | null, score: number | null) => {
-    const isWinner = m.winner ? m.winner === id : picked === id;
+    const isWinner = !!id && (m.winner ? m.winner === id : picked === id);
     const content = (
       <>
         {editable && (
@@ -651,7 +652,7 @@ function MatchRow({
           <span className="flex min-w-0 items-center gap-2">{content}</span>
         )}
         <span className={`shrink-0 text-sm tabular-nums ${isWinner ? "font-semibold" : "text-muted-foreground"}`}>
-          {final ? (m.winner ? ((id === m.team_a ? m.legs_a : m.legs_b) ?? "—") : picked ? (picked === id ? 2 : loserLegs) : "") : m.winner ? (m.winner === id ? "0" : (score ?? "")) : editable && picked === id ? "0" : ""}
+          {bye ? "" : final ? (m.winner ? ((id === m.team_a ? m.legs_a : m.legs_b) ?? "—") : picked ? (picked === id ? 2 : loserLegs) : "") : m.winner ? (m.winner === id ? "0" : (score ?? "")) : editable && picked === id ? "0" : ""}
         </span>
       </div>
     );
@@ -676,7 +677,8 @@ function MatchRow({
     <div className={`text-sm ${boxed ? "rounded-lg border border-border bg-card p-3" : "border-t border-border pt-1.5"}`}>
       {side(m.team_a, m.score_a)}
       {side(m.team_b, m.score_b)}
-      {final && m.winner && <p className="mt-1 text-xs text-muted-foreground">Reste au perdant : {m.winner === m.team_a ? m.score_b : m.score_a}</p>}
+      {bye && <p className="mt-1 text-xs text-muted-foreground">Exempt — qualifié au tour suivant</p>}
+      {final && m.winner && !bye && <p className="mt-1 text-xs text-muted-foreground">Reste au perdant : {m.winner === m.team_a ? m.score_b : m.score_a}</p>}
       {editable && (
         <form
           onSubmit={(e) => {
