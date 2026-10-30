@@ -5,7 +5,7 @@ import { Play, Trash2, Trophy, Plus, Check, Pencil, PencilLine, Mail, KeyRound, 
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { buildPoolBracket, poolStandings } from "@/lib/bracket";
+import { buildPoolBracket, poolStandings, rankedPoolQualifiers } from "@/lib/bracket";
 import {
   getTournamentBoard,
   startTournament,
@@ -138,7 +138,8 @@ export function TournamentBoard({
   // Aperçu du tableau final avant la fin des poules : "1er Poule A" etc., avec le leader actuel.
   const preview =
     poolCount > 0 && poolMatches.length > 0 && bracket.length === 0
-      ? buildPoolBracket(poolData.map((p) => [0, 1].map((rank) => `${rank}:${p.i}`)))
+      ? buildPoolBracket(poolData.map((p) => [0, 1].map((rank) => `${rank}:${p.i}`)),
+          rankedPoolQualifiers(poolData.map((p) => p.rows.map((row, rank) => ({ ...row, team: `${rank}:${p.i}` })))))
       : [];
   const previewRounds = [...new Set(preview.map((m) => m.round))].sort((a, b) => a - b);
   const seedLabel = (key: string | null) => {

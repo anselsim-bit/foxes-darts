@@ -1,6 +1,7 @@
 # Foxes Darts — Tâches
 
 ## Croisements des poules et consolante
+- [x] Places directes en demi-finales aux meilleurs premiers (victoires, puis points restants), testées et appliquées au tournoi interne.
 - [x] Corriger les croisements au premier tour et ajouter les tests.
 - [x] Réparer le tableau du tournoi concerné sans perdre les résultats joués.
 - [x] Rétablir et vérifier l'affichage de la consolante.
