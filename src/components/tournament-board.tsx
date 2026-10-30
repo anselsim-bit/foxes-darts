@@ -615,7 +615,7 @@ function MatchRow({
   const [picked, setPicked] = useState<string | null>(m.winner);
   const loserScore = picked === m.team_a ? m.score_b : m.score_a;
   const [remaining, setRemaining] = useState(loserScore && loserScore > 0 ? loserScore.toString() : "");
-  const final = m.stage === "bracket";
+  const final = m.stage !== "pool";
   const bye = !!m.winner && (!m.team_a || !m.team_b);
   const [loserLegs, setLoserLegs] = useState((m.winner === m.team_a ? m.legs_b : m.legs_a) === 1 ? 1 : 0);
 
