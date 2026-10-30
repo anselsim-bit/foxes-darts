@@ -158,7 +158,7 @@ async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; sc
     const a = Math.max(0, Math.floor(data.scoreA));
     const b = Math.max(0, Math.floor(data.scoreB));
     if (a === b) throw new Error("Il faut un vainqueur (scores différents).");
-    const legs = m.stage === "bracket" ? validateFinalLegs(data.legsA, data.legsB) : null;
+    const legs = m.stage !== "pool" ? validateFinalLegs(data.legsA, data.legsB) : null;
     if (legs && ((a < b) !== (legs.legsA > legs.legsB))) throw new Error("Le gagnant doit avoir remporté deux manches.");
     // Aux fléchettes, le vainqueur est celui qui a le moins de points restants (0).
     const winner = a < b ? m.team_a : m.team_b;

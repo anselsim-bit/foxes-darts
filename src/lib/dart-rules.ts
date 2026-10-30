@@ -4,7 +4,7 @@ export type ScoredTurn = { player: number; darts: ScoredDart[]; bust: boolean; t
 export function tournamentRules(startScore: number, doubleOut: boolean, stage: string, limitDoubles = true) {
   if (startScore !== 301 && startScore !== 501) throw new Error("Choisissez une partie en 301 ou 501.");
   if (typeof doubleOut !== "boolean") throw new Error("Choisissez le type de sortie.");
-  return { start: startScore, doubleOut, poolDoubleLimit: stage === "pool" && doubleOut && limitDoubles, legsToWin: stage === "bracket" ? 2 : 1 };
+  return { start: startScore, doubleOut, poolDoubleLimit: stage === "pool" && doubleOut && limitDoubles, legsToWin: stage === "pool" ? 1 : 2 };
 }
 
 export function validateFinalLegs(a: number | undefined, b: number | undefined) {
