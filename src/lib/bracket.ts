@@ -90,7 +90,7 @@ export function buildBracket(seeds: string[]): MatchDraft[] {
 
 /** Emplacement du vainqueur au tour suivant. */
 /** Conserve les exempts des meilleures têtes de série et croise les poules au premier tour. */
-export function buildPoolBracket(pools: string[][]): MatchDraft[] {
+export function buildPoolBracket(pools: string[][], priority?: string[]): MatchDraft[] {
   const seeds: string[] = [];
   const origin = new Map<string, number>();
   for (let rank = 0; rank < Math.max(0, ...pools.map((p) => p.length)); rank++) {
@@ -98,6 +98,10 @@ export function buildPoolBracket(pools: string[][]): MatchDraft[] {
       const team = pool[rank];
       if (team) { seeds.push(team); origin.set(team, i); }
     });
+  }
+  if (priority) {
+    const order = new Map(priority.map((team, i) => [team, i]));
+    seeds.sort((a, b) => (order.get(a) ?? Infinity) - (order.get(b) ?? Infinity));
   }
   const initial = buildBracket(seeds);
   const played = initial.filter((m) => m.round === 1 && m.team_a && m.team_b);
@@ -137,7 +141,7 @@ export function buildPoolBracket(pools: string[][]): MatchDraft[] {
 }
 
 export function buildPoolFinals(standings: PoolRow[][], consolation: boolean): MatchDraft[] {
-  const drafts = buildPoolBracket(standings.map((s) => s.slice(0, 2).map((r) => r.team)));
+  const drafts = buildPoolBracket(standings.map((s) => s.slice(0, 2).map((r) => r.team)), rankedPoolQualifiers(standings));
   if (Math.max(0, ...drafts.map((d) => d.round)) >= 2)
     drafts.push({ stage: "small_final", pool_index: null, round: 1, position: 0, team_a: null, team_b: null, winner: null });
   const losers = standings.map((s) => s.slice(2).map((r) => r.team));
@@ -151,6 +155,12 @@ export function nextSlot(round: number, position: number) {
 }
 
 export type PoolRow = { team: string; played: number; wins: number; losses: number; diff: number };
+
+/** Les premiers restent prioritaires sur les deuxièmes ; comparaison des performances à rang égal. */
+export function rankedPoolQualifiers(standings: PoolRow[][]): string[] {
+  return [0, 1].flatMap((rank) => standings.flatMap((pool) => pool[rank] ? [pool[rank]] : [])
+    .sort((a, b) => b.wins - a.wins || a.diff - b.diff).map((row) => row.team));
+}
 
 export function poolStandings(teams: string[], matches: MatchResult[]): PoolRow[] {
   const rows = new Map<string, PoolRow>(teams.map((t) => [t, { team: t, played: 0, wins: 0, losses: 0, diff: 0 }]));

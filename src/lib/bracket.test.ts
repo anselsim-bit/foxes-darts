@@ -4,6 +4,26 @@ import { distributePools, roundRobin, buildBracket, buildPoolBracket, buildPoolF
 const teams = Array.from({ length: 16 }, (_, i) => `T${i + 1}`);
 
 describe("bracket", () => {
+  it("réserve les deux exemptions aux meilleurs premiers et non à l'ordre des poules", () => {
+    const standings = [
+      [{ team: "Aymeric", wins: 2, diff: 30 }, { team: "Lucas", wins: 2, diff: 34 }],
+      [{ team: "Lucien", wins: 3, diff: 0 }, { team: "Justine", wins: 2, diff: 68 }],
+      [{ team: "Gautier", wins: 3, diff: 0 }, { team: "Théo", wins: 2, diff: 16 }],
+    ].map((p) => p.map((row) => ({ ...row, played: 3, losses: 3 - row.wins })));
+    const bracket = buildPoolFinals(standings, false);
+    expect(bracket.filter((m) => m.round === 1 && m.winner).map((m) => m.winner)).toEqual(["Lucien", "Gautier"]);
+    expect(bracket.find((m) => m.round === 2 && m.position === 0)).toMatchObject({ team_a: "Lucien", team_b: "Gautier" });
+    for (const m of bracket.filter((m) => m.round === 1 && m.team_a && m.team_b)) {
+      expect(standings.findIndex((p) => p.some((r) => r.team === m.team_a))).not.toBe(standings.findIndex((p) => p.some((r) => r.team === m.team_b)));
+    }
+  });
+  it("départage les premiers à victoires égales avec le moins de points restants", () => {
+    const standings = [50, 10, 30].map((diff, i) => [
+      { team: `first${i}`, wins: 3, diff, played: 4, losses: 1 },
+      { team: `second${i}`, wins: 4, diff: 0, played: 4, losses: 0 },
+    ]);
+    expect(buildPoolFinals(standings, false).filter((m) => m.round === 1 && m.winner).map((m) => m.winner)).toEqual(["first1", "first2"]);
+  });
   it.each([2, 3, 4, 5, 6, 7, 8])("croise les %i poules sans revanche au premier tour", (count) => {
     const pools = Array.from({ length: count }, (_, i) => [`${i}:1`, `${i}:2`]);
     const first = buildPoolBracket(pools).filter((m) => m.round === 1);
