@@ -1,0 +1,2 @@
+ALTER TABLE public.tournament_matches DROP CONSTRAINT tournament_matches_stage_check;
+ALTER TABLE public.tournament_matches ADD CONSTRAINT tournament_matches_stage_check CHECK (stage IN ('pool', 'bracket', 'consolation', 'small_final'));

@@ -1,5 +1,10 @@
 # Foxes Darts — Tâches
 
+## Croisements des poules et consolante
+- [x] Corriger les croisements au premier tour et ajouter les tests.
+- [x] Réparer le tableau du tournoi concerné sans perdre les résultats joués.
+- [x] Rétablir et vérifier l'affichage de la consolante.
+
 ## Classement poules, consolante et petite finale
 - [x] Points restants additionnés au perdant seul ; classement au moins de points.
 - [x] Tableau de consolante pour les non qualifiés des poules, optionnel à la création du tournoi.

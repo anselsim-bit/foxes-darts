@@ -1,9 +1,28 @@
 import { describe, it, expect } from "vitest";
-import { distributePools, roundRobin, buildBracket, poolStandings, qualifiersFromPools, consolationFromPools } from "./bracket";
+import { distributePools, roundRobin, buildBracket, buildPoolBracket, buildPoolFinals, poolStandings, qualifiersFromPools, consolationFromPools } from "./bracket";
 
 const teams = Array.from({ length: 16 }, (_, i) => `T${i + 1}`);
 
 describe("bracket", () => {
+  it.each([2, 3, 4, 5, 6, 7, 8])("croise les %i poules sans revanche au premier tour", (count) => {
+    const pools = Array.from({ length: count }, (_, i) => [`${i}:1`, `${i}:2`]);
+    const first = buildPoolBracket(pools).filter((m) => m.round === 1);
+    expect(first.flatMap((m) => [m.team_a, m.team_b]).filter(Boolean).sort()).toEqual(pools.flat().sort());
+    for (const m of first) if (m.team_a && m.team_b) expect(m.team_a.split(":")[0]).not.toBe(m.team_b.split(":")[0]);
+    expect(first.filter((m) => m.winner)).toHaveLength(2 ** Math.ceil(Math.log2(count * 2)) - count * 2);
+  });
+  it("génère la consolante activée et croise les trois poules", () => {
+    const standings = Array.from({ length: 3 }, (_, i) => Array.from({ length: 4 }, (_, r) => ({ team: `${i}:${r}`, played: 3, wins: 3 - r, losses: r, diff: r })));
+    const matches = buildPoolFinals(standings, true);
+    const consolation = matches.filter((m) => m.stage === "consolation");
+    expect(consolation).toHaveLength(7);
+    expect(matches.filter((m) => m.stage === "small_final")).toHaveLength(1);
+    for (const m of consolation.filter((m) => m.round === 1 && m.team_a && m.team_b)) expect(m.team_a?.split(":")[0]).not.toBe(m.team_b?.split(":")[0]);
+  });
+  it("ne génère aucune consolante désactivée", () => {
+    const standings = ["a", "b"].map((p) => [1, 2, 3, 4].map((r) => ({ team: `${p}${r}`, played: 3, wins: 4 - r, losses: r - 1, diff: r })));
+    expect(buildPoolFinals(standings, false).filter((m) => m.stage === "consolation")).toHaveLength(0);
+  });
   it("16 équipes en 4 poules donne 4 équipes par poule", () => {
     expect(distributePools(teams, 4).map((p) => p.length)).toEqual([4, 4, 4, 4]);
   });

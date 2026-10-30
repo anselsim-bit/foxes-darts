@@ -5,7 +5,7 @@ import { Play, Trash2, Trophy, Plus, Check, Pencil, PencilLine, Mail, KeyRound, 
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { buildBracket, poolStandings, qualifiersFromPools } from "@/lib/bracket";
+import { buildPoolBracket, poolStandings } from "@/lib/bracket";
 import {
   getTournamentBoard,
   startTournament,
@@ -42,12 +42,14 @@ export function TournamentBoard({
   poolCount,
   maxParticipants,
   isTeam,
+  consolationEnabled = false,
 }: {
   tournamentId: string;
   status: string;
   poolCount: number;
   maxParticipants: number | null;
   isTeam: boolean;
+  consolationEnabled?: boolean;
 }) {
   const qc = useQueryClient();
   const { data } = useQuery({
@@ -136,20 +138,15 @@ export function TournamentBoard({
   // Aperçu du tableau final avant la fin des poules : "1er Poule A" etc., avec le leader actuel.
   const preview =
     poolCount > 0 && poolMatches.length > 0 && bracket.length === 0
-      ? buildBracket(
-          qualifiersFromPools(
-            poolData.map((p) => [0, 1].map((rank) => ({ team: `${rank}:${p.i}`, played: 0, wins: 0, losses: 0, diff: 0 }))),
-            2,
-          ),
-        )
+      ? buildPoolBracket(poolData.map((p) => [0, 1].map((rank) => `${rank}:${p.i}`)))
       : [];
   const previewRounds = [...new Set(preview.map((m) => m.round))].sort((a, b) => a - b);
   const seedLabel = (key: string | null) => {
     if (!key) return { label: "Vainqueur précédent", team: null as string | null, current: null as string | null };
     const [rank, pool] = key.split(":").map(Number) as [number, number];
-    const done = poolData[pool]!.ms.every((m) => m.winner);
-    const team = poolData[pool]!.rows[rank]?.team ?? null;
-    return { label: `${rank === 0 ? "1er" : "2e"} ${poolName(pool)}`, team: done ? team : null, current: team };
+    const done = poolData[pool]?.ms.every((m) => m.winner);
+    const team = poolData[pool]?.rows[rank]?.team ?? null;
+    return { label: `${rank === 0 ? "1er" : `${rank + 1}e`} ${poolName(pool)}`, team: done ? team : null, current: team };
   };
   const previewName = (r: number) => {
     const left = previewRounds.length - r;
@@ -163,7 +160,10 @@ export function TournamentBoard({
 
   const showPools = poolCount > 0 && poolMatches.length > 0;
   const hasFinal = bracket.length > 0 || preview.length > 0;
-  const hasConsolation = consolation.length > 0;
+  const consolationSeeds = poolData.map((p) => p.rows.slice(2).map((_, rank) => `${rank + 2}:${p.i}`));
+  const consolationPreview = consolationEnabled && consolation.length === 0 && consolationSeeds.flat().length >= 2
+    ? buildPoolBracket(consolationSeeds) : [];
+  const hasConsolation = consolation.length > 0 || consolationPreview.length > 0;
   const several = [showPools, hasFinal, hasConsolation].filter(Boolean).length > 1;
   const showPoolsView = showPools && (!several || view === "pools");
   const showFinalView = hasFinal && (!several || view === "final");
@@ -189,7 +189,7 @@ export function TournamentBoard({
           {rounds.map((r) => (
             <div key={r} className="min-w-0 flex-1 space-y-3">
               <h3 className="text-sm font-semibold text-primary">{roundName(r)}</h3>
-              <div className="flex h-full flex-col justify-around gap-3">
+              <div className="flex flex-col gap-3">
                 {bracket
                   .filter((m) => m.round === r)
                   .map((m) => (
@@ -239,7 +239,7 @@ export function TournamentBoard({
           {previewRounds.map((r) => (
             <div key={r} className="min-w-0 flex-1 space-y-3">
               <h3 className="text-sm font-semibold text-primary">{previewName(r)}</h3>
-              <div className="flex h-full flex-col justify-around gap-3">
+              <div className="flex flex-col gap-3">
                 {preview
                   .filter((m) => m.round === r)
                   .map((m) => (
@@ -283,7 +283,7 @@ export function TournamentBoard({
           {consolationRounds.map((r) => (
             <div key={r} className="min-w-0 flex-1 space-y-3">
               <h3 className="text-sm font-semibold text-primary">{consolationRoundName(r)}</h3>
-              <div className="flex h-full flex-col justify-around gap-3">
+              <div className="flex flex-col gap-3">
                 {consolation
                   .filter((m) => m.round === r)
                   .map((m) => (
@@ -297,6 +297,25 @@ export function TournamentBoard({
                     />
                   ))}
               </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ) : consolationPreview.length > 0 ? (
+      <div>
+        <h2 className="text-2xl">Consolante (aperçu)</h2>
+        <div className="mt-4 flex flex-col gap-4 lg:flex-row">
+          {[...new Set(consolationPreview.map((m) => m.round))].map((r) => (
+            <div key={r} className="min-w-0 flex-1 space-y-3">
+              <h3 className="text-sm font-semibold text-primary">{r === Math.max(...consolationPreview.map((m) => m.round)) ? "Finale" : `Tour ${r}`}</h3>
+              {consolationPreview.filter((m) => m.round === r).map((m) => (
+                <div key={m.position} className="rounded-lg border border-dashed border-border bg-card p-3 text-sm">
+                  {[m.team_a, m.team_b].map((key, j) => {
+                    const seed = seedLabel(key);
+                    return <div key={j} className={j ? "mt-1.5 border-t border-border pt-1.5" : ""}>{seed.team ? name(seed.team) : seed.label}</div>;
+                  })}
+                </div>
+              ))}
             </div>
           ))}
         </div>
@@ -596,10 +615,11 @@ function MatchRow({
   const loserScore = picked === m.team_a ? m.score_b : m.score_a;
   const [remaining, setRemaining] = useState(loserScore && loserScore > 0 ? loserScore.toString() : "");
   const final = m.stage === "bracket";
+  const bye = !!m.winner && (!m.team_a || !m.team_b);
   const [loserLegs, setLoserLegs] = useState((m.winner === m.team_a ? m.legs_b : m.legs_a) === 1 ? 1 : 0);
 
   const side = (id: string | null, score: number | null) => {
-    const isWinner = m.winner ? m.winner === id : picked === id;
+    const isWinner = !!id && (m.winner ? m.winner === id : picked === id);
     const content = (
       <>
         {editable && (
@@ -632,7 +652,7 @@ function MatchRow({
           <span className="flex min-w-0 items-center gap-2">{content}</span>
         )}
         <span className={`shrink-0 text-sm tabular-nums ${isWinner ? "font-semibold" : "text-muted-foreground"}`}>
-          {final ? (m.winner ? ((id === m.team_a ? m.legs_a : m.legs_b) ?? "—") : picked ? (picked === id ? 2 : loserLegs) : "") : m.winner ? (m.winner === id ? "0" : (score ?? "")) : editable && picked === id ? "0" : ""}
+          {bye ? "" : final ? (m.winner ? ((id === m.team_a ? m.legs_a : m.legs_b) ?? "—") : picked ? (picked === id ? 2 : loserLegs) : "") : m.winner ? (m.winner === id ? "0" : (score ?? "")) : editable && picked === id ? "0" : ""}
         </span>
       </div>
     );
@@ -657,7 +677,8 @@ function MatchRow({
     <div className={`text-sm ${boxed ? "rounded-lg border border-border bg-card p-3" : "border-t border-border pt-1.5"}`}>
       {side(m.team_a, m.score_a)}
       {side(m.team_b, m.score_b)}
-      {final && m.winner && <p className="mt-1 text-xs text-muted-foreground">Reste au perdant : {m.winner === m.team_a ? m.score_b : m.score_a}</p>}
+      {bye && <p className="mt-1 text-xs text-muted-foreground">Exempt — qualifié au tour suivant</p>}
+      {final && m.winner && !bye && <p className="mt-1 text-xs text-muted-foreground">Reste au perdant : {m.winner === m.team_a ? m.score_b : m.score_a}</p>}
       {editable && (
         <form
           onSubmit={(e) => {
