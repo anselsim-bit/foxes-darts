@@ -218,7 +218,7 @@ export function TournamentBoard({
                 name={name}
                 admin={admin}
                 boxed
-                onSave={(a, b) => run(() => reportMatch({ data: { matchId: smallFinal.id, scoreA: a, scoreB: b } }), "Résultat enregistré.")}
+                onSave={(a, b, legsA, legsB) => run(() => reportMatch({ data: { matchId: smallFinal.id, scoreA: a, scoreB: b, legsA, legsB } }), "Résultat enregistré.")}
               />
             </div>
             {smallFinal.winner && (
@@ -294,7 +294,7 @@ export function TournamentBoard({
                       name={name}
                       admin={admin}
                       boxed
-                      onSave={(a, b) => run(() => reportMatch({ data: { matchId: m.id, scoreA: a, scoreB: b } }), "Résultat enregistré.")}
+                      onSave={(a, b, legsA, legsB) => run(() => reportMatch({ data: { matchId: m.id, scoreA: a, scoreB: b, legsA, legsB } }), "Résultat enregistré.")}
                     />
                   ))}
               </div>
