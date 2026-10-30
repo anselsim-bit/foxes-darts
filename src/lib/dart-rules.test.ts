@@ -4,8 +4,10 @@ import { isBust, replayTurns, requiresDouble, tournamentRules, validateFinalLegs
 const misses = (player: number): ScoredTurn => ({ player, darts: Array.from({ length: 3 }, () => ({ value: 0, isDouble: false })), bust: false, total: 0 });
 
 describe("tournament rules", () => {
-  it("requires two winning legs in all knockout rounds but only one in pools", () => {
+  it("requires two winning legs in all knockout rounds (bracket, consolation, small final) but only one in pools", () => {
     expect(tournamentRules(501, true, "bracket").legsToWin).toBe(2);
+    expect(tournamentRules(501, true, "consolation").legsToWin).toBe(2);
+    expect(tournamentRules(501, true, "small_final").legsToWin).toBe(2);
     expect(tournamentRules(301, false, "pool").legsToWin).toBe(1);
   });
   it("accepts only 2–0 or 2–1 final results in either direction", () => {
