@@ -141,6 +141,13 @@
       "when": 1793179741360,
       "tag": "0019_tournament_consolation_option",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793390289614,
+      "tag": "0020_allow_consolation_small_final_stages",
+      "breakpoints": true
     }
   ]
 }
