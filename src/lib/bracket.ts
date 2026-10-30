@@ -89,6 +89,63 @@ export function buildBracket(seeds: string[]): MatchDraft[] {
 }
 
 /** Emplacement du vainqueur au tour suivant. */
+/** Conserve les exempts des meilleures têtes de série et croise les poules au premier tour. */
+export function buildPoolBracket(pools: string[][]): MatchDraft[] {
+  const seeds: string[] = [];
+  const origin = new Map<string, number>();
+  for (let rank = 0; rank < Math.max(0, ...pools.map((p) => p.length)); rank++) {
+    pools.forEach((pool, i) => {
+      const team = pool[rank];
+      if (team) { seeds.push(team); origin.set(team, i); }
+    });
+  }
+  const initial = buildBracket(seeds);
+  const played = initial.filter((m) => m.round === 1 && m.team_a && m.team_b);
+  const opponents = played.map((m) => m.team_b);
+  const assigned = new Map<number, number>();
+  const match = (left: number, seen: Set<number>): boolean => {
+    const a = played[left]?.team_a;
+    if (!a) return false;
+    const candidates = [left, ...opponents.map((_, i) => i).filter((i) => i !== left)];
+    for (const right of candidates) {
+      const b = opponents[right];
+      if (!b || seen.has(right) || origin.get(a) === origin.get(b)) continue;
+      seen.add(right);
+      const previous = assigned.get(right);
+      if (previous === undefined || match(previous, seen)) {
+        assigned.set(right, left);
+        return true;
+      }
+    }
+    return false;
+  };
+  played.forEach((_, i) => match(i, new Set()));
+  const usedLeft = new Set(assigned.values());
+  const freeLeft = played.map((_, i) => i).filter((i) => !usedLeft.has(i));
+  opponents.forEach((_, right) => {
+    if (!assigned.has(right)) {
+      const left = freeLeft.shift();
+      if (left !== undefined) assigned.set(right, left);
+    }
+  });
+  const slots: (string | null)[] = [...seeds, ...Array(nextPow2(Math.max(2, seeds.length)) - seeds.length).fill(null)];
+  for (const [right, left] of assigned) {
+    const m = played[left];
+    if (m) slots[slots.length - 1 - m.position] = opponents[right] ?? null;
+  }
+  return buildBracket(slots.filter((team): team is string => team !== null));
+}
+
+export function buildPoolFinals(standings: PoolRow[][], consolation: boolean): MatchDraft[] {
+  const drafts = buildPoolBracket(standings.map((s) => s.slice(0, 2).map((r) => r.team)));
+  if (Math.max(0, ...drafts.map((d) => d.round)) >= 2)
+    drafts.push({ stage: "small_final", pool_index: null, round: 1, position: 0, team_a: null, team_b: null, winner: null });
+  const losers = standings.map((s) => s.slice(2).map((r) => r.team));
+  if (consolation && losers.flat().length >= 2)
+    drafts.push(...buildPoolBracket(losers).map((d) => ({ ...d, stage: "consolation" as const })));
+  return drafts;
+}
+
 export function nextSlot(round: number, position: number) {
   return { round: round + 1, position: Math.floor(position / 2), side: position % 2 === 0 ? ("team_a" as const) : ("team_b" as const) };
 }

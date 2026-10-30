@@ -233,6 +233,7 @@ function TournamentDetail() {
         poolCount={tournament.pool_count}
         maxParticipants={tournament.max_participants}
         isTeam={tournament.format === "equipe"}
+        consolationEnabled={tournament.consolation}
       />
     </div>
   );

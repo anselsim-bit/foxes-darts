@@ -4,11 +4,10 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
 import {
   buildBracket,
-  consolationFromPools,
+  buildPoolFinals,
   distributePools,
   nextSlot,
   poolStandings,
-  qualifiersFromPools,
   roundRobin,
   shuffle,
   type MatchDraft,
@@ -96,20 +95,10 @@ async function generateFinalsIfPoolsDone(supabase: SupabaseClient<Database>, tou
   if (pool.length === 0 || pool.some((m) => !m.winner)) return false;
   const standings = Array.from({ length: t?.pool_count ?? 0 }, (_, i) => {
     const ms = pool.filter((m) => m.pool_index === i);
-    const teams = [...new Set(ms.flatMap((m) => [m.team_a!, m.team_b!]))];
+    const teams = [...new Set(ms.flatMap((m) => [m.team_a, m.team_b]).filter((id): id is string => id !== null))];
     return poolStandings(teams, ms);
   });
-  const drafts: MatchDraft[] = buildBracket(qualifiersFromPools(standings, 2));
-  // Petite finale pour la 3e place : les perdants des demi-finales (créée dès qu'il y a des demies).
-  const bracketRounds = Math.max(...drafts.map((d) => d.round), 0);
-  if (bracketRounds >= 2) {
-    drafts.push({ stage: "small_final", pool_index: null, round: 1, position: 0, team_a: null, team_b: null, winner: null });
-  }
-  // Consolante : les non qualifiés des poules (3es, puis 4es…) s'affrontent dans leur propre tableau.
-  const losers = t?.consolation === false ? [] : consolationFromPools(standings, 2);
-  if (losers.length >= 2) {
-    drafts.push(...buildBracket(losers).map((d) => ({ ...d, stage: "consolation" as const })));
-  }
+  const drafts = buildPoolFinals(standings, t?.consolation !== false);
   const { error } = await supabase.from("tournament_matches").insert(drafts.map(toRow(tournamentId)));
   if (error) throw new Error(error.message);
   return true;
