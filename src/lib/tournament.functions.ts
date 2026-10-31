@@ -13,7 +13,7 @@ import {
   type MatchDraft,
 } from "@/lib/bracket";
 import { publicClient } from "@/lib/public.functions";
-import { tournamentRules, validateFinalLegs } from "@/lib/dart-rules";
+import { phaseRules, validateFinalLegs, validateLiveLegs } from "@/lib/dart-rules";
 
 type Ctx = { supabase: SupabaseClient<Database>; userId: string };
 
@@ -33,7 +33,7 @@ export const getTournamentBoard = createServerFn({ method: "GET" })
       sb.from("tournament_teams").select("id, name, captain_id").eq("tournament_id", data.id).order("created_at"),
       sb
         .from("tournament_matches")
-        .select("id, stage, pool_index, round, position, team_a, team_b, score_a, score_b, legs_a, legs_b, winner")
+        .select("id, stage, pool_index, round, position, team_a, team_b, score_a, score_b, legs_a, legs_b, live_legs_a, live_legs_b, winner")
         .eq("tournament_id", data.id)
         .order("round")
         .order("position"),
@@ -162,7 +162,7 @@ async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; sc
     if (legs && ((a < b) !== (legs.legsA > legs.legsB))) throw new Error("Le gagnant doit avoir remporté deux manches.");
     // Aux fléchettes, le vainqueur est celui qui a le moins de points restants (0).
     const winner = a < b ? m.team_a : m.team_b;
-    const { error: saveError } = await supabaseAdmin.from("tournament_matches").update({ score_a: a, score_b: b, legs_a: legs?.legsA ?? null, legs_b: legs?.legsB ?? null, winner }).eq("id", m.id);
+    const { error: saveError } = await supabaseAdmin.from("tournament_matches").update({ score_a: a, score_b: b, legs_a: legs?.legsA ?? null, legs_b: legs?.legsB ?? null, live_legs_a: legs?.legsA ?? 0, live_legs_b: legs?.legsB ?? 0, winner }).eq("id", m.id);
     if (saveError) throw new Error("Impossible d'enregistrer le résultat.");
     // Dès que le dernier match de poule est enregistré, le tableau final, la petite finale
     // et la consolante sont générés automatiquement (sans action de l'admin).
@@ -253,7 +253,7 @@ export const listPlayableMatches = createServerFn({ method: "POST" })
     if (!(await hasValidCode(data.tournamentId, data.code))) throw new Error("Code d'accès invalide ou tournoi inactif.");
     const sb = publicClient();
     const [{ data: tournament, error: tournamentError }, { data: teams }, { data: matches }] = await Promise.all([
-      sb.from("tournaments").select("start_score, double_out, pool_double_limit").eq("id", data.tournamentId).single(),
+      sb.from("tournaments").select("start_score, double_out, final_start_score, final_double_out, consolation_start_score, consolation_double_out, pool_double_limit").eq("id", data.tournamentId).single(),
       sb.from("tournament_teams").select("id, name").eq("tournament_id", data.tournamentId),
       sb
         .from("tournament_matches")
@@ -278,7 +278,7 @@ export const listPlayableMatches = createServerFn({ method: "POST" })
               : `Tour ${m.round}`;
       return [{
       id: m.id,
-      ...tournamentRules(tournament.start_score, tournament.double_out, m.stage, tournament.pool_double_limit ?? true),
+      ...phaseRules(tournament, m.stage),
       label: `${stageLabel} — ${name.get(m.team_a)} vs ${name.get(m.team_b)}`,
       teamA: name.get(m.team_a) ?? "Équipe A",
       teamB: name.get(m.team_b) ?? "Équipe B",
@@ -425,3 +425,18 @@ export function friendly(msg: string) {
   if (msg.includes("TOURNAMENT_STARTED")) return "Le tournoi a déjà commencé, les inscriptions sont closes.";
   return msg;
 }
+
+/** Provisional scores only: current code required, never advances the bracket. */
+export const updateTournamentLiveLegs = createServerFn({ method: "POST" })
+  .inputValidator((input: { matchId: string; code: string; legsA: number; legsB: number }) => ({ ...input, ...validateLiveLegs(input.legsA, input.legsB) }))
+  .handler(async ({ data }) => {
+    const { data: match } = await publicClient().from("tournament_matches")
+      .select("id, tournament_id, stage, team_a, team_b, winner").eq("id", data.matchId).maybeSingle();
+    if (!match || match.stage === "pool" || !match.team_a || !match.team_b || match.winner) throw new Error("Match indisponible.");
+    if (!(await hasValidCode(match.tournament_id, data.code))) throw new Error("Code d'accès invalide ou tournoi inactif.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("tournament_matches")
+      .update({ live_legs_a: data.live_legs_a, live_legs_b: data.live_legs_b }).eq("id", match.id).is("winner", null);
+    if (error) throw new Error("Impossible d'actualiser les manches.");
+    return { ok: true };
+  });

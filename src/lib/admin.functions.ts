@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
-import { tournamentRules } from "@/lib/dart-rules";
+import { tournamentRules, phaseRules } from "@/lib/dart-rules";
 
 type AdminContext = {
   supabase: SupabaseClient<Database>;
@@ -45,6 +45,10 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
       pool_count?: number | undefined;
       start_score: number;
       double_out: boolean;
+      final_start_score?: number;
+      final_double_out?: boolean;
+      consolation_start_score?: number;
+      consolation_double_out?: boolean;
       pool_double_limit?: boolean | undefined;
       consolation?: boolean | undefined;
       location?: string | undefined;
@@ -56,6 +60,8 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
     const rules = tournamentRules(data.start_score, data.double_out, "bracket", data.pool_double_limit ?? true);
+    const finalRules = phaseRules(data, "bracket");
+    const consolationRules = phaseRules(data, "consolation");
     const row = {
       title: data.title,
       event_date: data.event_date,
@@ -68,6 +74,10 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
       pool_count: Math.max(0, Math.floor(data.pool_count ?? 0)),
       start_score: rules.start,
       double_out: rules.doubleOut,
+      final_start_score: finalRules.start,
+      final_double_out: finalRules.doubleOut,
+      consolation_start_score: consolationRules.start,
+      consolation_double_out: consolationRules.doubleOut,
       pool_double_limit: data.pool_double_limit ?? true,
       consolation: data.consolation ?? true,
       location: data.location || null,
