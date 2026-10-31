@@ -50,7 +50,7 @@ export const listTournaments = createServerFn({ method: "GET" }).handler(async (
   const supabase = publicClient();
   const { data, error } = await supabase
     .from("tournaments")
-    .select("id, title, event_date, start_time, end_time, format, max_participants, team_size, pool_count, start_score, double_out, final_start_score, final_double_out, consolation_start_score, consolation_double_out, pool_double_limit, consolation, status, location, description, helloasso_url, image_url, tournament_teams(count)")
+    .select("id, title, event_date, start_time, end_time, format, max_participants, team_size, pool_count, start_score, double_out, final_start_score, final_double_out, consolation_start_score, consolation_double_out, pool_double_limit, consolation_double_limit, consolation, status, location, description, helloasso_url, image_url, tournament_teams(count)")
     .order("event_date", { ascending: false });
   if (error) throw new Error(error.message);
   const signed = await signImageUrls(
@@ -116,7 +116,7 @@ export const getTournament = createServerFn({ method: "GET" })
     const supabase = publicClient();
     const { data: t, error } = await supabase
       .from("tournaments")
-      .select("id, title, event_date, start_time, end_time, format, max_participants, team_size, pool_count, start_score, double_out, final_start_score, final_double_out, consolation_start_score, consolation_double_out, pool_double_limit, consolation, status, location, description, helloasso_url, image_url")
+      .select("id, title, event_date, start_time, end_time, format, max_participants, team_size, pool_count, start_score, double_out, final_start_score, final_double_out, consolation_start_score, consolation_double_out, pool_double_limit, consolation_double_limit, consolation, status, location, description, helloasso_url, image_url")
       .eq("id", data.id)
       .maybeSingle();
     if (error) throw new Error(error.message);

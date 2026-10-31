@@ -80,4 +80,12 @@ describe("tournament rules", () => {
     expect(tournamentRules(501, true, "pool", false).poolDoubleLimit).toBe(false);
     expect(tournamentRules(501, true, "bracket", false).poolDoubleLimit).toBe(false);
   });
+  it("applies its own 5-attempt limit to the consolation, never to the main bracket", () => {
+    const settings = { start_score: 501, double_out: true, pool_double_limit: false, consolation_start_score: 301, consolation_double_out: true, consolation_double_limit: true };
+    expect(phaseRules(settings, "consolation")).toMatchObject({ start: 301, doubleOut: true, poolDoubleLimit: true });
+    expect(phaseRules(settings, "pool").poolDoubleLimit).toBe(false);
+    expect(phaseRules(settings, "bracket").poolDoubleLimit).toBe(false);
+    expect(phaseRules({ ...settings, consolation_double_limit: false }, "consolation").poolDoubleLimit).toBe(false);
+    expect(phaseRules({ ...settings, consolation_double_limit: null }, "consolation").poolDoubleLimit).toBe(false);
+  });
 });
