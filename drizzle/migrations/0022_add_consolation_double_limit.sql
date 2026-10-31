@@ -1,0 +1,2 @@
+ALTER TABLE public.tournaments ADD COLUMN consolation_double_limit boolean;
+COMMENT ON COLUMN public.tournaments.consolation_double_limit IS 'Limite de 5 tours d''essais de double en consolante ; NULL = reprendre pool_double_limit';

@@ -151,6 +151,7 @@ function TournamentsTab() {
     consolation_start_score: 501,
     consolation_double_out: true,
     pool_double_limit: true,
+    consolation_double_limit: true,
     consolation: true,
     venue: DEFAULT_VENUE.venue,
     street: DEFAULT_VENUE.street,
@@ -193,6 +194,7 @@ function TournamentsTab() {
       consolation_start_score: t.consolation_start_score ?? t.start_score,
       consolation_double_out: t.consolation_double_out ?? t.double_out,
       pool_double_limit: t.pool_double_limit ?? true,
+      consolation_double_limit: t.consolation_double_limit ?? t.pool_double_limit ?? true,
       consolation: t.consolation ?? true,
       venue: parts[0] ?? "",
       street: parts[1] ?? "",
@@ -244,6 +246,7 @@ function TournamentsTab() {
           consolation_start_score: form.consolation_start_score,
           consolation_double_out: form.consolation_double_out,
           pool_double_limit: form.pool_double_limit,
+          consolation_double_limit: form.consolation_double_limit,
           consolation: form.consolation,
           location: location || undefined,
           description: form.description,
@@ -367,6 +370,7 @@ function TournamentsTab() {
             </div>
           ))}
           {form.with_pools && form.double_out && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.pool_double_limit} onChange={e => setForm({ ...form, pool_double_limit: e.target.checked })} /> Limite de 5 tours d'essais de double en poules</label>}
+          {form.with_pools && form.consolation && form.consolation_double_out && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.consolation_double_limit} onChange={e => setForm({ ...form, consolation_double_limit: e.target.checked })} /> Limite de 5 tours d'essais de double en consolante</label>}
         </fieldset>
         <div className="grid grid-cols-2 gap-3">
           {form.format === "equipe" && (

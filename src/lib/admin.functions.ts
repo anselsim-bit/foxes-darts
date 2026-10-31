@@ -50,6 +50,7 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
       consolation_start_score?: number;
       consolation_double_out?: boolean;
       pool_double_limit?: boolean | undefined;
+      consolation_double_limit?: boolean | undefined;
       consolation?: boolean | undefined;
       location?: string | undefined;
       description?: string | undefined;
@@ -79,6 +80,7 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
       consolation_start_score: consolationRules.start,
       consolation_double_out: consolationRules.doubleOut,
       pool_double_limit: data.pool_double_limit ?? true,
+      consolation_double_limit: data.consolation_double_limit ?? data.pool_double_limit ?? true,
       consolation: data.consolation ?? true,
       location: data.location || null,
       description: data.description || null,

@@ -3,6 +3,7 @@
 ## Compteurs et formats par phase
 - [x] Moyenne et meilleure volée sur tous les compteurs, retour tactile visible et passage anticipé.
 - [x] Formats indépendants pour poules, phase finale et consolante.
+- [x] Limite de 5 tours d'essais de double activable aussi pour la consolante (option dédiée, repli sur le réglage des poules).
 - [x] Manches en direct sur le tableau, sans avancer le vainqueur avant validation ; vérifiées sur deux écrans dans un tournoi temporaire supprimé ensuite.
 - [x] Harmoniser l'affichage des tableaux et vérifier sur ordinateur et téléphone ; 54 tests passent.
 
