@@ -6,7 +6,7 @@ import { deviceCodeKey, deviceDraftKey } from "@/lib/tournament-device";
 import { listPlayableMatches, validateTournamentCode, reportTournamentMatch } from "@/lib/tournament.functions";
 
 vi.mock("@/lib/tournament.functions", () => ({
-  listPlayableMatches: vi.fn(), validateTournamentCode: vi.fn(), rememberTournamentCode: vi.fn(), getMyTournamentCode: vi.fn(), reportTournamentMatch: vi.fn(),
+  listPlayableMatches: vi.fn(), validateTournamentCode: vi.fn(), rememberTournamentCode: vi.fn(), getMyTournamentCode: vi.fn(), reportTournamentMatch: vi.fn(), updateTournamentLiveLegs: vi.fn().mockResolvedValue({ ok: true }),
 }));
 vi.mock("@/lib/darts.functions", () => ({ saveGameResult: vi.fn() }));
 vi.mock("sonner", () => ({ toast: { info: vi.fn(), success: vi.fn(), error: vi.fn() } }));

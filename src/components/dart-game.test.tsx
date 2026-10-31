@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { Game } from "./dart-game";
 
 vi.mock("@/lib/darts.functions", () => ({ saveGameResult: vi.fn() }));
-vi.mock("@/lib/tournament.functions", () => ({ reportTournamentMatch: vi.fn() }));
+vi.mock("@/lib/tournament.functions", () => ({ reportTournamentMatch: vi.fn(), updateTournamentLiveLegs: vi.fn().mockResolvedValue({ ok: true }) }));
 vi.mock("sonner", () => ({ toast: { info: vi.fn(), success: vi.fn(), error: vi.fn() } }));
 afterEach(cleanup);
 
@@ -14,6 +14,15 @@ const shoot = (score: number) => fireEvent.click(screen.getByRole("button", { na
 const next = () => fireEvent.click(screen.getByRole("button", { name: "Suivant" }));
 
 describe("Manual scoreboard handover", () => {
+  it("passes after zero, one or two darts without inventing extra throws", () => {
+    startGame(); next();
+    expect(screen.getByText("Au tour de", { exact: false })).toHaveTextContent("Équipe B");
+    shoot(20); next();
+    expect(screen.getByText("281")).toBeInTheDocument();
+    shoot(19); shoot(18); next();
+    expect(screen.getByText("264")).toBeInTheDocument();
+    expect(screen.getByText("Au tour de", { exact: false })).toHaveTextContent("Équipe B");
+  });
   it("keeps all three throws on the same player until Next, then clears them and advances", () => {
     startGame();
     shoot(20); shoot(19); shoot(18);
@@ -29,7 +38,7 @@ describe("Manual scoreboard handover", () => {
   it("allows undoing the third throw before handing over", () => {
     startGame(); shoot(20); shoot(19); shoot(18);
     fireEvent.click(screen.getByRole("button", { name: "Annuler" }));
-    expect(screen.queryByRole("button", { name: "Suivant" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Suivant" })).toBeEnabled();
     expect(screen.getByText("262")).toBeInTheDocument();
     shoot(17); next();
     expect(screen.getByText("245")).toBeInTheDocument();
