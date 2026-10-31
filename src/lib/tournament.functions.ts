@@ -253,7 +253,7 @@ export const listPlayableMatches = createServerFn({ method: "POST" })
     if (!(await hasValidCode(data.tournamentId, data.code))) throw new Error("Code d'accès invalide ou tournoi inactif.");
     const sb = publicClient();
     const [{ data: tournament, error: tournamentError }, { data: teams }, { data: matches }, { data: allMatches }] = await Promise.all([
-      sb.from("tournaments").select("start_score, double_out, final_start_score, final_double_out, consolation_start_score, consolation_double_out, pool_double_limit").eq("id", data.tournamentId).single(),
+      sb.from("tournaments").select("start_score, double_out, final_start_score, final_double_out, consolation_start_score, consolation_double_out, pool_double_limit, consolation_double_limit").eq("id", data.tournamentId).single(),
       sb.from("tournament_teams").select("id, name").eq("tournament_id", data.tournamentId),
       sb
         .from("tournament_matches")
