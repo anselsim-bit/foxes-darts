@@ -32,6 +32,8 @@ type Match = {
   winner: string | null;
   legs_a?: number | null;
   legs_b?: number | null;
+  live_legs_a?: number;
+  live_legs_b?: number;
 };
 
 const poolName = (i: number) => `Poule ${String.fromCharCode(65 + i)}`;
@@ -132,7 +134,7 @@ export function TournamentBoard({
 
   const poolData = Array.from({ length: poolCount }, (_, i) => {
     const ms = poolMatches.filter((m) => m.pool_index === i);
-    const ids = [...new Set(ms.flatMap((m) => [m.team_a!, m.team_b!]))];
+    const ids = [...new Set(ms.flatMap(m => [m.team_a, m.team_b]).filter((id): id is string => id !== null))];
     return { i, ms, rows: poolStandings(ids, ms) };
   });
   // Aperçu du tableau final avant la fin des poules : "1er Poule A" etc., avec le leader actuel.
@@ -186,7 +188,7 @@ export function TournamentBoard({
             <span className="text-gradient-ember font-semibold">{name(finalMatch.winner)}</span>
           </p>
         )}
-        <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:gap-4">
+        <div className="tournament-rounds mt-6">
           {rounds.map((r) => (
             <div key={r} className="min-w-0 flex-1 space-y-3">
               <h3 className="text-sm font-semibold text-primary">{roundName(r)}</h3>
@@ -236,7 +238,7 @@ export function TournamentBoard({
           Les 2 premiers de chaque poule se qualifient. Les noms se confirment quand la poule est terminée ; en attendant, le
           leader actuel est indiqué en gris.
         </p>
-        <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:gap-4">
+        <div className="tournament-rounds mt-6">
           {previewRounds.map((r) => (
             <div key={r} className="min-w-0 flex-1 space-y-3">
               <h3 className="text-sm font-semibold text-primary">{previewName(r)}</h3>
@@ -280,7 +282,7 @@ export function TournamentBoard({
             <span className="text-gradient-ember font-semibold">{name(consolationFinal.winner)}</span>
           </p>
         )}
-        <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:gap-4">
+        <div className="tournament-rounds mt-6">
           {consolationRounds.map((r) => (
             <div key={r} className="min-w-0 flex-1 space-y-3">
               <h3 className="text-sm font-semibold text-primary">{consolationRoundName(r)}</h3>
@@ -305,7 +307,7 @@ export function TournamentBoard({
     ) : consolationPreview.length > 0 ? (
       <div>
         <h2 className="text-2xl">Consolante (aperçu)</h2>
-        <div className="mt-4 flex flex-col gap-4 lg:flex-row">
+        <div className="tournament-rounds mt-6">
           {[...new Set(consolationPreview.map((m) => m.round))].map((r) => (
             <div key={r} className="min-w-0 flex-1 space-y-3">
               <h3 className="text-sm font-semibold text-primary">{r === Math.max(...consolationPreview.map((m) => m.round)) ? "Finale" : `Tour ${r}`}</h3>
@@ -324,7 +326,7 @@ export function TournamentBoard({
     ) : null;
 
   return (
-    <section className="mt-10 space-y-8">
+    <section className="mt-10 space-y-8 border-t border-border pt-8">
       <div>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-2xl">
@@ -397,7 +399,7 @@ export function TournamentBoard({
           <div className="mt-4 flex flex-wrap gap-2">
             {!full || !maxParticipants ? (
               <form
-                className="flex gap-2"
+                className="flex min-w-0 flex-wrap gap-2"
                 onSubmit={(e) => {
                   e.preventDefault();
                   run(() => adminAddTeam({ data: { tournamentId, name: newTeam } }), "Ajouté.").then(() => setNewTeam(""));
@@ -407,7 +409,7 @@ export function TournamentBoard({
                   value={newTeam}
                   onChange={(e) => setNewTeam(e.target.value)}
                   placeholder={isTeam ? "Nom de l'équipe" : "Nom du joueur"}
-                  className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm"
                 />
                 <button type="submit" className="btn-ember px-3 py-2 text-sm">
                   <Plus className="h-4 w-4" /> Ajouter
@@ -451,7 +453,7 @@ export function TournamentBoard({
       </div>
 
       {admin && (
-        <div className="mt-4 rounded-xl border border-border bg-card p-4">
+        <div className="border-y border-border py-5">
           <h3 className="flex items-center gap-2 text-sm font-semibold">
             <KeyRound className="h-4 w-4 text-primary" /> Code d'accès du tournoi
           </h3>
@@ -515,7 +517,7 @@ export function TournamentBoard({
       )}
 
       {several && (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2">
           {(
             [
               ...(showPools ? [["pools", "Poules"] as const] : []),
@@ -523,13 +525,14 @@ export function TournamentBoard({
               ...(hasConsolation ? [["consolation", "Consolante"] as const] : []),
             ]
           ).map(([v, lbl]) => (
-            <button
+            <Button
               key={v}
+              variant={view === v ? "default" : "outline"}
               onClick={() => setView(v)}
-              className={`rounded-full border px-3 py-1 text-sm transition ${view === v ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground hover:text-foreground"}`}
+              className="h-10 px-4"
             >
               {lbl}
-            </button>
+            </Button>
           ))}
         </div>
       )}
@@ -538,22 +541,23 @@ export function TournamentBoard({
         <div>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-2xl">Poules</h2>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {(["all", ...poolData.map((p) => p.i)] as const).map((v) => (
-                <button
+                <Button
+                  variant={poolView === v ? "default" : "outline"}
                   key={String(v)}
                   onClick={() => setPoolView(v)}
-                  className={`rounded-full border px-3 py-1 text-sm transition ${poolView === v ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground hover:text-foreground"}`}
+                  className="h-9 px-3"
                 >
                   {v === "all" ? "Toutes" : poolName(v)}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
           <div className={`mt-4 grid gap-4 ${poolView === "all" ? "md:grid-cols-2" : ""}`}>
             {poolData.filter((p) => poolView === "all" || p.i === poolView).map(({ i, ms, rows }) => {
               return (
-                <div key={i} className="rounded-xl border border-border bg-card p-4">
+                <div key={i} className="tournament-pool">
                   <h3 className="text-lg text-primary">{poolName(i)}</h3>
                   <table className="mt-2 w-full text-sm">
                     <thead className="text-xs text-muted-foreground">
@@ -653,7 +657,7 @@ function MatchRow({
           <span className="flex min-w-0 items-center gap-2">{content}</span>
         )}
         <span className={`shrink-0 text-sm tabular-nums ${isWinner ? "font-semibold" : "text-muted-foreground"}`}>
-          {bye ? "" : final ? (m.winner ? ((id === m.team_a ? m.legs_a : m.legs_b) ?? "—") : picked ? (picked === id ? 2 : loserLegs) : "") : m.winner ? (m.winner === id ? "0" : (score ?? "")) : editable && picked === id ? "0" : ""}
+          {bye ? "" : final ? (m.winner ? ((id === m.team_a ? m.legs_a : m.legs_b) ?? "—") : (id === m.team_a ? m.live_legs_a ?? 0 : m.live_legs_b ?? 0)) : m.winner ? (m.winner === id ? "0" : (score ?? "")) : editable && picked === id ? "0" : ""}
         </span>
       </div>
     );
@@ -678,6 +682,7 @@ function MatchRow({
     <div className={`text-sm ${boxed ? "rounded-lg border border-border bg-card p-3" : "border-t border-border pt-1.5"}`}>
       {side(m.team_a, m.score_a)}
       {side(m.team_b, m.score_b)}
+      {final && !m.winner && ((m.live_legs_a ?? 0) + (m.live_legs_b ?? 0) > 0) && <p role="status" className="mt-2 border-t border-border pt-2 text-xs font-semibold text-primary">En cours · {(m.live_legs_a ?? 0) === 2 || (m.live_legs_b ?? 0) === 2 ? "Résultat à confirmer" : "2 manches gagnantes"}</p>}
       {bye && <p className="mt-1 text-xs text-muted-foreground">Exempt — qualifié au tour suivant</p>}
       {final && m.winner && !bye && <p className="mt-1 text-xs text-muted-foreground">Reste au perdant : {m.winner === m.team_a ? m.score_b : m.score_a}</p>}
       {editable && (

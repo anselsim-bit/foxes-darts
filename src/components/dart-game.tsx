@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { suggestNextDarts } from "@/lib/checkout";
 import { saveGameResult } from "@/lib/darts.functions";
-import { reportTournamentMatch } from "@/lib/tournament.functions";
-import { isBust, replayTurns, requiresDouble } from "@/lib/dart-rules";
+import { reportTournamentMatch, updateTournamentLiveLegs } from "@/lib/tournament.functions";
+import { isBust, replayTurns, requiresDouble, visitStats } from "@/lib/dart-rules";
 import type { GameProgress } from "@/lib/tournament-device";
 
 export type Player = { name: string; userId: string | null; token?: string | undefined };
@@ -67,6 +67,9 @@ export function Game({
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [reported, setReported] = useState(false);
+  const [pressedKey, setPressedKey] = useState<number | null>(null);
+  const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (feedbackTimer.current) clearTimeout(feedbackTimer.current); }, []);
   const [completedLegs, setCompletedLegs] = useState(initialProgress?.completedLegs ?? []);
   useEffect(() => {
     if (!reported) onProgress?.({ turns, current, pendingBust, mult, completedLegs });
@@ -101,7 +104,7 @@ export function Game({
   const playerIdx = (turns.length + completedLegs.length) % players.length;
   const nextLeg = () => {
     if (winner === null || matchFinished) return;
-    setCompletedLegs([...completedLegs, { winner, remaining: scores[winner === 0 ? 1 : 0] ?? start }]);
+    setCompletedLegs([...completedLegs, { winner, remaining: scores[winner === 0 ? 1 : 0] ?? start, turns }]);
     setTurns([]); setCurrent([]); setPendingBust(null); setMult(1);
     notifiedSimple.current.clear();
   };
@@ -118,8 +121,24 @@ export function Game({
     toast.info(`${players[playerIdx]?.name ?? "Équipe"} : 5 tours d'essais terminés, passage en sortie simple.`, { duration: 7000 });
   }, [playerIdx, activeDoubleOut, doubleAttempts, doubleOut, poolDoubleLimit, winner, players]);
 
-  const bestVisit = (i: number) =>
-    turns.filter((t) => t.player === i && !t.bust).reduce((m, t) => Math.max(m, t.total), 0);
+  const allVisits = useMemo(() => [...completedLegs.flatMap(l => l.turns ?? []), ...turns,
+    ...(pendingBust !== null ? [{ player: playerIdx, darts: current, bust: pendingBust, total: current.reduce((a, d) => a + d.value, 0) }] : [])
+  ], [completedLegs, turns, current, pendingBust, playerIdx]);
+  const bestVisit = (i: number) => visitStats(allVisits, i).best;
+
+  const legsA = legWins[players[0]?.name === match?.teamA ? 0 : 1] ?? 0;
+  const legsB = legWins[players[0]?.name === match?.teamB ? 0 : 1] ?? 0;
+  useEffect(() => {
+    if (!match || !accessCode || legsToWin !== 2 || reported) return;
+    let active = true;
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    const sync = async () => {
+      try { await updateTournamentLiveLegs({ data: { matchId: match.id, code: accessCode, legsA, legsB } }); }
+      catch { if (active) retry = setTimeout(sync, 5000); }
+    };
+    void sync();
+    return () => { active = false; if (retry) clearTimeout(retry); };
+  }, [match?.id, accessCode, legsToWin, legsA, legsB, reported]);
 
   const endTurn = (darts: Dart[], bust: boolean) => {
     const total = darts.reduce((a, d) => a + d.value, 0);
@@ -131,6 +150,9 @@ export function Game({
 
   const throwDart = (base: number) => {
     if (winner !== null || turnComplete) return;
+    setPressedKey(base);
+    if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
+    feedbackTimer.current = setTimeout(() => setPressedKey(null), 220);
     const m = base === 25 && mult === 3 ? 2 : base === 0 ? 1 : mult;
     const value = base * m;
     const label = base === 0 ? "Raté" : base === 25 ? (m === 2 ? "Bull" : "25") : `${["", "S", "D", "T"][m]}${base}`;
@@ -196,8 +218,7 @@ export function Game({
       <div className="game-scores mt-6 grid gap-3" data-many={players.length > 4} style={{ gridTemplateColumns: `repeat(${Math.min(players.length, 4)}, minmax(0, 1fr))` }}>
         {players.map((p, i) => {
           const active = winner === null && i === playerIdx;
-          const darts = turns.filter((t) => t.player === i).length;
-          const scored = start - (scores[i] ?? start);
+          const stats = visitStats(allVisits, i);
           return (
             <div
               key={i}
@@ -209,8 +230,9 @@ export function Game({
               </p>
               <p className="game-score font-display text-4xl text-primary">{active ? remaining : scores[i]}</p>
               <p className="game-stats mt-1 text-xs text-muted-foreground">
-                {legsToWin === 2 ? `Manches : ${legWins[i]} / 2` : `Moy. ${darts ? (scored / darts).toFixed(1) : "0"} · Meilleure volée ${bestVisit(i)}`}
+                Moy. {stats.average.toFixed(1)} · Meilleure volée {stats.best}
               </p>
+              {legsToWin === 2 && <p className="game-legs mt-1 text-sm font-semibold text-primary" aria-live="polite">Manches : {legWins[i]} / 2</p>}
               {poolDoubleLimit && doubleOut && (
                 <p className="game-attempts mt-1 text-xs text-muted-foreground">
                   {requiresDouble(doubleOut, poolDoubleLimit, doubleAttempts[i] ?? 0) ? `Essais double : ${Math.min(doubleAttempts[i] ?? 0, 5)}/5 tours` : "Sortie simple"}
@@ -299,29 +321,19 @@ export function Game({
               })}
             </div>
           </div>
-          <div className="game-advice mb-3" aria-live="polite">
-          {turnComplete ? (
-            <div className="flex h-full justify-end">
-              <Button size="lg" className="game-next" onClick={() => endTurn(current, pendingBust === true)}>
-                Suivant <ArrowRight />
-              </Button>
-            </div>
-          ) : (() => {
+          <div className="game-advice mb-3 flex items-stretch gap-2" aria-live="polite">
+          {!turnComplete && (() => {
             const tip = suggestNextDarts(remaining, 3 - current.length, activeDoubleOut);
             if (!tip.note) return null;
-            return (
-              <div className="game-tip flex h-full flex-wrap items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-4 py-2 text-sm">
-                <Lightbulb className="h-4 w-4 shrink-0 text-primary" />
-                <span className="game-tip-label font-semibold">Conseil :</span>
-                {tip.darts.map((d, i) => (
-                  <span key={i} className="rounded bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">
-                    {d}
-                  </span>
-                ))}
-                <span className="game-tip-note min-w-0 text-muted-foreground">{tip.note}</span>
-              </div>
-            );
+            return <div className="game-tip flex h-full min-w-0 flex-1 flex-wrap items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-4 py-2 text-sm">
+              <Lightbulb className="h-4 w-4 shrink-0 text-primary" />
+              {tip.darts.map((d, i) => <span key={i} className="rounded bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">{d}</span>)}
+              <span className="game-tip-note min-w-0 text-muted-foreground">{tip.note}</span>
+            </div>;
           })()}
+          <Button size="lg" className={`game-next shrink-0 ${turnComplete ? "flex-1" : ""}`} onClick={() => endTurn(current, pendingBust === true)}>
+            Suivant <ArrowRight />
+          </Button>
           </div>
           <div className="game-multipliers mb-3 grid grid-cols-3 gap-2">
             {([1, 2, 3] as const).map((m) => (
@@ -343,14 +355,14 @@ export function Game({
           </div>
           <div className="game-keypad grid grid-cols-5 gap-2 sm:grid-cols-7">
             {Array.from({ length: 20 }, (_, i) => i + 1).map((n) => (
-              <Button variant="outline" key={n} onClick={() => throwDart(n)} disabled={turnComplete} className={`${btn} h-auto`}>
+              <Button variant="outline" key={n} data-feedback={pressedKey === n} onClick={() => throwDart(n)} disabled={turnComplete} className={`${btn} h-auto`}>
                 {n}
               </Button>
             ))}
-            <Button variant="outline" onClick={() => throwDart(25)} disabled={turnComplete} className={`${btn} h-auto`}>
+            <Button variant="outline" data-feedback={pressedKey === 25} onClick={() => throwDart(25)} disabled={turnComplete} className={`${btn} h-auto`}>
               {mult === 1 ? "25" : "Bull"}
             </Button>
-            <Button variant="outline" onClick={() => throwDart(0)} disabled={turnComplete} className={`${btn} h-auto`}>
+            <Button variant="outline" data-feedback={pressedKey === 0} onClick={() => throwDart(0)} disabled={turnComplete} className={`${btn} h-auto`}>
               Raté
             </Button>
             <Button variant="outline" onClick={undo} className={`${btn} h-auto`} aria-label="Annuler" title="Annuler la dernière fléchette">
