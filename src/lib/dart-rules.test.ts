@@ -22,7 +22,7 @@ describe("tournament rules", () => {
   it("accepts provisional leg scores but never two winners or invalid leg totals", () => {
     expect(validateLiveLegs(1, 1)).toEqual({ live_legs_a: 1, live_legs_b: 1 });
     expect(validateLiveLegs(2, 1)).toEqual({ live_legs_a: 2, live_legs_b: 1 });
-    for (const [a, b] of [[2, 2], [-1, 0], [3, 0], [0.5, 1]]) expect(() => validateLiveLegs(a, b)).toThrow();
+    for (const [a, b] of [[2, 2], [-1, 0], [3, 0], [0.5, 1]] as [number, number][]) expect(() => validateLiveLegs(a, b)).toThrow();
   });
   it("requires two winning legs in all knockout rounds (bracket, consolation, small final) but only one in pools", () => {
     expect(tournamentRules(501, true, "bracket").legsToWin).toBe(2);
