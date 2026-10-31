@@ -533,6 +533,7 @@ export type Database = {
       tournaments: {
         Row: {
           consolation: boolean
+          consolation_double_limit: boolean | null
           consolation_double_out: boolean | null
           consolation_start_score: number | null
           created_at: string
@@ -558,6 +559,7 @@ export type Database = {
         }
         Insert: {
           consolation?: boolean
+          consolation_double_limit?: boolean | null
           consolation_double_out?: boolean | null
           consolation_start_score?: number | null
           created_at?: string
@@ -583,6 +585,7 @@ export type Database = {
         }
         Update: {
           consolation?: boolean
+          consolation_double_limit?: boolean | null
           consolation_double_out?: boolean | null
           consolation_start_score?: number | null
           created_at?: string
