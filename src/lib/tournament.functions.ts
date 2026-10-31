@@ -268,7 +268,7 @@ export const listPlayableMatches = createServerFn({ method: "POST" })
     if (tournamentError || !tournament) throw new Error("Réglages du tournoi introuvables.");
     const name = new Map((teams ?? []).map((t) => [t.id, t.name]));
     const maxRound = new Map<string, number>();
-    for (const m of matches ?? []) maxRound.set(m.stage, Math.max(maxRound.get(m.stage) ?? 0, m.round));
+    for (const m of allMatches ?? []) maxRound.set(m.stage, Math.max(maxRound.get(m.stage) ?? 0, m.round));
     const roundName = (stage: string, round: number) => {
       const left = (maxRound.get(stage) ?? round) - round;
       return left === 0 ? "Finale" : left === 1 ? "Demi-finales" : left === 2 ? "Quarts de finale" : left === 3 ? "Huitièmes de finale" : `Tour ${round}`;
