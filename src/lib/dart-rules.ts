@@ -40,3 +40,22 @@ export function requiresDouble(doubleOut: boolean, poolDoubleLimit: boolean, att
 export function isBust(left: number, dart: ScoredDart, doubleOut: boolean) {
   return left < 0 || (doubleOut && left === 1) || (left === 0 && doubleOut && !dart.isDouble);
 }
+export type PhaseSettings = { start_score: number; double_out: boolean; pool_double_limit?: boolean | null | undefined; final_start_score?: number | null | undefined; final_double_out?: boolean | null | undefined; consolation_start_score?: number | null | undefined; consolation_double_out?: boolean | null | undefined };
+export function phaseRules(settings: PhaseSettings, stage: string) {
+  const consolation = stage === "consolation";
+  const final = stage !== "pool";
+  return tournamentRules(
+    (final ? (consolation ? settings.consolation_start_score : settings.final_start_score) : null) ?? settings.start_score,
+    (final ? (consolation ? settings.consolation_double_out : settings.final_double_out) : null) ?? settings.double_out,
+    stage, settings.pool_double_limit ?? true,
+  );
+}
+export function visitStats(turns: ScoredTurn[], player: number) {
+  const visits = turns.filter(t => t.player === player);
+  const totals = visits.map(t => t.bust ? 0 : t.total);
+  return { average: totals.length ? totals.reduce((a, b) => a + b, 0) / totals.length : 0, best: Math.max(0, ...totals) };
+}
+export function validateLiveLegs(a: number, b: number) {
+  if (![a, b].every(n => Number.isInteger(n) && n >= 0 && n <= 2) || (a === 2 && b === 2)) throw new Error("Manches invalides.");
+  return { live_legs_a: a, live_legs_b: b };
+}

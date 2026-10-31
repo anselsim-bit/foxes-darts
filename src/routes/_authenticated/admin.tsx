@@ -146,6 +146,10 @@ function TournamentsTab() {
     pool_count: "4",
     start_score: 501,
     double_out: true,
+    final_start_score: 501,
+    final_double_out: true,
+    consolation_start_score: 501,
+    consolation_double_out: true,
     pool_double_limit: true,
     consolation: true,
     venue: DEFAULT_VENUE.venue,
@@ -184,6 +188,10 @@ function TournamentsTab() {
       pool_count: String(t.pool_count || 4),
       start_score: t.start_score,
       double_out: t.double_out,
+      final_start_score: t.final_start_score ?? t.start_score,
+      final_double_out: t.final_double_out ?? t.double_out,
+      consolation_start_score: t.consolation_start_score ?? t.start_score,
+      consolation_double_out: t.consolation_double_out ?? t.double_out,
       pool_double_limit: t.pool_double_limit ?? true,
       consolation: t.consolation ?? true,
       venue: parts[0] ?? "",
@@ -231,6 +239,10 @@ function TournamentsTab() {
           pool_count: form.with_pools ? Math.max(1, parseInt(form.pool_count, 10) || 1) : 0,
           start_score: form.start_score,
           double_out: form.double_out,
+          final_start_score: form.final_start_score,
+          final_double_out: form.final_double_out,
+          consolation_start_score: form.consolation_start_score,
+          consolation_double_out: form.consolation_double_out,
           pool_double_limit: form.pool_double_limit,
           consolation: form.consolation,
           location: location || undefined,
@@ -337,25 +349,24 @@ function TournamentsTab() {
             />
           </div>
         </div>
-        <fieldset className="space-y-3">
-          <legend className="mb-2 text-sm font-medium">Parties du tournoi</legend>
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex gap-2" role="group" aria-label="Score de départ">
-              {[301, 501].map((score) => (
-                <Button key={score} type="button" variant={form.start_score === score ? "default" : "outline"} aria-pressed={form.start_score === score} onClick={() => setForm({ ...form, start_score: score })}>
-                  {score}
-                </Button>
-              ))}
+        <fieldset className="space-y-3 border-y border-border py-4">
+          <legend className="text-sm font-medium">Parties du tournoi</legend>
+          {([
+            ...(form.with_pools ? [{ label: "Poules", score: "start_score" as const, double: "double_out" as const }] : []),
+            { label: "Phase finale · petite finale", score: "final_start_score" as const, double: "final_double_out" as const },
+            ...(form.with_pools && form.consolation ? [{ label: "Consolante", score: "consolation_start_score" as const, double: "consolation_double_out" as const }] : []),
+          ]).map(phase => (
+            <div key={phase.score} className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-sm font-medium">{phase.label}</span>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex gap-1" role="group" aria-label={`Score de départ — ${phase.label}`}>
+                  {[301, 501].map(score => <Button key={score} type="button" size="sm" variant={form[phase.score] === score ? "default" : "outline"} aria-pressed={form[phase.score] === score} onClick={() => setForm({ ...form, [phase.score]: score })}>{score}</Button>)}
+                </div>
+                <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form[phase.double]} onChange={e => setForm({ ...form, [phase.double]: e.target.checked })} /> Sortie double</label>
+              </div>
             </div>
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={form.double_out} onChange={(e) => setForm({ ...form, double_out: e.target.checked })} /> Sortie double
-            </label>
-            {form.double_out && (
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={form.pool_double_limit} onChange={(e) => setForm({ ...form, pool_double_limit: e.target.checked })} /> Limite de 5 tours d'essais de double en poules
-              </label>
-            )}
-          </div>
+          ))}
+          {form.with_pools && form.double_out && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.pool_double_limit} onChange={e => setForm({ ...form, pool_double_limit: e.target.checked })} /> Limite de 5 tours d'essais de double en poules</label>}
         </fieldset>
         <div className="grid grid-cols-2 gap-3">
           {form.format === "equipe" && (

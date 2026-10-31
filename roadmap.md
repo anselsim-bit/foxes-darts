@@ -1,5 +1,11 @@
 # Foxes Darts — Tâches
 
+## Compteurs et formats par phase
+- [x] Moyenne et meilleure volée sur tous les compteurs, retour tactile visible et passage anticipé.
+- [x] Formats indépendants pour poules, phase finale et consolante.
+- [x] Manches en direct sur le tableau, sans avancer le vainqueur avant validation ; vérifiées sur deux écrans dans un tournoi temporaire supprimé ensuite.
+- [x] Harmoniser l'affichage des tableaux et vérifier sur ordinateur et téléphone ; 54 tests passent.
+
 ## Croisements des poules et consolante
 - [x] Places directes en demi-finales aux meilleurs premiers (victoires, puis points restants), testées et appliquées au tournoi interne.
 - [x] Corriger les croisements au premier tour et ajouter les tests.

@@ -145,7 +145,7 @@ export function TournamentPlay({ tournamentId, signedIn, qrCode }: { tournamentI
 
   if (players && match && code) {
     return (
-      <div className="mt-8 rounded-xl border border-primary/40">
+      <div className="mt-8">
         <Game
           players={players}
           start={match.start}

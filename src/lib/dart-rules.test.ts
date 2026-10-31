@@ -1,9 +1,29 @@
 import { describe, expect, it } from "vitest";
-import { isBust, replayTurns, requiresDouble, tournamentRules, validateFinalLegs, type ScoredTurn } from "./dart-rules";
+import { isBust, replayTurns, requiresDouble, tournamentRules, validateFinalLegs, phaseRules, visitStats, validateLiveLegs, type ScoredTurn } from "./dart-rules";
 
 const misses = (player: number): ScoredTurn => ({ player, darts: Array.from({ length: 3 }, () => ({ value: 0, isDouble: false })), bust: false, total: 0 });
 
 describe("tournament rules", () => {
+  it("applies independent pool, final and consolation formats, including small final", () => {
+    const settings = { start_score: 301, double_out: true, final_start_score: 501, final_double_out: false, consolation_start_score: 301, consolation_double_out: false };
+    expect(phaseRules(settings, "pool")).toMatchObject({ start: 301, doubleOut: true, legsToWin: 1 });
+    expect(phaseRules(settings, "bracket")).toMatchObject({ start: 501, doubleOut: false, legsToWin: 2 });
+    expect(phaseRules(settings, "small_final")).toMatchObject({ start: 501, doubleOut: false, legsToWin: 2 });
+    expect(phaseRules(settings, "consolation")).toMatchObject({ start: 301, doubleOut: false, legsToWin: 2 });
+  });
+  it("keeps existing tournament settings as fallback", () => {
+    expect(phaseRules({ start_score: 501, double_out: true }, "consolation")).toMatchObject({ start: 501, doubleOut: true });
+  });
+  it("averages visits including passes and busts, and keeps the best across legs", () => {
+    const turn = (total: number, bust = false) => ({ player: 0, darts: [], total, bust });
+    expect(visitStats([turn(60), turn(120), turn(80, true), turn(0)], 0)).toEqual({ average: 45, best: 120 });
+    expect(visitStats([], 1)).toEqual({ average: 0, best: 0 });
+  });
+  it("accepts provisional leg scores but never two winners or invalid leg totals", () => {
+    expect(validateLiveLegs(1, 1)).toEqual({ live_legs_a: 1, live_legs_b: 1 });
+    expect(validateLiveLegs(2, 1)).toEqual({ live_legs_a: 2, live_legs_b: 1 });
+    for (const [a, b] of [[2, 2], [-1, 0], [3, 0], [0.5, 1]] as [number, number][]) expect(() => validateLiveLegs(a, b)).toThrow();
+  });
   it("requires two winning legs in all knockout rounds (bracket, consolation, small final) but only one in pools", () => {
     expect(tournamentRules(501, true, "bracket").legsToWin).toBe(2);
     expect(tournamentRules(501, true, "consolation").legsToWin).toBe(2);

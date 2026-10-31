@@ -148,6 +148,13 @@
       "when": 1793390289614,
       "tag": "0020_allow_consolation_small_final_stages",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793440007280,
+      "tag": "0021_tournament_phase_formats_live_legs",
+      "breakpoints": true
     }
   ]
 }

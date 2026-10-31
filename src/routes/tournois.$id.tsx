@@ -45,7 +45,7 @@ export const Route = createFileRoute("/tournois/$id")({
     ],
   }),
   notFoundComponent: () => (
-    <div className="mx-auto max-w-4xl px-4 py-12">
+    <div className="mx-auto max-w-6xl px-4 py-10">
       <h1 className="text-3xl">Tournoi introuvable</h1>
       <p className="mt-3 text-muted-foreground">Ce tournoi n'existe plus ou a été supprimé.</p>
       <Link to="/tournois" className="mt-6 inline-block text-primary">Voir les tournois</Link>
@@ -111,7 +111,7 @@ function TournamentDetail() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12">
+    <div className="mx-auto max-w-6xl px-4 py-10">
       <Link to="/tournois" className="text-sm text-muted-foreground hover:text-foreground">
         ← Tous les tournois
       </Link>
@@ -124,7 +124,7 @@ function TournamentDetail() {
         />
       )}
 
-      <h1 className="mt-8 text-4xl">{tournament.title}</h1>
+      <h1 className="mt-6 break-words text-3xl sm:text-4xl">{tournament.title}</h1>
 
       <div className="mt-4 flex flex-wrap gap-4 text-sm text-muted-foreground">
         <span className="flex items-center gap-2">

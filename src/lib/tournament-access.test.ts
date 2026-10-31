@@ -33,7 +33,7 @@ vi.mock("@/integrations/supabase/client.server", () => ({
   supabaseAdmin: { from: mocks.adminFrom },
 }));
 
-import { listPlayableMatches, reportTournamentMatch, validateTournamentCode } from "./tournament.functions";
+import { listPlayableMatches, reportTournamentMatch, validateTournamentCode, updateTournamentLiveLegs } from "./tournament.functions";
 
 beforeEach(() => {
   mocks.publicRows.length = 0;
@@ -42,6 +42,21 @@ beforeEach(() => {
 });
 
 describe("Tournament guest access", () => {
+  it("refuses provisional leg writes with an obsolete code", async () => {
+    mocks.publicRows.push({ id: "match", tournament_id: "test", stage: "consolation", team_a: "a", team_b: "b", winner: null }, { status: "started" });
+    mocks.adminRows.push({ code: "NEWCODE" });
+    await expect(updateTournamentLiveLegs({ data: { matchId: "match", code: "OLD", legsA: 1, legsB: 0 } })).rejects.toThrow("Code d'accès invalide");
+    expect(mocks.adminFrom.mock.calls.map(([table]) => table)).toEqual(["tournament_settings_codes"]);
+  });
+  it("writes provisional legs without declaring a winner or advancing teams", async () => {
+    mocks.publicRows.push({ id: "match", tournament_id: "test", stage: "bracket", team_a: "a", team_b: "b", winner: null }, { status: "started" });
+    mocks.adminRows.push({ code: "FOX123" });
+    const update = vi.fn(() => ({ eq: () => ({ is: async () => ({ error: null }) }) }));
+    mocks.adminFrom.mockImplementation((table: string) => table === "tournament_matches" ? { update } : query(mocks.adminRows));
+    await updateTournamentLiveLegs({ data: { matchId: "match", code: "FOX123", legsA: 1, legsB: 1 } });
+    expect(update).toHaveBeenCalledWith({ live_legs_a: 1, live_legs_b: 1 });
+    expect(mocks.adminFrom.mock.calls.map(([table]) => table)).toEqual(["tournament_settings_codes", "tournament_matches"]);
+  });
   it("does not write or advance a final with only one winning leg", async () => {
     mocks.publicRows.push({ id: "match", tournament_id: "test", stage: "bracket", team_a: "a", team_b: "b" }, { status: "started" });
     mocks.adminRows.push({ code: "FOX123" });
