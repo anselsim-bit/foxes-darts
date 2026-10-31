@@ -386,6 +386,8 @@ export type Database = {
           id: string
           legs_a: number | null
           legs_b: number | null
+          live_legs_a: number
+          live_legs_b: number
           pool_index: number | null
           position: number
           round: number
@@ -402,6 +404,8 @@ export type Database = {
           id?: string
           legs_a?: number | null
           legs_b?: number | null
+          live_legs_a?: number
+          live_legs_b?: number
           pool_index?: number | null
           position?: number
           round?: number
@@ -418,6 +422,8 @@ export type Database = {
           id?: string
           legs_a?: number | null
           legs_b?: number | null
+          live_legs_a?: number
+          live_legs_b?: number
           pool_index?: number | null
           position?: number
           round?: number
@@ -527,11 +533,15 @@ export type Database = {
       tournaments: {
         Row: {
           consolation: boolean
+          consolation_double_out: boolean | null
+          consolation_start_score: number | null
           created_at: string
           description: string | null
           double_out: boolean
           end_time: string | null
           event_date: string
+          final_double_out: boolean | null
+          final_start_score: number | null
           format: string
           helloasso_url: string | null
           id: string
@@ -548,11 +558,15 @@ export type Database = {
         }
         Insert: {
           consolation?: boolean
+          consolation_double_out?: boolean | null
+          consolation_start_score?: number | null
           created_at?: string
           description?: string | null
           double_out?: boolean
           end_time?: string | null
           event_date: string
+          final_double_out?: boolean | null
+          final_start_score?: number | null
           format?: string
           helloasso_url?: string | null
           id?: string
@@ -569,11 +583,15 @@ export type Database = {
         }
         Update: {
           consolation?: boolean
+          consolation_double_out?: boolean | null
+          consolation_start_score?: number | null
           created_at?: string
           description?: string | null
           double_out?: boolean
           end_time?: string | null
           event_date?: string
+          final_double_out?: boolean | null
+          final_start_score?: number | null
           format?: string
           helloasso_url?: string | null
           id?: string

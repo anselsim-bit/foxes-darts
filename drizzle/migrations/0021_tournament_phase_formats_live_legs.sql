@@ -1,0 +1,5 @@
+ALTER TABLE public.tournaments ADD COLUMN final_start_score integer CHECK (final_start_score IN (301,501)), ADD COLUMN final_double_out boolean, ADD COLUMN consolation_start_score integer CHECK (consolation_start_score IN (301,501)), ADD COLUMN consolation_double_out boolean;
+UPDATE public.tournaments SET final_start_score = start_score, final_double_out = double_out, consolation_start_score = start_score, consolation_double_out = double_out;
+ALTER TABLE public.tournament_matches ADD COLUMN live_legs_a integer NOT NULL DEFAULT 0 CHECK (live_legs_a BETWEEN 0 AND 2), ADD COLUMN live_legs_b integer NOT NULL DEFAULT 0 CHECK (live_legs_b BETWEEN 0 AND 2);
+COMMENT ON COLUMN public.tournament_matches.live_legs_a IS 'Provisional leg wins; does not determine winner or bracket advancement.';
+COMMENT ON COLUMN public.tournaments.start_score IS 'Pool format and fallback for phase-specific settings.';
