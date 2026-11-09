@@ -2,7 +2,8 @@
 
 ## Évolution multi-organisations — cahier des charges du 9 novembre 2026
 - [x] Phase 1 : audit technique, inventaire réel et proposition de migration, sans changer le site ni ses données ; rapport dans docs/audit-multi-organisations.md.
-- [ ] Phase 2 : architecture et migration additive — attend la validation du plan et la vérification de sauvegarde.
+- [x] Phase 2, préparation : plan approuvé, contrôle du secret HelloAsso branché ; tests de reprise fiabilisés et 80/80 tests passent.
+- [ ] Phase 2 : application de la migration additive — attend la vérification de sauvegarde et de l’export par l’utilisateur ; aucune donnée modifiée.
 - [ ] Phases 3–7 : organisations, collaborateurs, espaces organisateurs, joueurs universels, pages publiques et administration centrale — attend la phase 2.
 - [ ] Phase 8 : validation isolation, sécurité, historique, anciennes URL et performances — attend les phases précédentes.
 
