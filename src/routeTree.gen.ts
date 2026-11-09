@@ -24,6 +24,7 @@ import { Route as AuthenticatedMonEspaceRouteImport } from './routes/_authentica
 import { Route as OSlugRouteImport } from './routes/o.$slug'
 import { Route as TournoisIndexRouteImport } from './routes/tournois.index'
 import { Route as TournoisIdRouteImport } from './routes/tournois.$id'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as TournoisIdJouerRouteImport } from './routes/tournois_.$id.jouer'
 import { Route as AuthenticatedDashboardOrganizationsSlugRouteImport } from './routes/_authenticated/dashboard_.organizations.$slug'
 import { Route as ApiPublicHooksHelloassoSyncRouteImport } from './routes/api/public/hooks/helloasso-sync'
@@ -107,6 +108,11 @@ const TournoisIdRoute = TournoisIdRouteImport.update({
   path: '/tournois/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TournoisIdJouerRoute = TournoisIdJouerRouteImport.update({
   id: '/tournois_/$id/jouer',
   path: '/tournois/$id/jouer',
@@ -161,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/o/$slug': typeof OSlugRouteWithChildren
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois/': typeof TournoisIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/tournois/$id/jouer': typeof TournoisIdJouerRoute
   '/dashboard/organizations/$slug': typeof AuthenticatedDashboardOrganizationsSlugRoute
   '/api/public/hooks/helloasso-sync': typeof ApiPublicHooksHelloassoSyncRoute
@@ -184,6 +191,7 @@ export interface FileRoutesByTo {
   '/o/$slug': typeof OSlugRouteWithChildren
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois': typeof TournoisIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/tournois/$id/jouer': typeof TournoisIdJouerRoute
   '/dashboard/organizations/$slug': typeof AuthenticatedDashboardOrganizationsSlugRoute
   '/api/public/hooks/helloasso-sync': typeof ApiPublicHooksHelloassoSyncRoute
@@ -209,6 +217,7 @@ export interface FileRoutesById {
   '/o/$slug': typeof OSlugRouteWithChildren
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois/': typeof TournoisIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/tournois_/$id/jouer': typeof TournoisIdJouerRoute
   '/_authenticated/dashboard_/organizations/$slug': typeof AuthenticatedDashboardOrganizationsSlugRoute
   '/api/public/hooks/helloasso-sync': typeof ApiPublicHooksHelloassoSyncRoute
@@ -234,6 +243,7 @@ export interface FileRouteTypes {
     | '/o/$slug'
     | '/tournois/$id'
     | '/tournois/'
+    | '/.lovable/oauth/consent'
     | '/tournois/$id/jouer'
     | '/dashboard/organizations/$slug'
     | '/api/public/hooks/helloasso-sync'
@@ -257,6 +267,7 @@ export interface FileRouteTypes {
     | '/o/$slug'
     | '/tournois/$id'
     | '/tournois'
+    | '/.lovable/oauth/consent'
     | '/tournois/$id/jouer'
     | '/dashboard/organizations/$slug'
     | '/api/public/hooks/helloasso-sync'
@@ -281,6 +292,7 @@ export interface FileRouteTypes {
     | '/o/$slug'
     | '/tournois/$id'
     | '/tournois/'
+    | '/.lovable/oauth/consent'
     | '/tournois_/$id/jouer'
     | '/_authenticated/dashboard_/organizations/$slug'
     | '/api/public/hooks/helloasso-sync'
@@ -301,6 +313,7 @@ export interface RootRouteChildren {
   OSlugRoute: typeof OSlugRouteWithChildren
   TournoisIdRoute: typeof TournoisIdRoute
   TournoisIndexRoute: typeof TournoisIndexRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   TournoisIdJouerRoute: typeof TournoisIdJouerRoute
   ApiPublicHooksHelloassoSyncRoute: typeof ApiPublicHooksHelloassoSyncRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -415,6 +428,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TournoisIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tournois_/$id/jouer': {
       id: '/tournois_/$id/jouer'
       path: '/tournois/$id/jouer'
@@ -510,6 +530,7 @@ const rootRouteChildren: RootRouteChildren = {
   OSlugRoute: OSlugRouteWithChildren,
   TournoisIdRoute: TournoisIdRoute,
   TournoisIndexRoute: TournoisIndexRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   TournoisIdJouerRoute: TournoisIdJouerRoute,
   ApiPublicHooksHelloassoSyncRoute: ApiPublicHooksHelloassoSyncRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
