@@ -11,6 +11,15 @@
 - [ ] Phases 3–7 : organisations, collaborateurs, espaces organisateurs, joueurs universels, pages publiques et administration centrale — phases suivantes, après la bascule sécurisée ; non ouvertes pendant cette étape.
 - [ ] Phase 8 : validation isolation, sécurité, historique, anciennes URL et performances — attend les phases précédentes.
 
+## Livraison complète du document — demande du 9 novembre à 18h01
+- [ ] Terminer les opérations atomiques et les protections de lancement, inscriptions, résultats et statistiques.
+- [ ] Création d’organisation, propriétaire, invitations et collaborateurs avec expiration, refus, renvoi et transfert protégé.
+- [ ] Tableau de bord personnel, sélecteur et gestion locale avec tournois, joueurs, statistiques, personnalisation et paramètres.
+- [ ] Profil universel complet, historique et notifications privées ; doublons soumis à vérification, jamais fusionnés automatiquement.
+- [ ] Pages publiques par organisation et tournoi, anciennes URL et accès QR conservés.
+- [ ] Administration centrale : organisations, utilisateurs, suspension/réactivation et journal des actions.
+- [ ] Tests avec deux organisations et plusieurs identités, parcours réels et documentation finale ; ouvrir uniquement après contrôle.
+
 ## Compteurs et formats par phase
 - [x] Moyenne et meilleure volée sur tous les compteurs, retour tactile visible et passage anticipé.
 - [x] Formats indépendants pour poules, phase finale et consolante.
