@@ -4,11 +4,13 @@ import { useState } from "react";
 import { Check, Pencil, Plus, Trash2, Upload, Users, X } from "lucide-react";
 import { getTournamentBoard, adminAddTeam, adminDeleteTeam, adminRenameTeam } from "@/lib/tournament.functions";
 import { toast } from "sonner";
+import { organizationMediaPath } from "@/lib/organization-media";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { listTournaments, listPhotos, listStandings, listHighlights } from "@/lib/public.functions";
 import {
   getMyRoles,
+  getAdminOrganization,
   adminUpsertTournament,
   adminDeleteTournament,
   adminAddPhoto,
@@ -209,8 +211,8 @@ function TournamentsTab() {
   };
 
   const uploadImage = async (file: File) => {
-    const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
-    const path = `tournaments/${crypto.randomUUID()}.${ext}`;
+    const { id } = await getAdminOrganization();
+    const path = organizationMediaPath(id, "tournaments", file.name, crypto.randomUUID());
     const { error } = await supabase.storage
       .from("tournament-photos")
       .upload(path, file, file.type ? { contentType: file.type } : {});
@@ -656,7 +658,8 @@ function PhotosTab() {
   const upload = async (file: File) => {
     setBusy(true);
     try {
-      const path = `photos/${crypto.randomUUID()}.${(file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "")}`;
+      const { id } = await getAdminOrganization();
+      const path = organizationMediaPath(id, "photos", file.name, crypto.randomUUID());
       const { error } = await supabase.storage.from("tournament-photos").upload(path, file);
       if (error) throw error;
       await adminAddPhoto({
@@ -866,7 +869,8 @@ function HighlightsTab() {
   const [mediaPath, setMediaPath] = useState("");
 
   const uploadMedia = async (file: File) => {
-    const path = `highlights/${crypto.randomUUID()}.${(file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "")}`;
+    const { id } = await getAdminOrganization();
+    const path = organizationMediaPath(id, "highlights", file.name, crypto.randomUUID());
     const { error } = await supabase.storage.from("tournament-photos").upload(path, file);
     if (error) {
       toast.error("Échec de l'envoi.");

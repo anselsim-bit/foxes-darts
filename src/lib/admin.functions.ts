@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
 import { tournamentRules, phaseRules } from "@/lib/dart-rules";
-import { requireCentralManager } from "@/lib/organization-access";
+import { requireCentralManager, requireOrganizationPlayer, requirePlatformAdmin } from "@/lib/organization-access";
 
 type AdminContext = {
   supabase: SupabaseClient<Database>;
@@ -19,6 +19,16 @@ export const getMyRoles = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     try { await requireAdmin(context); return ["admin"]; } catch { return [] as string[]; }
   });
+
+export const getAdminOrganization = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => ({ id: await requireAdmin(context) }));
+
+async function centralPlayerIds(context: AdminContext, organizationId: string) {
+  const { data, error } = await context.supabase.from("organization_players").select("user_id").eq("organization_id", organizationId);
+  if (error) throw new Error("Impossible de charger les membres de Foxes Darts.");
+  return (data ?? []).map((p) => p.user_id);
+}
 
 // ---------- Tournois ----------
 
@@ -277,10 +287,12 @@ export const adminSyncHelloAsso = createServerFn({ method: "POST" })
 export const adminListPlayerStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await requireAdmin(context);
+    const organizationId = await requireAdmin(context);
+    const ids = await centralPlayerIds(context, organizationId);
     const { data, error } = await context.supabase
       .from("player_stats")
       .select("id, user_id, matches_played, wins, losses, best_score, profiles(display_name)")
+      .in("user_id", ids)
       .order("wins", { ascending: false });
     if (error) throw new Error(error.message);
     return (data ?? []).map((s) => ({
@@ -297,10 +309,12 @@ export const adminListPlayerStats = createServerFn({ method: "GET" })
 export const adminListPlayers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await requireAdmin(context);
+    const organizationId = await requireAdmin(context);
+    const ids = await centralPlayerIds(context, organizationId);
     const { data, error } = await context.supabase
       .from("profiles")
       .select("id, display_name")
+      .in("id", ids)
       .order("display_name");
     if (error) throw new Error(error.message);
     return data ?? [];
@@ -318,7 +332,9 @@ export const adminUpsertPlayerStats = createServerFn({ method: "POST" })
     }) => input,
   )
   .handler(async ({ data, context }) => {
-    await requireAdmin(context);
+    const organizationId = await requireAdmin(context);
+    await requirePlatformAdmin(context);
+    await requireOrganizationPlayer(context, organizationId, data.user_id);
     const { error } = await context.supabase.from("player_stats").upsert(
       {
         user_id: data.user_id,
@@ -340,20 +356,21 @@ export const adminListMembers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const organizationId = await requireAdmin(context);
+    const ids = await centralPlayerIds(context, organizationId);
     const { data: profiles, error } = await context.supabase
       .from("profiles")
       .select("id, display_name")
+      .in("id", ids)
       .order("display_name");
     if (error) throw new Error(error.message);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: admins } = await context.supabase.from("organization_members").select("user_id").eq("organization_id", organizationId).in("role", ["ORGANIZATION_OWNER", "ORGANIZATION_ADMIN"]);
     const adminIds = new Set((admins ?? []).map((r) => r.user_id));
     const emails = new Map<string, string>();
-    for (let page = 1; page <= 20; page++) {
-      const { data: list, error: listError } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
-      if (listError) throw new Error(listError.message);
-      for (const u of list.users) if (u.email) emails.set(u.id, u.email);
-      if (list.users.length < 1000) break;
+    for (const profile of profiles ?? []) {
+      const { data: account, error: accountError } = await supabaseAdmin.auth.admin.getUserById(profile.id);
+      if (accountError) throw new Error("Impossible de charger l'adresse du membre.");
+      if (account.user?.email) emails.set(profile.id, account.user.email);
     }
     return (profiles ?? []).map((p) => ({
       id: p.id,
@@ -374,25 +391,12 @@ export const adminSetMemberAdmin = createServerFn({ method: "POST" })
     const organizationId = await requireAdmin(context);
     if (data.userId === context.userId && !data.admin)
       throw new Error("Vous ne pouvez pas retirer vos propres droits d'administrateur.");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await requireOrganizationPlayer(context, organizationId, data.userId);
     const { data: membership, error: memberError } = await context.supabase.from("organization_members").select("role").eq("organization_id", organizationId).eq("user_id", data.userId).maybeSingle();
     if (memberError) throw new Error("Impossible de vérifier les droits du membre.");
     if (membership?.role === "ORGANIZATION_OWNER") throw new Error("Les droits du propriétaire ne peuvent pas être modifiés ici.");
-    const { error: localError } = data.admin
-      ? await supabaseAdmin.from("organization_members").upsert({ organization_id: organizationId, user_id: data.userId, role: "ORGANIZATION_ADMIN" })
-      : await supabaseAdmin.from("organization_members").delete().eq("organization_id", organizationId).eq("user_id", data.userId).eq("role", "ORGANIZATION_ADMIN");
-    if (localError) throw new Error("Impossible de modifier les droits Foxes Darts.");
-    if (data.admin) {
-      const { data: existing } = await supabaseAdmin
-        .from("user_roles").select("id").eq("user_id", data.userId).eq("role", "admin").maybeSingle();
-      if (!existing) {
-        const { error } = await supabaseAdmin.from("user_roles").insert({ user_id: data.userId, role: "admin" });
-        if (error) throw new Error(error.message);
-      }
-    } else {
-      const { error } = await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId).eq("role", "admin");
-      if (error) throw new Error(error.message);
-    }
+    const { error } = await context.supabase.rpc("set_central_member_admin", { _user_id: data.userId, _admin: data.admin });
+    if (error) throw new Error("Impossible de modifier les droits Foxes Darts.");
     return { ok: true };
   });
 
@@ -406,7 +410,8 @@ export const adminSendPasswordReset = createServerFn({ method: "POST" })
     return { userId: input.userId, origin };
   })
   .handler(async ({ data, context }) => {
-    await requireAdmin(context);
+    const organizationId = await requireAdmin(context);
+    await requireOrganizationPlayer(context, organizationId, data.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: u, error } = await supabaseAdmin.auth.admin.getUserById(data.userId);
     if (error || !u.user?.email) throw new Error("Adresse e-mail introuvable pour ce membre.");
