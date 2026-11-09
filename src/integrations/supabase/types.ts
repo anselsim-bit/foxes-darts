@@ -121,6 +121,7 @@ export type Database = {
           event_date: string | null
           id: string
           media_url: string | null
+          organization_id: string | null
           title: string
         }
         Insert: {
@@ -129,6 +130,7 @@ export type Database = {
           event_date?: string | null
           id?: string
           media_url?: string | null
+          organization_id?: string | null
           title: string
         }
         Update: {
@@ -137,9 +139,18 @@ export type Database = {
           event_date?: string | null
           id?: string
           media_url?: string | null
+          organization_id?: string | null
           title?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "highlights_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -440,6 +451,7 @@ export type Database = {
           created_at: string
           id: string
           image_url: string
+          organization_id: string | null
           tournament_id: string | null
         }
         Insert: {
@@ -447,6 +459,7 @@ export type Database = {
           created_at?: string
           id?: string
           image_url: string
+          organization_id?: string | null
           tournament_id?: string | null
         }
         Update: {
@@ -454,15 +467,30 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string
+          organization_id?: string | null
           tournament_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "photos_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "photos_tournament_id_fkey"
             columns: ["tournament_id"]
             isOneToOne: false
             referencedRelation: "tournaments"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "photos_tournament_organization_fk"
+            columns: ["tournament_id", "organization_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id", "organization_id"]
           },
         ]
       }
@@ -532,23 +560,32 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_path: string | null
           created_at: string
           display_name: string | null
+          first_name: string | null
           id: string
+          last_name: string | null
           tournament_announcements: boolean
           tournaments_seen_at: string
         }
         Insert: {
+          avatar_path?: string | null
           created_at?: string
           display_name?: string | null
+          first_name?: string | null
           id: string
+          last_name?: string | null
           tournament_announcements?: boolean
           tournaments_seen_at?: string
         }
         Update: {
+          avatar_path?: string | null
           created_at?: string
           display_name?: string | null
+          first_name?: string | null
           id?: string
+          last_name?: string | null
           tournament_announcements?: boolean
           tournaments_seen_at?: string
         }
@@ -598,6 +635,7 @@ export type Database = {
           created_at: string
           id: string
           losses: number
+          organization_id: string | null
           played: number
           player_name: string
           points: number
@@ -609,6 +647,7 @@ export type Database = {
           created_at?: string
           id?: string
           losses?: number
+          organization_id?: string | null
           played?: number
           player_name: string
           points?: number
@@ -620,6 +659,7 @@ export type Database = {
           created_at?: string
           id?: string
           losses?: number
+          organization_id?: string | null
           played?: number
           player_name?: string
           points?: number
@@ -627,7 +667,15 @@ export type Database = {
           season?: string
           wins?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "standings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tournament_access_codes: {
         Row: {
@@ -799,6 +847,27 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "matches_team_a_same_tournament_fk"
+            columns: ["tournament_id", "team_a"]
+            isOneToOne: false
+            referencedRelation: "tournament_teams"
+            referencedColumns: ["tournament_id", "id"]
+          },
+          {
+            foreignKeyName: "matches_team_b_same_tournament_fk"
+            columns: ["tournament_id", "team_b"]
+            isOneToOne: false
+            referencedRelation: "tournament_teams"
+            referencedColumns: ["tournament_id", "id"]
+          },
+          {
+            foreignKeyName: "matches_winner_same_tournament_fk"
+            columns: ["tournament_id", "winner"]
+            isOneToOne: false
+            referencedRelation: "tournament_teams"
+            referencedColumns: ["tournament_id", "id"]
+          },
+          {
             foreignKeyName: "tournament_matches_team_a_fkey"
             columns: ["team_a"]
             isOneToOne: false
@@ -899,6 +968,7 @@ export type Database = {
           consolation_double_out: boolean | null
           consolation_start_score: number | null
           created_at: string
+          created_by: string | null
           description: string | null
           double_out: boolean
           end_time: string | null
@@ -911,6 +981,7 @@ export type Database = {
           image_url: string | null
           location: string | null
           max_participants: number | null
+          organization_id: string | null
           pool_count: number
           pool_double_limit: boolean
           start_score: number
@@ -925,6 +996,7 @@ export type Database = {
           consolation_double_out?: boolean | null
           consolation_start_score?: number | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           double_out?: boolean
           end_time?: string | null
@@ -937,6 +1009,7 @@ export type Database = {
           image_url?: string | null
           location?: string | null
           max_participants?: number | null
+          organization_id?: string | null
           pool_count?: number
           pool_double_limit?: boolean
           start_score?: number
@@ -951,6 +1024,7 @@ export type Database = {
           consolation_double_out?: boolean | null
           consolation_start_score?: number | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           double_out?: boolean
           end_time?: string | null
@@ -963,6 +1037,7 @@ export type Database = {
           image_url?: string | null
           location?: string | null
           max_participants?: number | null
+          organization_id?: string | null
           pool_count?: number
           pool_double_limit?: boolean
           start_score?: number
@@ -971,7 +1046,22 @@ export type Database = {
           team_size?: number
           title?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tournaments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournaments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -998,6 +1088,10 @@ export type Database = {
     Functions: {
       can_manage_organization: {
         Args: { _organization_id: string }
+        Returns: boolean
+      }
+      can_manage_tournament: {
+        Args: { _tournament_id: string }
         Returns: boolean
       }
       has_role: {
