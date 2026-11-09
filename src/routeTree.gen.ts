@@ -21,6 +21,7 @@ import { Route as AuthenticatedCreateOrganizationRouteImport } from './routes/_a
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedInvitationRouteImport } from './routes/_authenticated/invitation'
 import { Route as AuthenticatedMonEspaceRouteImport } from './routes/_authenticated/mon-espace'
+import { Route as OSlugRouteImport } from './routes/o.$slug'
 import { Route as TournoisIndexRouteImport } from './routes/tournois.index'
 import { Route as TournoisIdRouteImport } from './routes/tournois.$id'
 import { Route as TournoisIdJouerRouteImport } from './routes/tournois_.$id.jouer'
@@ -29,6 +30,7 @@ import { Route as ApiPublicHooksHelloassoSyncRouteImport } from './routes/api/pu
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
+import { Route as OSlugTournamentIdRouteImport } from './routes/o.$slug.tournament.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -90,6 +92,11 @@ const AuthenticatedMonEspaceRoute = AuthenticatedMonEspaceRouteImport.update({
   path: '/mon-espace',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const OSlugRoute = OSlugRouteImport.update({
+  id: '/o/$slug',
+  path: '/o/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TournoisIndexRoute = TournoisIndexRouteImport.update({
   id: '/tournois/',
   path: '/tournois/',
@@ -133,6 +140,11 @@ const LovableEmailTransactionalPreviewRoute =
     path: '/lovable/email/transactional/preview',
     getParentRoute: () => rootRouteImport,
   } as any)
+const OSlugTournamentIdRoute = OSlugTournamentIdRouteImport.update({
+  id: '/tournament/$id',
+  path: '/tournament/$id',
+  getParentRoute: () => OSlugRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -146,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/invitation': typeof AuthenticatedInvitationRoute
   '/mon-espace': typeof AuthenticatedMonEspaceRoute
+  '/o/$slug': typeof OSlugRouteWithChildren
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois/': typeof TournoisIndexRoute
   '/tournois/$id/jouer': typeof TournoisIdJouerRoute
@@ -154,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/o/$slug/tournament/$id': typeof OSlugTournamentIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -167,6 +181,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/invitation': typeof AuthenticatedInvitationRoute
   '/mon-espace': typeof AuthenticatedMonEspaceRoute
+  '/o/$slug': typeof OSlugRouteWithChildren
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois': typeof TournoisIndexRoute
   '/tournois/$id/jouer': typeof TournoisIdJouerRoute
@@ -175,6 +190,7 @@ export interface FileRoutesByTo {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/o/$slug/tournament/$id': typeof OSlugTournamentIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -190,6 +206,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/invitation': typeof AuthenticatedInvitationRoute
   '/_authenticated/mon-espace': typeof AuthenticatedMonEspaceRoute
+  '/o/$slug': typeof OSlugRouteWithChildren
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois/': typeof TournoisIndexRoute
   '/tournois_/$id/jouer': typeof TournoisIdJouerRoute
@@ -198,6 +215,7 @@ export interface FileRoutesById {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/o/$slug/tournament/$id': typeof OSlugTournamentIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -213,6 +231,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/invitation'
     | '/mon-espace'
+    | '/o/$slug'
     | '/tournois/$id'
     | '/tournois/'
     | '/tournois/$id/jouer'
@@ -221,6 +240,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
+    | '/o/$slug/tournament/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -234,6 +254,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/invitation'
     | '/mon-espace'
+    | '/o/$slug'
     | '/tournois/$id'
     | '/tournois'
     | '/tournois/$id/jouer'
@@ -242,6 +263,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
+    | '/o/$slug/tournament/$id'
   id:
     | '__root__'
     | '/'
@@ -256,6 +278,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/invitation'
     | '/_authenticated/mon-espace'
+    | '/o/$slug'
     | '/tournois/$id'
     | '/tournois/'
     | '/tournois_/$id/jouer'
@@ -264,6 +287,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
+    | '/o/$slug/tournament/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -274,6 +298,7 @@ export interface RootRouteChildren {
   CompteurRoute: typeof CompteurRoute
   GalerieRoute: typeof GalerieRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  OSlugRoute: typeof OSlugRouteWithChildren
   TournoisIdRoute: typeof TournoisIdRoute
   TournoisIndexRoute: typeof TournoisIndexRoute
   TournoisIdJouerRoute: typeof TournoisIdJouerRoute
@@ -369,6 +394,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMonEspaceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/o/$slug': {
+      id: '/o/$slug'
+      path: '/o/$slug'
+      fullPath: '/o/$slug'
+      preLoaderRoute: typeof OSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tournois/': {
       id: '/tournois/'
       path: '/tournois'
@@ -425,6 +457,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/o/$slug/tournament/$id': {
+      id: '/o/$slug/tournament/$id'
+      path: '/tournament/$id'
+      fullPath: '/o/$slug/tournament/$id'
+      preLoaderRoute: typeof OSlugTournamentIdRouteImport
+      parentRoute: typeof OSlugRoute
+    }
   }
 }
 
@@ -450,6 +489,16 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface OSlugRouteChildren {
+  OSlugTournamentIdRoute: typeof OSlugTournamentIdRoute
+}
+
+const OSlugRouteChildren: OSlugRouteChildren = {
+  OSlugTournamentIdRoute: OSlugTournamentIdRoute,
+}
+
+const OSlugRouteWithChildren = OSlugRoute._addFileChildren(OSlugRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -458,6 +507,7 @@ const rootRouteChildren: RootRouteChildren = {
   CompteurRoute: CompteurRoute,
   GalerieRoute: GalerieRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  OSlugRoute: OSlugRouteWithChildren,
   TournoisIdRoute: TournoisIdRoute,
   TournoisIndexRoute: TournoisIndexRoute,
   TournoisIdJouerRoute: TournoisIdJouerRoute,
