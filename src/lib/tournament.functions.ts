@@ -160,51 +160,18 @@ async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; sc
     if (legs && ((a < b) !== (legs.legsA > legs.legsB))) throw new Error("Le gagnant doit avoir remporté deux manches.");
     // Aux fléchettes, le vainqueur est celui qui a le moins de points restants (0).
     const winner = a < b ? m.team_a : m.team_b;
-    let save = supabaseAdmin.from("tournament_matches").update({ score_a: a, score_b: b, legs_a: legs?.legsA ?? null, legs_b: legs?.legsB ?? null, live_legs_a: legs?.legsA ?? 0, live_legs_b: legs?.legsB ?? 0, winner }).eq("id", m.id);
-    if (!manager) save = save.is("winner", null);
-    const { data: saved, error: saveError } = await save.select("id").maybeSingle();
-    if (saveError || !saved) throw new Error("Résultat déjà enregistré ou impossible à enregistrer.");
-    // Dès que le dernier match de poule est enregistré, le tableau final, la petite finale
-    // et la consolante sont générés automatiquement (sans action de l'admin).
-    if (m.stage === "pool") await generateFinalsIfPoolsDone(supabaseAdmin, m.tournament_id);
-    if (m.stage === "bracket" || m.stage === "consolation") {
-      const s = nextSlot(m.round, m.position);
-      const { data: next } = await supabaseAdmin
-        .from("tournament_matches")
-        .select("id")
-        .eq("tournament_id", m.tournament_id)
-        .eq("stage", m.stage)
-        .eq("round", s.round)
-        .eq("position", s.position)
-        .maybeSingle();
-      if (next) await supabaseAdmin.from("tournament_matches").update(s.side === "team_a" ? { team_a: winner } : { team_b: winner }).eq("id", next.id);
-      else if (m.stage === "bracket") await supabaseAdmin.from("tournaments").update({ status: "finished" }).eq("id", m.tournament_id);
-      // Petite finale : le perdant d'une demi-finale du tableau principal y prend place.
-      if (m.stage === "bracket") {
-        const { data: lastRound } = await supabaseAdmin
-          .from("tournament_matches")
-          .select("round")
-          .eq("tournament_id", m.tournament_id)
-          .eq("stage", "bracket")
-          .order("round", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (lastRound && m.round === lastRound.round - 1) {
-          const loser = winner === m.team_a ? m.team_b : m.team_a;
-          const { data: smallFinal } = await supabaseAdmin
-            .from("tournament_matches")
-            .select("id")
-            .eq("tournament_id", m.tournament_id)
-            .eq("stage", "small_final")
-            .maybeSingle();
-          if (smallFinal)
-            await supabaseAdmin
-              .from("tournament_matches")
-              .update(m.position % 2 === 0 ? { team_a: loser } : { team_b: loser })
-              .eq("id", smallFinal.id);
-        }
+    let finals: MatchDraft[] = [];
+    if (m.stage === "pool") {
+      const { data: settings } = await supabaseAdmin.from("tournaments").select("pool_count, consolation").eq("id", m.tournament_id).single();
+      const { data: snapshot } = await supabaseAdmin.from("tournament_matches").select("id,stage,pool_index,team_a,team_b,score_a,score_b,winner").eq("tournament_id", m.tournament_id);
+      const pool = (snapshot ?? []).filter(x => x.stage === "pool").map(x => x.id === m.id ? { ...x, score_a: a, score_b: b, winner } : x);
+      if (pool.length && pool.every(x => x.winner) && !(snapshot ?? []).some(x => x.stage !== "pool")) {
+        const standings = Array.from({ length: settings?.pool_count ?? 0 }, (_, i) => { const matches = pool.filter(x => x.pool_index === i); const ids = [...new Set(matches.flatMap(x => [x.team_a, x.team_b]).filter((id): id is string => !!id))]; return poolStandings(ids, matches); });
+        finals = buildPoolFinals(standings, settings?.consolation !== false);
       }
     }
+    const { error: commitError } = await supabaseAdmin.rpc("commit_tournament_result", { _actor: (context?.userId ?? null) as unknown as string, _match_id: m.id, _code: normalizeCode(data.code), _score_a: a, _score_b: b, _legs_a: (legs?.legsA ?? null) as unknown as number, _legs_b: (legs?.legsB ?? null) as unknown as number, _finals: finals as unknown as import("@/integrations/supabase/types").Json });
+    if (commitError) throw new Error("Résultat non enregistré : le tableau a changé ou une correction touche un match déjà commencé. Réessayez après actualisation.");
     return { ok: true };
 }
 
