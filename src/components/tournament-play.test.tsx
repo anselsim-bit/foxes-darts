@@ -5,6 +5,12 @@ import { TournamentPlay } from "./tournament-play";
 import { deviceCodeKey, deviceDraftKey } from "@/lib/tournament-device";
 import { listPlayableMatches, validateTournamentCode, reportTournamentMatch } from "@/lib/tournament.functions";
 
+const navigation = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+vi.mock("@tanstack/react-router", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@tanstack/react-router")>(),
+  useNavigate: () => navigation,
+}));
+
 vi.mock("@/lib/tournament.functions", () => ({
   listPlayableMatches: vi.fn(), validateTournamentCode: vi.fn(), rememberTournamentCode: vi.fn(), getMyTournamentCode: vi.fn(), reportTournamentMatch: vi.fn(), updateTournamentLiveLegs: vi.fn().mockResolvedValue({ ok: true }),
 }));
@@ -50,8 +56,9 @@ describe("Tournament device recovery", () => {
     vi.mocked(reportTournamentMatch).mockResolvedValue({ ok: true });
     fireEvent.click(screen.getByRole("button", { name: "Envoyer le résultat au tableau du tournoi" }));
     await waitFor(() => expect(reportTournamentMatch).toHaveBeenCalledWith({ data: { matchId: "match-1", scoreA: 0, scoreB: 301, code: "FOXES", legsA: 2, legsB: 1 } }));
-    expect(localStorage.getItem(deviceDraftKey("test"))).toBeNull();
-  });
+    await waitFor(() => expect(localStorage.getItem(deviceDraftKey("test"))).toBeNull(), { timeout: 5000 });
+    expect(navigation).toHaveBeenCalledWith({ to: "/tournois/$id", params: { id: "test" } });
+  }, 15000);
   it("remembers a guest code and restores 444 remaining with the third dart pending handover", async () => {
     await begin(); shoot(20); shoot(19); shoot(18);
     expect(localStorage.getItem(deviceCodeKey("test"))).toBe("FOXES");
@@ -99,7 +106,7 @@ describe("Tournament device recovery", () => {
     const report = await screen.findByRole("button", { name: "Envoyer le résultat au tableau du tournoi" });
     vi.mocked(reportTournamentMatch).mockResolvedValue({ ok: true } as Awaited<ReturnType<typeof reportTournamentMatch>>);
     fireEvent.click(report);
-    await waitFor(() => expect(localStorage.getItem(deviceDraftKey("test"))).toBeNull());
+    await waitFor(() => expect(localStorage.getItem(deviceDraftKey("test"))).toBeNull(), { timeout: 5000 });
     expect(reportTournamentMatch).toHaveBeenCalledWith({ data: { matchId: "match-1", scoreA: 0, scoreB: 301, code: "FOXES" } });
   });
 });
