@@ -5,3 +5,4 @@
 - Historical lists and HelloAsso use the persisted central organization; member administration targets organization_players, local role changes use an authenticated transactional RPC, and only platform admins may edit global statistics.
 - New media paths include the authorized organization UUID; SQL checks ownership and public signing filters paths, while legacy unprefixed media belongs only to the central organization.
 - Historical profile provenance is immutable to clients; future player affiliations come from verified registrations, not universal signup or name/email matching, to prevent cross-organization directory exposure.
+- Organization lifecycle, invitations, owner transfer and platform status changes use authenticated transactional SQL functions with hashed invitations, email binding and audit events; onboarding stays release-gated until cross-tenant validation passes.
