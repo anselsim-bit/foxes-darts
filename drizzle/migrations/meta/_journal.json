@@ -176,6 +176,13 @@
       "when": 1794245589666,
       "tag": "0024_attach_foxes_history_and_gate_tenants",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1794245630589,
+      "tag": "0025_tighten_organization_table_grants",
+      "breakpoints": true
     }
   ]
 }

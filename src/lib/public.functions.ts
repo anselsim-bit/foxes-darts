@@ -68,7 +68,7 @@ export const listPhotos = createServerFn({ method: "GET" }).handler(async () => 
   const supabase = publicClient();
   const { data, error } = await supabase
     .from("photos")
-    .select("id, image_url, caption, created_at, tournament_id, tournaments(title)")
+    .select("id, image_url, caption, created_at, tournament_id, tournaments!photos_tournament_id_fkey(title)")
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   const signed = await signImageUrls(

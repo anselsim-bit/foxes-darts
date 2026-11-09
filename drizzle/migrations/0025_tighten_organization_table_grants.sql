@@ -1,0 +1,4 @@
+REVOKE ALL ON public.organizations,public.platform_roles,public.organization_members,public.organization_settings,public.organization_invitations,public.tournament_manager_assignments,public.organization_players,public.notifications,public.organization_audit_events FROM anon,authenticated;
+GRANT SELECT ON public.organizations TO anon,authenticated;
+GRANT SELECT ON public.platform_roles,public.organization_members,public.organization_settings,public.tournament_manager_assignments,public.organization_players,public.notifications,public.organization_audit_events TO authenticated;
+GRANT ALL ON public.organizations,public.platform_roles,public.organization_members,public.organization_settings,public.organization_invitations,public.tournament_manager_assignments,public.organization_players,public.notifications,public.organization_audit_events TO service_role;
