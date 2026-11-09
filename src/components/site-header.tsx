@@ -111,7 +111,7 @@ export function SiteHeader() {
           {signedIn ? (
             <>
               <Link
-                to="/mon-espace"
+                to="/dashboard"
                 className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                 activeProps={{ className: "rounded-md px-3 py-2 text-sm font-semibold text-primary" }}
               >
@@ -176,7 +176,7 @@ export function SiteHeader() {
             {signedIn ? (
               <>
                 <Link
-                  to="/mon-espace"
+                  to="/dashboard"
                   onClick={() => setOpen(false)}
                   className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground"
                 >

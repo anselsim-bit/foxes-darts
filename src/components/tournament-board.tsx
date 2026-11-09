@@ -71,7 +71,7 @@ export function TournamentBoard({
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (user) {
-        const isAdm = (await amIAdmin()).admin;
+        const isAdm = (await amIAdmin({ data: { tournamentId } })).admin;
         setAdmin(isAdm);
         if (isAdm) {
           const r = await getTournamentCodeAdmin({ data: { tournamentId } });

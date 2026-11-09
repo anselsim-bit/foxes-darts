@@ -14,7 +14,7 @@ async function hashToken(token: string) {
 export const createOrganization = createServerFn({method:"POST"}).middleware([requireSupabaseAuth]).inputValidator((input:{name:string;description:string;settings:Record<string,string>})=>input).handler(async ({data,context})=>{
   const slug=organizationSlug(data.name);
   if (!slug) throw new Error("Nom d'organisation invalide.");
-  safeColor(data.settings.primary_color ?? "#e85d3a"); safeColor(data.settings.secondary_color ?? "#1a1a1a");
+  safeColor(data.settings["primary_color"] ?? "#e85d3a"); safeColor(data.settings["secondary_color"] ?? "#1a1a1a");
   let result=await context.supabase.rpc("create_organization_space",{_name:data.name,_slug:slug,_description:data.description,_settings:data.settings});
   let finalSlug=slug;
   if(result.error?.code==="23505") {finalSlug=`${slug}-${crypto.randomUUID().slice(0,8)}`;result=await context.supabase.rpc("create_organization_space",{_name:data.name,_slug:finalSlug,_description:data.description,_settings:data.settings});}
@@ -61,7 +61,7 @@ export const getOrganizationSpace = createServerFn({method:"GET"}).middleware([r
 export const saveOrganization = createServerFn({method:"POST"}).middleware([requireSupabaseAuth]).inputValidator((input:{id:string;name:string;description:string;settings:Record<string,string>})=>input).handler(async ({data,context})=>{
   await manage(context,data.id);
   if(data.name.trim().length<2) throw new Error("Nom trop court.");
-  safeColor(data.settings.primary_color);safeColor(data.settings.secondary_color);
+  safeColor(data.settings["primary_color"]);safeColor(data.settings["secondary_color"]);
   const {error}=await context.supabase.rpc("save_organization_settings",{_organization_id:data.id,_name:data.name,_description:data.description,_settings:data.settings});
   if(error) throw new Error("Impossible d'enregistrer les paramètres.");
   return {ok:true};
