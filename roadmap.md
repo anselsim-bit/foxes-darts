@@ -1,5 +1,10 @@
 # Foxes Darts — Tâches
 
+## Intégrations d’agents — 9 novembre 2026
+- [ ] Ajouter le serveur MCP protégé, le consentement et le retour après connexion.
+- [ ] Ajouter les outils de lecture du tableau de bord dans le navigateur.
+- [ ] Vérifier les permissions, extraire le catalogue et préciser la republication nécessaire.
+
 ## Évolution multi-organisations — cahier des charges du 9 novembre 2026
 - [x] Phase 1 : audit technique, inventaire réel et proposition de migration, sans changer le site ni ses données ; rapport dans docs/audit-multi-organisations.md.
 - [x] Phase 2, préparation : plan approuvé, contrôle du secret HelloAsso branché ; tests de reprise fiabilisés et 80/80 tests passent.
