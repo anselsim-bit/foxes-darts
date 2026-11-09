@@ -149,6 +149,8 @@ async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; sc
     assertResultWritable(m.winner, manager);
     if (!manager && !(await hasValidCode(m.tournament_id, data.code))) {
       if (!context) throw new Error("Code d'accès invalide ou tournoi inactif.");
+      const { data: playable } = await context.supabase.from("tournaments").select("status, organizations(status)").eq("id", m.tournament_id).maybeSingle();
+      if (playable?.status !== "started" || playable.organizations?.status !== "active") throw new Error("Tournoi inactif.");
       const { data: caps } = await context.supabase.from("tournament_teams").select("captain_id").in("id", [m.team_a, m.team_b]);
       if (!(caps ?? []).some((c) => c.captain_id === context.userId))
         throw new Error("Seul un administrateur, un joueur du match ou un code d'accès actif permet de saisir le résultat.");
