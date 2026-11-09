@@ -8,6 +8,7 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+- Agent access uses OAuth client-claimed tokens and caller-scoped read-only MCP tools; browser tools mount with their visible page and static-name telemetry, preventing cross-organization or consequential access.
 - Scoreboard member confirmation: members other than the signed-in recorder confirm with their password server-side, which yields an HMAC play token (GAME_TOKEN_SECRET) checked when saving a game — prevents falsifying other members' stats without exposing emails.
 - tournament_teams enforces capacity; shared brackets/previews give byes to ranked pool winners and cross pool opponents.
 - Failed preloads are suppressed only during a reload; otherwise preserve the original rejection for error boundaries, never return an undefined module.

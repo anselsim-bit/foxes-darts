@@ -15,7 +15,9 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ClassementsRouteImport } from './routes/classements'
 import { Route as CompteurRouteImport } from './routes/compteur'
 import { Route as GalerieRouteImport } from './routes/galerie'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedCreateOrganizationRouteImport } from './routes/_authenticated/create-organization'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -24,6 +26,7 @@ import { Route as AuthenticatedMonEspaceRouteImport } from './routes/_authentica
 import { Route as OSlugRouteImport } from './routes/o.$slug'
 import { Route as TournoisIndexRouteImport } from './routes/tournois.index'
 import { Route as TournoisIdRouteImport } from './routes/tournois.$id'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as TournoisIdJouerRouteImport } from './routes/tournois_.$id.jouer'
 import { Route as AuthenticatedDashboardOrganizationsSlugRouteImport } from './routes/_authenticated/dashboard_.organizations.$slug'
 import { Route as ApiPublicHooksHelloassoSyncRouteImport } from './routes/api/public/hooks/helloasso-sync'
@@ -61,11 +64,22 @@ const GalerieRoute = GalerieRouteImport.update({
   path: '/galerie',
   getParentRoute: () => rootRouteImport,
 } as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -105,6 +119,11 @@ const TournoisIndexRoute = TournoisIndexRouteImport.update({
 const TournoisIdRoute = TournoisIdRouteImport.update({
   id: '/tournois/$id',
   path: '/tournois/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TournoisIdJouerRoute = TournoisIdJouerRouteImport.update({
@@ -152,7 +171,9 @@ export interface FileRoutesByFullPath {
   '/classements': typeof ClassementsRoute
   '/compteur': typeof CompteurRoute
   '/galerie': typeof GalerieRoute
+  '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/create-organization': typeof AuthenticatedCreateOrganizationRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -161,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/o/$slug': typeof OSlugRouteWithChildren
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois/': typeof TournoisIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/tournois/$id/jouer': typeof TournoisIdJouerRoute
   '/dashboard/organizations/$slug': typeof AuthenticatedDashboardOrganizationsSlugRoute
   '/api/public/hooks/helloasso-sync': typeof ApiPublicHooksHelloassoSyncRoute
@@ -175,7 +197,9 @@ export interface FileRoutesByTo {
   '/classements': typeof ClassementsRoute
   '/compteur': typeof CompteurRoute
   '/galerie': typeof GalerieRoute
+  '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/create-organization': typeof AuthenticatedCreateOrganizationRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -184,6 +208,7 @@ export interface FileRoutesByTo {
   '/o/$slug': typeof OSlugRouteWithChildren
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois': typeof TournoisIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/tournois/$id/jouer': typeof TournoisIdJouerRoute
   '/dashboard/organizations/$slug': typeof AuthenticatedDashboardOrganizationsSlugRoute
   '/api/public/hooks/helloasso-sync': typeof ApiPublicHooksHelloassoSyncRoute
@@ -200,7 +225,9 @@ export interface FileRoutesById {
   '/classements': typeof ClassementsRoute
   '/compteur': typeof CompteurRoute
   '/galerie': typeof GalerieRoute
+  '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/create-organization': typeof AuthenticatedCreateOrganizationRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -209,6 +236,7 @@ export interface FileRoutesById {
   '/o/$slug': typeof OSlugRouteWithChildren
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois/': typeof TournoisIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/tournois_/$id/jouer': typeof TournoisIdJouerRoute
   '/_authenticated/dashboard_/organizations/$slug': typeof AuthenticatedDashboardOrganizationsSlugRoute
   '/api/public/hooks/helloasso-sync': typeof ApiPublicHooksHelloassoSyncRoute
@@ -225,7 +253,9 @@ export interface FileRouteTypes {
     | '/classements'
     | '/compteur'
     | '/galerie'
+    | '/mcp'
     | '/reset-password'
+    | '/.well-known/oauth-protected-resource'
     | '/admin'
     | '/create-organization'
     | '/dashboard'
@@ -234,6 +264,7 @@ export interface FileRouteTypes {
     | '/o/$slug'
     | '/tournois/$id'
     | '/tournois/'
+    | '/.lovable/oauth/consent'
     | '/tournois/$id/jouer'
     | '/dashboard/organizations/$slug'
     | '/api/public/hooks/helloasso-sync'
@@ -248,7 +279,9 @@ export interface FileRouteTypes {
     | '/classements'
     | '/compteur'
     | '/galerie'
+    | '/mcp'
     | '/reset-password'
+    | '/.well-known/oauth-protected-resource'
     | '/admin'
     | '/create-organization'
     | '/dashboard'
@@ -257,6 +290,7 @@ export interface FileRouteTypes {
     | '/o/$slug'
     | '/tournois/$id'
     | '/tournois'
+    | '/.lovable/oauth/consent'
     | '/tournois/$id/jouer'
     | '/dashboard/organizations/$slug'
     | '/api/public/hooks/helloasso-sync'
@@ -272,7 +306,9 @@ export interface FileRouteTypes {
     | '/classements'
     | '/compteur'
     | '/galerie'
+    | '/mcp'
     | '/reset-password'
+    | '/.well-known/oauth-protected-resource'
     | '/_authenticated/admin'
     | '/_authenticated/create-organization'
     | '/_authenticated/dashboard'
@@ -281,6 +317,7 @@ export interface FileRouteTypes {
     | '/o/$slug'
     | '/tournois/$id'
     | '/tournois/'
+    | '/.lovable/oauth/consent'
     | '/tournois_/$id/jouer'
     | '/_authenticated/dashboard_/organizations/$slug'
     | '/api/public/hooks/helloasso-sync'
@@ -297,10 +334,13 @@ export interface RootRouteChildren {
   ClassementsRoute: typeof ClassementsRoute
   CompteurRoute: typeof CompteurRoute
   GalerieRoute: typeof GalerieRoute
+  McpRoute: typeof McpRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   OSlugRoute: typeof OSlugRouteWithChildren
   TournoisIdRoute: typeof TournoisIdRoute
   TournoisIndexRoute: typeof TournoisIndexRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   TournoisIdJouerRoute: typeof TournoisIdJouerRoute
   ApiPublicHooksHelloassoSyncRoute: typeof ApiPublicHooksHelloassoSyncRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -352,11 +392,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GalerieRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -413,6 +467,13 @@ declare module '@tanstack/react-router' {
       path: '/tournois/$id'
       fullPath: '/tournois/$id'
       preLoaderRoute: typeof TournoisIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tournois_/$id/jouer': {
@@ -506,10 +567,14 @@ const rootRouteChildren: RootRouteChildren = {
   ClassementsRoute: ClassementsRoute,
   CompteurRoute: CompteurRoute,
   GalerieRoute: GalerieRoute,
+  McpRoute: McpRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   OSlugRoute: OSlugRouteWithChildren,
   TournoisIdRoute: TournoisIdRoute,
   TournoisIndexRoute: TournoisIndexRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   TournoisIdJouerRoute: TournoisIdJouerRoute,
   ApiPublicHooksHelloassoSyncRoute: ApiPublicHooksHelloassoSyncRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
