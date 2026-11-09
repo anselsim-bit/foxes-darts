@@ -16,8 +16,8 @@
 - [ ] Création d’organisation, propriétaire, invitations et collaborateurs avec expiration, refus, renvoi et transfert protégé.
 - [ ] Tableau de bord personnel, sélecteur et gestion locale avec tournois, joueurs, statistiques, personnalisation et paramètres.
 - [ ] Profil universel complet, historique et notifications privées ; doublons soumis à vérification, jamais fusionnés automatiquement.
-- [ ] Pages publiques par organisation et tournoi, anciennes URL et accès QR conservés.
-- [ ] Administration centrale : organisations, utilisateurs, suspension/réactivation et journal des actions.
+- [x] Pages publiques par organisation et tournoi ajoutées ; anciennes URL et accès QR conservés. Personnalisation publique complète reste dans la validation.
+- [x] Administration centrale : listes paginées organisations/utilisateurs, suspension/réactivation et journal des actions ; gestion avancée des comptes reste à compléter.
 - [ ] Tests avec deux organisations et plusieurs identités, parcours réels et documentation finale ; ouvrir uniquement après contrôle.
 
 ## Compteurs et formats par phase
@@ -96,3 +96,7 @@
 - [x] Le bouton « Importer maintenant » rafraîchit quand même un tournoi complet, à la demande de l'admin.
 - [x] Corriger l'initiale ajoutée à tort à tous les prénoms : une équipe compte une seule fois dans la détection d'homonymes.
 - [x] Tester les deux cas et vérifier les noms sur les tournois réels.
+
+## État de validation de la livraison complète
+- [x] Création d’un espace et tournoi via les formulaires, isolation avec le second compte, lancement et résultat 2–1 vérifiés ; données temporaires retirées et empreinte des 39 matchs Foxes inchangée.
+- [ ] Compléments détaillés dans docs/multi-organisations-livraison.md : invitation bout en bout, profil/avatar, édition locale complète, publication privée, statistiques atomiques, limites et personnalisation publique ; ouverture toujours verrouillée.
