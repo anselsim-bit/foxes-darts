@@ -3,12 +3,13 @@ import { useState } from "react";
 import { Target } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { oauthReturnPath } from "@/lib/oauth-return-path";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>): { redirect?: string } => {
     const r = search["redirect"];
-    return typeof r === "string" && r.startsWith("/") && !r.startsWith("//")
-      ? { redirect: r }
+    return typeof r === "string"
+      ? { redirect: oauthReturnPath(r) }
       : {};
   },
   head: () => ({
@@ -55,7 +56,7 @@ function AuthPage() {
           password,
           options: {
             data: { display_name: displayName },
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: new URL(redirectTo ?? "/dashboard", window.location.origin).href,
           },
         });
         if (error) throw error;
