@@ -49,7 +49,7 @@ export const startTournament = createServerFn({ method: "POST" })
     if (data.accessCode.length < 4) throw new Error("Le code d'accès doit contenir au moins 4 caractères.");
     const { data: t, error } = await context.supabase
       .from("tournaments")
-      .select("status, max_participants, pool_count")
+      .select("status, max_participants, pool_count, revision")
       .eq("id", data.id)
       .single();
     if (error) throw new Error(error.message);
@@ -66,13 +66,9 @@ export const startTournament = createServerFn({ method: "POST" })
     } else {
       drafts = buildBracket(ids);
     }
-    const { error: e2 } = await context.supabase.from("tournament_matches").insert(drafts.map(toRow(data.id)));
-    if (e2) throw new Error(e2.message);
-    await context.supabase.from("tournaments").update({ status: "started" }).eq("id", data.id);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin
-      .from("tournament_settings_codes")
-      .upsert({ tournament_id: data.id, code: data.accessCode, updated_at: new Date().toISOString() });
+    const { error: commitError } = await supabaseAdmin.rpc("commit_tournament_start", { _actor: context.userId, _tournament_id: data.id, _revision: t.revision, _team_ids: ids, _matches: drafts as unknown as import("@/integrations/supabase/types").Json, _code: data.accessCode });
+    if (commitError) throw new Error("Le tournoi a changé ou a déjà commencé. Rechargez son tableau.");
     return { ok: true };
   });
 
