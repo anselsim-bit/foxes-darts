@@ -1,0 +1,3 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { OrganizationManager } from "@/components/organization-manager";
+export const Route=createFileRoute('/_authenticated/dashboard_/organizations/$slug')({head:()=>({meta:[{title:"Gestion de l’organisation — Foxes Darts"},{name:"description",content:"Tournois, collaborateurs et paramètres de votre organisation."},{property:"og:title",content:"Gestion de l’organisation — Foxes Darts"},{property:"og:description",content:"Tournois, collaborateurs et paramètres de votre organisation."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary"}]}),component:()=>{const {slug}=Route.useParams();return <OrganizationManager slug={slug}/>}});
