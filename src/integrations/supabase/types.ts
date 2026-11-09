@@ -338,17 +338,26 @@ export type Database = {
       }
       organization_players: {
         Row: {
+          category: string | null
           created_at: string
+          membership_status: string | null
+          notes: string | null
           organization_id: string
           user_id: string
         }
         Insert: {
+          category?: string | null
           created_at?: string
+          membership_status?: string | null
+          notes?: string | null
           organization_id: string
           user_id: string
         }
         Update: {
+          category?: string | null
           created_at?: string
+          membership_status?: string | null
+          notes?: string | null
           organization_id?: string
           user_id?: string
         }
@@ -371,33 +380,54 @@ export type Database = {
       }
       organization_settings: {
         Row: {
+          address: string | null
+          city: string | null
           contact_email: string | null
+          cover_path: string | null
           location: string | null
           logo_path: string | null
           organization_id: string
           organization_type: string | null
+          phone: string | null
+          postal_code: string | null
           primary_color: string | null
+          responsible_name: string | null
           secondary_color: string | null
+          social_links: Json
           updated_at: string
         }
         Insert: {
+          address?: string | null
+          city?: string | null
           contact_email?: string | null
+          cover_path?: string | null
           location?: string | null
           logo_path?: string | null
           organization_id: string
           organization_type?: string | null
+          phone?: string | null
+          postal_code?: string | null
           primary_color?: string | null
+          responsible_name?: string | null
           secondary_color?: string | null
+          social_links?: Json
           updated_at?: string
         }
         Update: {
+          address?: string | null
+          city?: string | null
           contact_email?: string | null
+          cover_path?: string | null
           location?: string | null
           logo_path?: string | null
           organization_id?: string
           organization_type?: string | null
+          phone?: string | null
+          postal_code?: string | null
           primary_color?: string | null
+          responsible_name?: string | null
           secondary_color?: string | null
+          social_links?: Json
           updated_at?: string
         }
         Relationships: [
@@ -414,26 +444,32 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          description: string | null
           id: string
           name: string
           slug: string
           status: string
+          updated_at: string
         }
         Insert: {
           created_at?: string
           created_by?: string | null
+          description?: string | null
           id?: string
           name: string
           slug: string
           status?: string
+          updated_at?: string
         }
         Update: {
           created_at?: string
           created_by?: string | null
+          description?: string | null
           id?: string
           name?: string
           slug?: string
           status?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -1105,6 +1141,28 @@ export type Database = {
         Args: { _tournament_id: string }
         Returns: boolean
       }
+      change_organization_collaborator: {
+        Args: { _organization_id: string; _role: string; _user_id: string }
+        Returns: undefined
+      }
+      create_organization_invitation: {
+        Args: {
+          _email: string
+          _organization_id: string
+          _role: string
+          _token_hash: string
+        }
+        Returns: string
+      }
+      create_organization_space: {
+        Args: {
+          _description: string
+          _name: string
+          _settings: Json
+          _slug: string
+        }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1126,6 +1184,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      respond_organization_invitation: {
+        Args: { _accept: boolean; _token_hash: string }
+        Returns: string
+      }
       set_central_member_admin: {
         Args: { _admin: boolean; _user_id: string }
         Returns: undefined
@@ -1137,6 +1199,10 @@ export type Database = {
       tournament_is_public: {
         Args: { _tournament_id: string }
         Returns: boolean
+      }
+      transfer_organization_ownership: {
+        Args: { _organization_id: string; _user_id: string }
+        Returns: undefined
       }
     }
     Enums: {
