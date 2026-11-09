@@ -1171,6 +1171,19 @@ export type Database = {
         Args: { _organization_id: string; _role: string; _user_id: string }
         Returns: undefined
       }
+      commit_tournament_result: {
+        Args: {
+          _actor: string
+          _code: string
+          _finals: Json
+          _legs_a: number
+          _legs_b: number
+          _match_id: string
+          _score_a: number
+          _score_b: number
+        }
+        Returns: undefined
+      }
       commit_tournament_start: {
         Args: {
           _actor: string
