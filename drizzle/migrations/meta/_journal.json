@@ -197,6 +197,13 @@
       "when": 1794246456811,
       "tag": "0027_scope_members_and_private_media",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1794246518851,
+      "tag": "0028_protect_global_player_statistics_reads",
+      "breakpoints": true
     }
   ]
 }
