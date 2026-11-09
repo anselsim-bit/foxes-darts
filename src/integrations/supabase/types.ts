@@ -1163,6 +1163,10 @@ export type Database = {
         }
         Returns: string
       }
+      get_public_organization_settings: {
+        Args: { _organization_id: string }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1180,6 +1184,7 @@ export type Database = {
         Args: { _organization_id: string }
         Returns: boolean
       }
+      platform_counts: { Args: never; Returns: Json }
       profile_readable_by_manager: {
         Args: { _user_id: string }
         Returns: boolean
@@ -1188,8 +1193,21 @@ export type Database = {
         Args: { _accept: boolean; _token_hash: string }
         Returns: string
       }
+      save_organization_settings: {
+        Args: {
+          _description: string
+          _name: string
+          _organization_id: string
+          _settings: Json
+        }
+        Returns: undefined
+      }
       set_central_member_admin: {
         Args: { _admin: boolean; _user_id: string }
+        Returns: undefined
+      }
+      set_organization_status: {
+        Args: { _organization_id: string; _status: string }
         Returns: undefined
       }
       tournament_accepts_registration: {

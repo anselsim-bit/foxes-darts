@@ -218,6 +218,13 @@
       "when": 1794247402758,
       "tag": "0030_organization_lifecycle_and_collaboration",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1794247492505,
+      "tag": "0031_organization_settings_and_platform_controls",
+      "breakpoints": true
     }
   ]
 }
