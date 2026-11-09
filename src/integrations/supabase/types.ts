@@ -530,6 +530,21 @@ export type Database = {
           },
         ]
       }
+      platform_release_flags: {
+        Row: {
+          enabled: boolean
+          name: string
+        }
+        Insert: {
+          enabled?: boolean
+          name: string
+        }
+        Update: {
+          enabled?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
       platform_roles: {
         Row: {
           created_at: string

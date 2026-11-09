@@ -225,6 +225,13 @@
       "when": 1794247492505,
       "tag": "0031_organization_settings_and_platform_controls",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1794247559292,
+      "tag": "0032_guard_organization_activation_during_validation",
+      "breakpoints": true
     }
   ]
 }
