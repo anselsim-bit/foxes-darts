@@ -1,0 +1,2 @@
+ALTER POLICY "Anyone can read player stats" ON public.player_stats USING(auth.uid()=user_id OR (auth.uid() IS NOT NULL AND public.profile_readable_by_manager(user_id)));
+COMMENT ON TABLE public.player_stats IS 'Global player aggregates: private to the player and authorized organization/platform management; organization-specific aggregates must not be inferred from free-play totals.';

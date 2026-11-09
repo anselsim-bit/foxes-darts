@@ -31,3 +31,13 @@ export async function requireTeamManager(context: OrganizationContext, teamId: s
   if (error || !data) throw new Error("Équipe introuvable.");
   await requireTournamentManager(context, data.tournament_id);
 }
+
+export async function requireOrganizationPlayer(context: OrganizationContext, organizationId: string, userId: string) {
+  const { data, error } = await context.supabase.from("organization_players").select("user_id").eq("organization_id", organizationId).eq("user_id", userId).maybeSingle();
+  if (error || !data) throw new Error("Ce joueur n'appartient pas à cette organisation.");
+}
+
+export async function requirePlatformAdmin(context: OrganizationContext) {
+  const { data, error } = await context.supabase.rpc("is_platform_admin");
+  if (error || data !== true) throw new Error("La modification des statistiques globales est réservée à l'administration centrale.");
+}

@@ -2,4 +2,6 @@
 - Multi-organization onboarding remains database-gated until legacy privileged server, storage and public-list paths are scoped; foundation tables permit client reads only and preserve global player identities/statistics.
 - Photo-to-tournament embeds name the historical foreign key explicitly because the additional organization-integrity relationship makes unqualified embeds ambiguous.
 - Tournament privileged actions require authenticated tournament-scoped checks; only verified managers may correct completed results, and conditional guest writes cannot overwrite a concurrent report.
-- Historical lists and HelloAsso use the persisted central organization; local role changes also update organization memberships while legacy member/global-statistics access remains gated until its separate cutover.
+- Historical lists and HelloAsso use the persisted central organization; member administration targets organization_players, local role changes use an authenticated transactional RPC, and only platform admins may edit global statistics.
+- New media paths include the authorized organization UUID; SQL checks ownership and public signing filters paths, while legacy unprefixed media belongs only to the central organization.
+- Historical profile provenance is immutable to clients; future player affiliations come from verified registrations, not universal signup or name/email matching, to prevent cross-organization directory exposure.

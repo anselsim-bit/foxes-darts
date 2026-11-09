@@ -190,6 +190,27 @@
       "when": 1794245895398,
       "tag": "0026_scope_tournament_and_content_permissions",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1794246456811,
+      "tag": "0027_scope_members_and_private_media",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1794246518851,
+      "tag": "0028_protect_global_player_statistics_reads",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1794246751593,
+      "tag": "0029_close_deprecated_access_code_permissions",
+      "breakpoints": true
     }
   ]
 }
