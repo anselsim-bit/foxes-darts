@@ -566,6 +566,7 @@ export type Database = {
           first_name: string | null
           id: string
           last_name: string | null
+          legacy_organization_id: string | null
           tournament_announcements: boolean
           tournaments_seen_at: string
         }
@@ -576,6 +577,7 @@ export type Database = {
           first_name?: string | null
           id: string
           last_name?: string | null
+          legacy_organization_id?: string | null
           tournament_announcements?: boolean
           tournaments_seen_at?: string
         }
@@ -586,10 +588,19 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          legacy_organization_id?: string | null
           tournament_announcements?: boolean
           tournaments_seen_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_legacy_organization_id_fkey"
+            columns: ["legacy_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       registrations: {
         Row: {
@@ -1106,9 +1117,18 @@ export type Database = {
         Returns: boolean
       }
       is_platform_admin: { Args: never; Returns: boolean }
+      media_organization_id: { Args: { _path: string }; Returns: string }
       organization_is_public: {
         Args: { _organization_id: string }
         Returns: boolean
+      }
+      profile_readable_by_manager: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      set_central_member_admin: {
+        Args: { _admin: boolean; _user_id: string }
+        Returns: undefined
       }
       tournament_accepts_registration: {
         Args: { _tournament_id: string }
