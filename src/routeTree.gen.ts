@@ -15,7 +15,9 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ClassementsRouteImport } from './routes/classements'
 import { Route as CompteurRouteImport } from './routes/compteur'
 import { Route as GalerieRouteImport } from './routes/galerie'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedCreateOrganizationRouteImport } from './routes/_authenticated/create-organization'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -62,11 +64,22 @@ const GalerieRoute = GalerieRouteImport.update({
   path: '/galerie',
   getParentRoute: () => rootRouteImport,
 } as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -158,7 +171,9 @@ export interface FileRoutesByFullPath {
   '/classements': typeof ClassementsRoute
   '/compteur': typeof CompteurRoute
   '/galerie': typeof GalerieRoute
+  '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/create-organization': typeof AuthenticatedCreateOrganizationRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -182,7 +197,9 @@ export interface FileRoutesByTo {
   '/classements': typeof ClassementsRoute
   '/compteur': typeof CompteurRoute
   '/galerie': typeof GalerieRoute
+  '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/create-organization': typeof AuthenticatedCreateOrganizationRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -208,7 +225,9 @@ export interface FileRoutesById {
   '/classements': typeof ClassementsRoute
   '/compteur': typeof CompteurRoute
   '/galerie': typeof GalerieRoute
+  '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/create-organization': typeof AuthenticatedCreateOrganizationRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -234,7 +253,9 @@ export interface FileRouteTypes {
     | '/classements'
     | '/compteur'
     | '/galerie'
+    | '/mcp'
     | '/reset-password'
+    | '/.well-known/oauth-protected-resource'
     | '/admin'
     | '/create-organization'
     | '/dashboard'
@@ -258,7 +279,9 @@ export interface FileRouteTypes {
     | '/classements'
     | '/compteur'
     | '/galerie'
+    | '/mcp'
     | '/reset-password'
+    | '/.well-known/oauth-protected-resource'
     | '/admin'
     | '/create-organization'
     | '/dashboard'
@@ -283,7 +306,9 @@ export interface FileRouteTypes {
     | '/classements'
     | '/compteur'
     | '/galerie'
+    | '/mcp'
     | '/reset-password'
+    | '/.well-known/oauth-protected-resource'
     | '/_authenticated/admin'
     | '/_authenticated/create-organization'
     | '/_authenticated/dashboard'
@@ -309,7 +334,9 @@ export interface RootRouteChildren {
   ClassementsRoute: typeof ClassementsRoute
   CompteurRoute: typeof CompteurRoute
   GalerieRoute: typeof GalerieRoute
+  McpRoute: typeof McpRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   OSlugRoute: typeof OSlugRouteWithChildren
   TournoisIdRoute: typeof TournoisIdRoute
   TournoisIndexRoute: typeof TournoisIndexRoute
@@ -365,11 +392,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GalerieRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -526,7 +567,10 @@ const rootRouteChildren: RootRouteChildren = {
   ClassementsRoute: ClassementsRoute,
   CompteurRoute: CompteurRoute,
   GalerieRoute: GalerieRoute,
+  McpRoute: McpRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   OSlugRoute: OSlugRouteWithChildren,
   TournoisIdRoute: TournoisIdRoute,
   TournoisIndexRoute: TournoisIndexRoute,
