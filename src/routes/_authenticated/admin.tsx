@@ -73,7 +73,7 @@ const btnPrimary =
 const btnDanger =
   "inline-flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:border-destructive hover:text-destructive";
 
-function AdminPage() {
+export function LegacyClubAdmin() {
   const { data: roles, isLoading } = useQuery({
     queryKey: ["my-roles"],
     queryFn: () => getMyRoles(),
