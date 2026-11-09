@@ -5,6 +5,8 @@
 - [x] Phase 2, préparation : plan approuvé, contrôle du secret HelloAsso branché ; tests de reprise fiabilisés et 80/80 tests passent.
 - [x] Phase 2, fondations : rattachement additif à Foxes, rôles initiaux et contraintes ; sauvegarde du 9 novembre 2026 à 00:28:16 UTC signalée et export confirmé. Empreintes historiques identiques, accès admin et refus d’élévation vérifiés, 88/88 tests.
 - [ ] Phase 2, bascule : limiter tous les chemins admin/HelloAsso/Storage/listes publiques à leur organisation avant ouverture d’un deuxième espace ; création et réaffectation restent volontairement verrouillées dans la base.
+  - [x] Étape demandée le 9 novembre : accès et corrections des tournois limités à l’organisation, politiques tournois/contenus basculées, listes historiques et import HelloAsso réservés à Foxes ; 98 tests passent, 16 équipes et 39 résultats inchangés, admin/inscrits/consolante vérifiés.
+  - [ ] Ensuite : annuaire et droits locaux, fichiers, transactions complètes et isolation entre deux organisations avant déverrouillage.
 - [ ] Phases 3–7 : organisations, collaborateurs, espaces organisateurs, joueurs universels, pages publiques et administration centrale — phases suivantes, après la bascule sécurisée ; non ouvertes pendant cette étape.
 - [ ] Phase 8 : validation isolation, sécurité, historique, anciennes URL et performances — attend les phases précédentes.
 

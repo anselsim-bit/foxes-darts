@@ -43,13 +43,13 @@ beforeEach(() => {
 
 describe("Tournament guest access", () => {
   it("refuses provisional leg writes with an obsolete code", async () => {
-    mocks.publicRows.push({ id: "match", tournament_id: "test", stage: "consolation", team_a: "a", team_b: "b", winner: null }, { status: "started" });
+    mocks.publicRows.push({ id: "match", tournament_id: "test", stage: "consolation", team_a: "a", team_b: "b", winner: null }, { status: "started", organizations: { status: "active" } });
     mocks.adminRows.push({ code: "NEWCODE" });
     await expect(updateTournamentLiveLegs({ data: { matchId: "match", code: "OLD", legsA: 1, legsB: 0 } })).rejects.toThrow("Code d'accès invalide");
     expect(mocks.adminFrom.mock.calls.map(([table]) => table)).toEqual(["tournament_settings_codes"]);
   });
   it("writes provisional legs without declaring a winner or advancing teams", async () => {
-    mocks.publicRows.push({ id: "match", tournament_id: "test", stage: "bracket", team_a: "a", team_b: "b", winner: null }, { status: "started" });
+    mocks.publicRows.push({ id: "match", tournament_id: "test", stage: "bracket", team_a: "a", team_b: "b", winner: null }, { status: "started", organizations: { status: "active" } });
     mocks.adminRows.push({ code: "FOX123" });
     const update = vi.fn(() => ({ eq: () => ({ is: async () => ({ error: null }) }) }));
     mocks.adminFrom.mockImplementation((table: string) => table === "tournament_matches" ? { update } : query(mocks.adminRows));
@@ -58,19 +58,29 @@ describe("Tournament guest access", () => {
     expect(mocks.adminFrom.mock.calls.map(([table]) => table)).toEqual(["tournament_settings_codes", "tournament_matches"]);
   });
   it("does not write or advance a final with only one winning leg", async () => {
-    mocks.publicRows.push({ id: "match", tournament_id: "test", stage: "bracket", team_a: "a", team_b: "b" }, { status: "started" });
+    mocks.publicRows.push({ id: "match", tournament_id: "test", stage: "bracket", team_a: "a", team_b: "b" }, { status: "started", organizations: { status: "active" } });
     mocks.adminRows.push({ code: "FOX123" });
     await expect(reportTournamentMatch({ data: { matchId: "match", scoreA: 0, scoreB: 42, legsA: 1, legsB: 0, code: "FOX123" } })).rejects.toThrow("deux manches gagnantes");
     expect(mocks.adminFrom.mock.calls.map(([table]) => table)).toEqual(["tournament_settings_codes"]);
   });
+  it("rejects a valid code for a suspended organization", async () => {
+    mocks.publicRows.push({ status: "started", organizations: { status: "suspended" } });
+    await expect(validateTournamentCode({ data: { tournamentId: "test", code: "FOX123" } })).resolves.toMatchObject({ valid: false });
+    expect(mocks.adminFrom).not.toHaveBeenCalled();
+  });
+  it("rejects guest correction of a completed match before checking its code", async () => {
+    mocks.publicRows.push({ id: "match", tournament_id: "test", team_a: "a", team_b: "b", winner: "a" });
+    await expect(reportTournamentMatch({ data: { matchId: "match", scoreA: 42, scoreB: 0, code: "FOX123" } })).rejects.toThrow("corriger");
+    expect(mocks.adminFrom).not.toHaveBeenCalled();
+  });
   it("accepts the current tournament code without a member session", async () => {
-    mocks.publicRows.push({ status: "started" });
+    mocks.publicRows.push({ status: "started", organizations: { status: "active" } });
     mocks.adminRows.push({ code: "FOX123" });
     await expect(validateTournamentCode({ data: { tournamentId: "test", code: " fox123 " } })).resolves.toMatchObject({ valid: true });
   });
 
   it("rejects an incorrect code without granting match access", async () => {
-    mocks.publicRows.push({ status: "started" });
+    mocks.publicRows.push({ status: "started", organizations: { status: "active" } });
     mocks.adminRows.push({ code: "FOX123" });
     await expect(listPlayableMatches({ data: { tournamentId: "test", code: "WRONG" } })).rejects.toThrow("Code d'accès invalide");
   });
@@ -82,7 +92,7 @@ describe("Tournament guest access", () => {
   });
 
   it("rechecks the current code before an anonymous result write", async () => {
-    mocks.publicRows.push({ id: "match", tournament_id: "test", team_a: "a", team_b: "b" }, { status: "started" });
+    mocks.publicRows.push({ id: "match", tournament_id: "test", team_a: "a", team_b: "b" }, { status: "started", organizations: { status: "active" } });
     mocks.adminRows.push({ code: "NEWCODE" });
     await expect(reportTournamentMatch({ data: { matchId: "match", scoreA: 0, scoreB: 42, code: "FOX123" } })).rejects.toThrow("Code d'accès invalide");
     expect(mocks.adminFrom.mock.calls.map(([table]) => table)).toEqual(["tournament_settings_codes"]);
