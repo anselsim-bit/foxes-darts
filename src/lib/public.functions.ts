@@ -2,6 +2,7 @@ import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { centralOrganizationId } from "@/lib/organization-access";
 
 export function publicClient() {
   const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
@@ -51,6 +52,7 @@ export const listTournaments = createServerFn({ method: "GET" }).handler(async (
   const { data, error } = await supabase
     .from("tournaments")
     .select("id, title, event_date, start_time, end_time, format, max_participants, team_size, pool_count, start_score, double_out, final_start_score, final_double_out, consolation_start_score, consolation_double_out, pool_double_limit, consolation_double_limit, consolation, status, location, description, helloasso_url, image_url, tournament_teams(count)")
+    .eq("organization_id", await centralOrganizationId(supabase))
     .order("event_date", { ascending: false });
   if (error) throw new Error(error.message);
   const signed = await signImageUrls(
@@ -69,6 +71,7 @@ export const listPhotos = createServerFn({ method: "GET" }).handler(async () => 
   const { data, error } = await supabase
     .from("photos")
     .select("id, image_url, caption, created_at, tournament_id, tournaments!photos_tournament_id_fkey(title)")
+    .eq("organization_id", await centralOrganizationId(supabase))
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   const signed = await signImageUrls(
@@ -90,6 +93,7 @@ export const listStandings = createServerFn({ method: "GET" }).handler(async () 
   const { data, error } = await supabase
     .from("standings")
     .select("id, season, rank, player_name, played, wins, losses, points")
+    .eq("organization_id", await centralOrganizationId(supabase))
     .order("season", { ascending: false })
     .order("rank", { ascending: true });
   if (error) throw new Error(error.message);
@@ -101,6 +105,7 @@ export const listHighlights = createServerFn({ method: "GET" }).handler(async ()
   const { data, error } = await supabase
     .from("highlights")
     .select("id, title, description, media_url, event_date")
+    .eq("organization_id", await centralOrganizationId(supabase))
     .order("event_date", { ascending: false });
   if (error) throw new Error(error.message);
   const signed = await signImageUrls(

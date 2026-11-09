@@ -1,4 +1,5 @@
 // Import des inscrits HelloAsso (API v5) vers helloasso_registrations.
+import { centralOrganizationId } from "./organization-access";
 const API = "https://api.helloasso.com";
 export const HELLOASSO_ORG = "association-cardiogoal-saint-leonard";
 
@@ -93,11 +94,14 @@ export function teamNameOf(r: {
   return holder || `Participant HelloAsso #${r.item_id}`;
 }
 
-export async function syncHelloAsso(opts: { force?: boolean } = {}) {
+export async function syncHelloAsso(opts: { force?: boolean; organizationId?: string } = {}) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const centralId = await centralOrganizationId(supabaseAdmin);
+  if (opts.organizationId && opts.organizationId !== centralId) throw new Error("La connexion HelloAsso actuelle est réservée à Foxes Darts.");
   const { data: tournaments, error } = await supabaseAdmin
     .from("tournaments")
     .select("id, helloasso_url, status, max_participants")
+    .eq("organization_id", centralId)
     .not("helloasso_url", "is", null);
   if (error) throw new Error(error.message);
 
@@ -107,6 +111,8 @@ export async function syncHelloAsso(opts: { force?: boolean } = {}) {
   type TournamentRow = NonNullable<typeof tournaments>[number];
   const pending: TournamentRow[] = [];
   for (const t of tournaments ?? []) {
+    if (!opts.force && t.status !== "open") continue;
+    if (parseHelloAssoUrl(t.helloasso_url ?? "")?.org !== HELLOASSO_ORG) continue;
     if (!opts.force && t.max_participants != null) {
       const { count } = await supabaseAdmin
         .from("tournament_teams")
@@ -170,6 +176,7 @@ export async function syncHelloAsso(opts: { force?: boolean } = {}) {
           const { data: existing } = await supabaseAdmin
             .from("tournament_teams")
             .select("id, name, name_locked, helloasso_item_id")
+            .eq("tournament_id", t.id)
             .in("helloasso_item_id", ids);
           const known = new Map((existing ?? []).map((e) => [e.helloasso_item_id, e]));
           // Tournoi complet ou déjà lancé : aucune nouvelle équipe n'est importée

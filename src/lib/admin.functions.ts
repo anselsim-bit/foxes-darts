@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
 import { tournamentRules, phaseRules } from "@/lib/dart-rules";
+import { requireCentralManager } from "@/lib/organization-access";
 
 type AdminContext = {
   supabase: SupabaseClient<Database>;
@@ -10,22 +11,13 @@ type AdminContext = {
 };
 
 async function requireAdmin(context: AdminContext) {
-  const { data: isAdmin } = await context.supabase.rpc("has_role", {
-    _user_id: context.userId,
-    _role: "admin",
-  });
-  if (!isAdmin) throw new Error("Accès réservé aux administrateurs.");
+  return requireCentralManager(context);
 }
 
 export const getMyRoles = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId);
-    if (error) return [] as string[];
-    return (data ?? []).map((r) => r.role as string);
+    try { await requireAdmin(context); return ["admin"]; } catch { return [] as string[]; }
   });
 
 // ---------- Tournois ----------
@@ -276,10 +268,10 @@ export const adminListHelloAsso = createServerFn({ method: "GET" })
 export const adminSyncHelloAsso = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await requireAdmin(context);
+    const organizationId = await requireAdmin(context);
     const { syncHelloAsso } = await import("./helloasso.server");
     // L'admin garde la main : le bouton rafraîchit même un tournoi complet.
-    return syncHelloAsso({ force: true });
+    return syncHelloAsso({ force: true, organizationId });
   });
 
 export const adminListPlayerStats = createServerFn({ method: "GET" })

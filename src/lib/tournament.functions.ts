@@ -14,15 +14,13 @@ import {
 } from "@/lib/bracket";
 import { publicClient } from "@/lib/public.functions";
 import { phaseRules, validateFinalLegs, validateLiveLegs } from "@/lib/dart-rules";
+import { canManageTournament, requireTournamentManager, requireTeamManager, requireCentralManager } from "@/lib/organization-access";
+import { assertResultWritable } from "@/lib/tournament-result-access";
 
 type Ctx = { supabase: SupabaseClient<Database>; userId: string };
 
 async function isAdmin(ctx: Ctx) {
-  const { data } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
-  return !!data;
-}
-async function requireAdmin(ctx: Ctx) {
-  if (!(await isAdmin(ctx))) throw new Error("Accès réservé aux administrateurs.");
+  try { await requireCentralManager(ctx); return true; } catch { return false; }
 }
 
 export const getTournamentBoard = createServerFn({ method: "GET" })
@@ -47,7 +45,7 @@ export const startTournament = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { id: string; accessCode: string }) => ({ id: input.id, accessCode: normalizeCode(input.accessCode) }))
   .handler(async ({ data, context }) => {
-    await requireAdmin(context);
+    await requireTournamentManager(context, data.id);
     if (data.accessCode.length < 4) throw new Error("Le code d'accès doit contenir au moins 4 caractères.");
     const { data: t, error } = await context.supabase
       .from("tournaments")
@@ -142,12 +140,14 @@ export const reportTournamentMatch = createServerFn({ method: "POST" })
 async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; scoreB: number; legsA?: number; legsB?: number; code?: string | undefined }, context?: Ctx) {
     const { data: m, error } = await publicClient()
       .from("tournament_matches")
-      .select("id, tournament_id, stage, round, position, team_a, team_b")
+      .select("id, tournament_id, stage, round, position, team_a, team_b, winner")
       .eq("id", data.matchId)
       .single();
     if (error || !m) throw new Error("Match introuvable.");
     if (!m.team_a || !m.team_b) throw new Error("Les deux adversaires ne sont pas encore connus.");
-    if (!(context && await isAdmin(context)) && !(await hasValidCode(m.tournament_id, data.code))) {
+    const manager = context ? await canManageTournament(context, m.tournament_id) : false;
+    assertResultWritable(m.winner, manager);
+    if (!manager && !(await hasValidCode(m.tournament_id, data.code))) {
       if (!context) throw new Error("Code d'accès invalide ou tournoi inactif.");
       const { data: caps } = await context.supabase.from("tournament_teams").select("captain_id").in("id", [m.team_a, m.team_b]);
       if (!(caps ?? []).some((c) => c.captain_id === context.userId))
@@ -162,8 +162,10 @@ async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; sc
     if (legs && ((a < b) !== (legs.legsA > legs.legsB))) throw new Error("Le gagnant doit avoir remporté deux manches.");
     // Aux fléchettes, le vainqueur est celui qui a le moins de points restants (0).
     const winner = a < b ? m.team_a : m.team_b;
-    const { error: saveError } = await supabaseAdmin.from("tournament_matches").update({ score_a: a, score_b: b, legs_a: legs?.legsA ?? null, legs_b: legs?.legsB ?? null, live_legs_a: legs?.legsA ?? 0, live_legs_b: legs?.legsB ?? 0, winner }).eq("id", m.id);
-    if (saveError) throw new Error("Impossible d'enregistrer le résultat.");
+    let save = supabaseAdmin.from("tournament_matches").update({ score_a: a, score_b: b, legs_a: legs?.legsA ?? null, legs_b: legs?.legsB ?? null, live_legs_a: legs?.legsA ?? 0, live_legs_b: legs?.legsB ?? 0, winner }).eq("id", m.id);
+    if (!manager) save = save.is("winner", null);
+    const { data: saved, error: saveError } = await save.select("id").maybeSingle();
+    if (saveError || !saved) throw new Error("Résultat déjà enregistré ou impossible à enregistrer.");
     // Dès que le dernier match de poule est enregistré, le tableau final, la petite finale
     // et la consolante sont générés automatiquement (sans action de l'admin).
     if (m.stage === "pool") await generateFinalsIfPoolsDone(supabaseAdmin, m.tournament_id);
@@ -216,7 +218,7 @@ export const adminAddTeam = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { tournamentId: string; name: string }) => input)
   .handler(async ({ data, context }) => {
-    await requireAdmin(context);
+    await requireTournamentManager(context, data.tournamentId);
     const name = data.name.trim();
     if (!name) throw new Error("Nom requis.");
     const { error } = await context.supabase.from("tournament_teams").insert({ tournament_id: data.tournamentId, name });
@@ -228,7 +230,7 @@ export const adminRenameTeam = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { id: string; name: string }) => input)
   .handler(async ({ data, context }) => {
-    await requireAdmin(context);
+    await requireTeamManager(context, data.id);
     const name = data.name.trim();
     if (!name) throw new Error("Nom requis.");
     const { error } = await context.supabase.from("tournament_teams").update({ name }).eq("id", data.id);
@@ -240,7 +242,7 @@ export const adminDeleteTeam = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { id: string }) => input)
   .handler(async ({ data, context }) => {
-    await requireAdmin(context);
+    await requireTeamManager(context, data.id);
     const { error } = await context.supabase.from("tournament_teams").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -305,7 +307,7 @@ export const adminSendTournamentLink = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { tournamentId: string }) => input)
   .handler(async ({ data, context }) => {
-    await requireAdmin(context);
+    await requireTournamentManager(context, data.tournamentId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
     const { data: t } = await supabaseAdmin
@@ -368,7 +370,7 @@ export const adminSetTournamentCode = createServerFn({ method: "POST" })
     code: normalizeCode(input.code),
   }))
   .handler(async ({ data, context }) => {
-    await requireAdmin(context);
+    await requireTournamentManager(context, data.tournamentId);
     if (data.code.length < 4) throw new Error("Le code d'accès doit contenir au moins 4 caractères.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
@@ -383,7 +385,7 @@ export const getTournamentCodeAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { tournamentId: string }) => input)
   .handler(async ({ data, context }) => {
-    await requireAdmin(context);
+    await requireTournamentManager(context, data.tournamentId);
     return { code: await currentCode(data.tournamentId) };
   });
 
