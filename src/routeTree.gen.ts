@@ -17,6 +17,9 @@ import { Route as CompteurRouteImport } from './routes/compteur'
 import { Route as GalerieRouteImport } from './routes/galerie'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedCreateOrganizationRouteImport } from './routes/_authenticated/create-organization'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedInvitationRouteImport } from './routes/_authenticated/invitation'
 import { Route as AuthenticatedMonEspaceRouteImport } from './routes/_authenticated/mon-espace'
 import { Route as TournoisIndexRouteImport } from './routes/tournois.index'
 import { Route as TournoisIdRouteImport } from './routes/tournois.$id'
@@ -63,6 +66,22 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCreateOrganizationRoute =
+  AuthenticatedCreateOrganizationRouteImport.update({
+    id: '/create-organization',
+    path: '/create-organization',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedInvitationRoute = AuthenticatedInvitationRouteImport.update({
+  id: '/invitation',
+  path: '/invitation',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedMonEspaceRoute = AuthenticatedMonEspaceRouteImport.update({
@@ -116,6 +135,9 @@ export interface FileRoutesByFullPath {
   '/galerie': typeof GalerieRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/create-organization': typeof AuthenticatedCreateOrganizationRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/invitation': typeof AuthenticatedInvitationRoute
   '/mon-espace': typeof AuthenticatedMonEspaceRoute
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois/': typeof TournoisIndexRoute
@@ -133,6 +155,9 @@ export interface FileRoutesByTo {
   '/galerie': typeof GalerieRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/create-organization': typeof AuthenticatedCreateOrganizationRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/invitation': typeof AuthenticatedInvitationRoute
   '/mon-espace': typeof AuthenticatedMonEspaceRoute
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois': typeof TournoisIndexRoute
@@ -152,6 +177,9 @@ export interface FileRoutesById {
   '/galerie': typeof GalerieRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/create-organization': typeof AuthenticatedCreateOrganizationRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/invitation': typeof AuthenticatedInvitationRoute
   '/_authenticated/mon-espace': typeof AuthenticatedMonEspaceRoute
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois/': typeof TournoisIndexRoute
@@ -171,6 +199,9 @@ export interface FileRouteTypes {
     | '/galerie'
     | '/reset-password'
     | '/admin'
+    | '/create-organization'
+    | '/dashboard'
+    | '/invitation'
     | '/mon-espace'
     | '/tournois/$id'
     | '/tournois/'
@@ -188,6 +219,9 @@ export interface FileRouteTypes {
     | '/galerie'
     | '/reset-password'
     | '/admin'
+    | '/create-organization'
+    | '/dashboard'
+    | '/invitation'
     | '/mon-espace'
     | '/tournois/$id'
     | '/tournois'
@@ -206,6 +240,9 @@ export interface FileRouteTypes {
     | '/galerie'
     | '/reset-password'
     | '/_authenticated/admin'
+    | '/_authenticated/create-organization'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/invitation'
     | '/_authenticated/mon-espace'
     | '/tournois/$id'
     | '/tournois/'
@@ -291,6 +328,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/create-organization': {
+      id: '/_authenticated/create-organization'
+      path: '/create-organization'
+      fullPath: '/create-organization'
+      preLoaderRoute: typeof AuthenticatedCreateOrganizationRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/invitation': {
+      id: '/_authenticated/invitation'
+      path: '/invitation'
+      fullPath: '/invitation'
+      preLoaderRoute: typeof AuthenticatedInvitationRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/mon-espace': {
       id: '/_authenticated/mon-espace'
       path: '/mon-espace'
@@ -352,11 +410,17 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedCreateOrganizationRoute: typeof AuthenticatedCreateOrganizationRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedInvitationRoute: typeof AuthenticatedInvitationRoute
   AuthenticatedMonEspaceRoute: typeof AuthenticatedMonEspaceRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedCreateOrganizationRoute: AuthenticatedCreateOrganizationRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedInvitationRoute: AuthenticatedInvitationRoute,
   AuthenticatedMonEspaceRoute: AuthenticatedMonEspaceRoute,
 }
 
