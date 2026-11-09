@@ -1,3 +1,4 @@
+import { PlatformAdmin } from "@/components/platform-admin";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -43,7 +44,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: AdminPage,
+  component: PlatformAdmin,
 });
 
 const TABS = [
@@ -72,7 +73,7 @@ const btnPrimary =
 const btnDanger =
   "inline-flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:border-destructive hover:text-destructive";
 
-function AdminPage() {
+export function LegacyClubAdmin() {
   const { data: roles, isLoading } = useQuery({
     queryKey: ["my-roles"],
     queryFn: () => getMyRoles(),

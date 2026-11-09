@@ -338,17 +338,26 @@ export type Database = {
       }
       organization_players: {
         Row: {
+          category: string | null
           created_at: string
+          membership_status: string | null
+          notes: string | null
           organization_id: string
           user_id: string
         }
         Insert: {
+          category?: string | null
           created_at?: string
+          membership_status?: string | null
+          notes?: string | null
           organization_id: string
           user_id: string
         }
         Update: {
+          category?: string | null
           created_at?: string
+          membership_status?: string | null
+          notes?: string | null
           organization_id?: string
           user_id?: string
         }
@@ -371,33 +380,54 @@ export type Database = {
       }
       organization_settings: {
         Row: {
+          address: string | null
+          city: string | null
           contact_email: string | null
+          cover_path: string | null
           location: string | null
           logo_path: string | null
           organization_id: string
           organization_type: string | null
+          phone: string | null
+          postal_code: string | null
           primary_color: string | null
+          responsible_name: string | null
           secondary_color: string | null
+          social_links: Json
           updated_at: string
         }
         Insert: {
+          address?: string | null
+          city?: string | null
           contact_email?: string | null
+          cover_path?: string | null
           location?: string | null
           logo_path?: string | null
           organization_id: string
           organization_type?: string | null
+          phone?: string | null
+          postal_code?: string | null
           primary_color?: string | null
+          responsible_name?: string | null
           secondary_color?: string | null
+          social_links?: Json
           updated_at?: string
         }
         Update: {
+          address?: string | null
+          city?: string | null
           contact_email?: string | null
+          cover_path?: string | null
           location?: string | null
           logo_path?: string | null
           organization_id?: string
           organization_type?: string | null
+          phone?: string | null
+          postal_code?: string | null
           primary_color?: string | null
+          responsible_name?: string | null
           secondary_color?: string | null
+          social_links?: Json
           updated_at?: string
         }
         Relationships: [
@@ -414,26 +444,32 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          description: string | null
           id: string
           name: string
           slug: string
           status: string
+          updated_at: string
         }
         Insert: {
           created_at?: string
           created_by?: string | null
+          description?: string | null
           id?: string
           name: string
           slug: string
           status?: string
+          updated_at?: string
         }
         Update: {
           created_at?: string
           created_by?: string | null
+          description?: string | null
           id?: string
           name?: string
           slug?: string
           status?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -493,6 +529,21 @@ export type Database = {
             referencedColumns: ["id", "organization_id"]
           },
         ]
+      }
+      platform_release_flags: {
+        Row: {
+          enabled: boolean
+          name: string
+        }
+        Insert: {
+          enabled?: boolean
+          name: string
+        }
+        Update: {
+          enabled?: boolean
+          name?: string
+        }
+        Relationships: []
       }
       platform_roles: {
         Row: {
@@ -995,6 +1046,7 @@ export type Database = {
           organization_id: string | null
           pool_count: number
           pool_double_limit: boolean
+          revision: number
           start_score: number
           start_time: string | null
           status: string
@@ -1023,6 +1075,7 @@ export type Database = {
           organization_id?: string | null
           pool_count?: number
           pool_double_limit?: boolean
+          revision?: number
           start_score?: number
           start_time?: string | null
           status?: string
@@ -1051,6 +1104,7 @@ export type Database = {
           organization_id?: string | null
           pool_count?: number
           pool_double_limit?: boolean
+          revision?: number
           start_score?: number
           start_time?: string | null
           status?: string
@@ -1097,6 +1151,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      actor_manages_tournament: {
+        Args: { _actor: string; _tournament_id: string }
+        Returns: boolean
+      }
       can_manage_organization: {
         Args: { _organization_id: string }
         Returns: boolean
@@ -1104,6 +1162,60 @@ export type Database = {
       can_manage_tournament: {
         Args: { _tournament_id: string }
         Returns: boolean
+      }
+      cancel_tournament_registration: {
+        Args: { _tournament_id: string }
+        Returns: undefined
+      }
+      change_organization_collaborator: {
+        Args: { _organization_id: string; _role: string; _user_id: string }
+        Returns: undefined
+      }
+      commit_tournament_result: {
+        Args: {
+          _actor: string
+          _code: string
+          _finals: Json
+          _legs_a: number
+          _legs_b: number
+          _match_id: string
+          _score_a: number
+          _score_b: number
+        }
+        Returns: undefined
+      }
+      commit_tournament_start: {
+        Args: {
+          _actor: string
+          _code: string
+          _matches: Json
+          _revision: number
+          _team_ids: Json
+          _tournament_id: string
+        }
+        Returns: undefined
+      }
+      create_organization_invitation: {
+        Args: {
+          _email: string
+          _organization_id: string
+          _role: string
+          _token_hash: string
+        }
+        Returns: string
+      }
+      create_organization_space: {
+        Args: {
+          _description: string
+          _name: string
+          _settings: Json
+          _slug: string
+        }
+        Returns: string
+      }
+      get_public_organization_settings: {
+        Args: { _organization_id: string }
+        Returns: Json
       }
       has_role: {
         Args: {
@@ -1122,12 +1234,34 @@ export type Database = {
         Args: { _organization_id: string }
         Returns: boolean
       }
+      platform_counts: { Args: never; Returns: Json }
       profile_readable_by_manager: {
         Args: { _user_id: string }
         Returns: boolean
       }
+      register_tournament_player: {
+        Args: { _name: string; _tournament_id: string }
+        Returns: undefined
+      }
+      respond_organization_invitation: {
+        Args: { _accept: boolean; _token_hash: string }
+        Returns: string
+      }
+      save_organization_settings: {
+        Args: {
+          _description: string
+          _name: string
+          _organization_id: string
+          _settings: Json
+        }
+        Returns: undefined
+      }
       set_central_member_admin: {
         Args: { _admin: boolean; _user_id: string }
+        Returns: undefined
+      }
+      set_organization_status: {
+        Args: { _organization_id: string; _status: string }
         Returns: undefined
       }
       tournament_accepts_registration: {
@@ -1137,6 +1271,10 @@ export type Database = {
       tournament_is_public: {
         Args: { _tournament_id: string }
         Returns: boolean
+      }
+      transfer_organization_ownership: {
+        Args: { _organization_id: string; _user_id: string }
+        Returns: undefined
       }
     }
     Enums: {

@@ -36,6 +36,7 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
     (input: {
+      organizationId?: string;
       id?: string | undefined;
       title: string;
       event_date: string;
@@ -61,7 +62,15 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
     }) => input,
   )
   .handler(async ({ data, context }) => {
-    await requireAdmin(context);
+    const organizationId = data.organizationId ?? await requireAdmin(context);
+    if (data.id) {
+      const { data: allowed } = await context.supabase.rpc("can_manage_tournament", { _tournament_id: data.id });
+      if (!allowed) throw new Error("Tournoi non autorisé.");
+    } else {
+      const { data: membership } = await context.supabase.from("organization_members").select("role").eq("organization_id", organizationId).eq("user_id", context.userId).maybeSingle();
+      const { data: allowed } = await context.supabase.rpc("can_manage_organization", { _organization_id: organizationId });
+      if (!allowed && membership?.role !== "TOURNAMENT_MANAGER") throw new Error("Organisation non autorisée.");
+    }
     const rules = tournamentRules(data.start_score, data.double_out, "bracket", data.pool_double_limit ?? true);
     const finalRules = phaseRules(data, "bracket");
     const consolationRules = phaseRules(data, "consolation");
@@ -93,7 +102,7 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
     const { image_url, ...rest } = row;
     const query = data.id
       ? context.supabase.from("tournaments").update(data.image_url ? row : rest).eq("id", data.id)
-      : context.supabase.from("tournaments").insert({ ...rest, image_url });
+      : context.supabase.from("tournaments").insert({ ...rest, image_url, organization_id: organizationId, created_by: context.userId });
     const { error } = await query;
     if (error) throw new Error(error.message);
     return { ok: true };

@@ -211,6 +211,41 @@
       "when": 1794246751593,
       "tag": "0029_close_deprecated_access_code_permissions",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1794247402758,
+      "tag": "0030_organization_lifecycle_and_collaboration",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1794247492505,
+      "tag": "0031_organization_settings_and_platform_controls",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1794247559292,
+      "tag": "0032_guard_organization_activation_during_validation",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1794247707335,
+      "tag": "0033_atomic_registration_and_start",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1794247808482,
+      "tag": "0034_atomic_match_commit_and_progression",
+      "breakpoints": true
     }
   ]
 }
