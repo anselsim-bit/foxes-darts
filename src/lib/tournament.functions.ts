@@ -121,8 +121,8 @@ async function currentCode(tournamentId: string) {
 async function hasValidCode(tournamentId: string, code: string | undefined) {
   const c = normalizeCode(code);
   if (!c) return false;
-  const { data: tournament } = await publicClient().from("tournaments").select("status").eq("id", tournamentId).maybeSingle();
-  if (tournament?.status !== "started") return false;
+  const { data: tournament } = await publicClient().from("tournaments").select("status, organizations(status)").eq("id", tournamentId).maybeSingle();
+  if (tournament?.status !== "started" || tournament.organizations?.status !== "active") return false;
   return (await currentCode(tournamentId)) === c;
 }
 

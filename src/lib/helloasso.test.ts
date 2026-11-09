@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { extractPartner, teamNameOf, syncHelloAsso } from "./helloasso.server";
+vi.mock("./organization-access", () => ({ centralOrganizationId: async () => "foxes-id" }));
 
 const mocks = vi.hoisted(() => {
   type Op = { table: string; op: string; payload?: unknown };
@@ -64,7 +65,7 @@ const ticket = (id: number, extra: Record<string, unknown> = {}) => ({
 });
 const tournamentRow = {
   id: "t1",
-  helloasso_url: "https://www.helloasso.com/associations/asso/evenements/tournoi",
+  helloasso_url: "https://www.helloasso.com/associations/association-cardiogoal-saint-leonard/evenements/tournoi",
   status: "open",
   max_participants: 16,
 };
@@ -218,5 +219,16 @@ describe("syncHelloAsso capacity", () => {
     mocks.state.teamCount = 4;
     await syncHelloAsso();
     expect(mocks.ops.filter((o) => o.op === "insert")).toEqual([]);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+  it("refuses another organization's manual import before any API call", async () => {
+    await expect(syncHelloAsso({ force: true, organizationId: "other-club" })).rejects.toThrow("réservée à Foxes Darts");
+    expect(fetch).not.toHaveBeenCalled();
+  });
+  it("never uses the Foxes connection for another HelloAsso association", async () => {
+    mocks.state.tournaments = [{ ...tournamentRow, helloasso_url: "https://www.helloasso.com/associations/other-club/evenements/tournoi" }];
+    await syncHelloAsso({ force: true });
+    expect(fetch).not.toHaveBeenCalled();
+    expect(mocks.ops).toEqual([]);
   });
 });
