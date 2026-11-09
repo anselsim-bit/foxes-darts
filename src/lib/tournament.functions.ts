@@ -214,7 +214,8 @@ async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; sc
 
 export const amIAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => ({ admin: await isAdmin(context), userId: context.userId }));
+  .inputValidator((input: { tournamentId?: string } = {}) => input)
+  .handler(async ({ data, context }) => ({ admin: data.tournamentId ? await canManageTournament(context, data.tournamentId) : await isAdmin(context), userId: context.userId }));
 
 export const adminAddTeam = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

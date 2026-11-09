@@ -24,6 +24,7 @@ import { Route as AuthenticatedMonEspaceRouteImport } from './routes/_authentica
 import { Route as TournoisIndexRouteImport } from './routes/tournois.index'
 import { Route as TournoisIdRouteImport } from './routes/tournois.$id'
 import { Route as TournoisIdJouerRouteImport } from './routes/tournois_.$id.jouer'
+import { Route as AuthenticatedDashboardOrganizationsSlugRouteImport } from './routes/_authenticated/dashboard_.organizations.$slug'
 import { Route as ApiPublicHooksHelloassoSyncRouteImport } from './routes/api/public/hooks/helloasso-sync'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
@@ -104,6 +105,12 @@ const TournoisIdJouerRoute = TournoisIdJouerRouteImport.update({
   path: '/tournois/$id/jouer',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedDashboardOrganizationsSlugRoute =
+  AuthenticatedDashboardOrganizationsSlugRouteImport.update({
+    id: '/dashboard_/organizations/$slug',
+    path: '/dashboard/organizations/$slug',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicHooksHelloassoSyncRoute =
   ApiPublicHooksHelloassoSyncRouteImport.update({
     id: '/api/public/hooks/helloasso-sync',
@@ -142,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois/': typeof TournoisIndexRoute
   '/tournois/$id/jouer': typeof TournoisIdJouerRoute
+  '/dashboard/organizations/$slug': typeof AuthenticatedDashboardOrganizationsSlugRoute
   '/api/public/hooks/helloasso-sync': typeof ApiPublicHooksHelloassoSyncRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -162,6 +170,7 @@ export interface FileRoutesByTo {
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois': typeof TournoisIndexRoute
   '/tournois/$id/jouer': typeof TournoisIdJouerRoute
+  '/dashboard/organizations/$slug': typeof AuthenticatedDashboardOrganizationsSlugRoute
   '/api/public/hooks/helloasso-sync': typeof ApiPublicHooksHelloassoSyncRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -184,6 +193,7 @@ export interface FileRoutesById {
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois/': typeof TournoisIndexRoute
   '/tournois_/$id/jouer': typeof TournoisIdJouerRoute
+  '/_authenticated/dashboard_/organizations/$slug': typeof AuthenticatedDashboardOrganizationsSlugRoute
   '/api/public/hooks/helloasso-sync': typeof ApiPublicHooksHelloassoSyncRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -206,6 +216,7 @@ export interface FileRouteTypes {
     | '/tournois/$id'
     | '/tournois/'
     | '/tournois/$id/jouer'
+    | '/dashboard/organizations/$slug'
     | '/api/public/hooks/helloasso-sync'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -226,6 +237,7 @@ export interface FileRouteTypes {
     | '/tournois/$id'
     | '/tournois'
     | '/tournois/$id/jouer'
+    | '/dashboard/organizations/$slug'
     | '/api/public/hooks/helloasso-sync'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -247,6 +259,7 @@ export interface FileRouteTypes {
     | '/tournois/$id'
     | '/tournois/'
     | '/tournois_/$id/jouer'
+    | '/_authenticated/dashboard_/organizations/$slug'
     | '/api/public/hooks/helloasso-sync'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -377,6 +390,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TournoisIdJouerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/dashboard_/organizations/$slug': {
+      id: '/_authenticated/dashboard_/organizations/$slug'
+      path: '/dashboard/organizations/$slug'
+      fullPath: '/dashboard/organizations/$slug'
+      preLoaderRoute: typeof AuthenticatedDashboardOrganizationsSlugRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/hooks/helloasso-sync': {
       id: '/api/public/hooks/helloasso-sync'
       path: '/api/public/hooks/helloasso-sync'
@@ -414,6 +434,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedInvitationRoute: typeof AuthenticatedInvitationRoute
   AuthenticatedMonEspaceRoute: typeof AuthenticatedMonEspaceRoute
+  AuthenticatedDashboardOrganizationsSlugRoute: typeof AuthenticatedDashboardOrganizationsSlugRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -422,6 +443,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedInvitationRoute: AuthenticatedInvitationRoute,
   AuthenticatedMonEspaceRoute: AuthenticatedMonEspaceRoute,
+  AuthenticatedDashboardOrganizationsSlugRoute:
+    AuthenticatedDashboardOrganizationsSlugRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
