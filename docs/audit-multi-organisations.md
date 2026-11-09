@@ -118,3 +118,13 @@ Fonctions SQL observées : `has_role`, `handle_new_user`, `enforce_team_capacity
 Voir le plan présenté pour les phases suivantes : création additive des organisations et permissions, rattachement des données à Foxes sans changement des identifiants, puis adaptation des écrans et ouverture pilote.
 
 Conditions de passage : validation du plan ; export et sauvegarde vérifiés par l'utilisateur ; stabilité des tests ; contrôles d'isolation et absence de perte d'historique. L'audit n'autorise ni suppression, ni réinitialisation, ni attribution immédiate de rôles.
+
+## 11. Préparation après approbation du plan
+
+Le contrôle `authenticateCronRequest` est désormais appelé avant l'import horaire. Cinq tests vérifient les secrets courant/précédent et le refus d'un jeton arbitraire, d'identifiants absents et d'une configuration absente.
+
+Les tests de reprise utilisent désormais une navigation simulée explicitement, attendent la suppression du brouillon et accordent au scénario complet de trois manches un délai réaliste. Exécution standard après correction : **80/80 tests, 10/10 fichiers**. Cela ne constitue pas encore un test d'isolation réel.
+
+Fichiers applicatifs modifiés : uniquement `src/routes/api/public/hooks/helloasso-sync.ts`. Tests : `src/lib/cron-auth.test.ts`, `src/components/tournament-play.test.tsx`. Documentation et suivi : ce rapport, `AGENTS.md`, `roadmap.md`.
+
+Aucune table, politique de données, compte, droit ou donnée historique n'a été modifié. L'application de la migration reste bloquée par la vérification de la sauvegarde et de l'export demandée dans le plan approuvé.
