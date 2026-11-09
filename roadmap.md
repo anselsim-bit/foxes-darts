@@ -1,9 +1,10 @@
 # Foxes Darts — Tâches
 
 ## Intégrations d’agents — 9 novembre 2026
-- [ ] Ajouter le serveur MCP protégé, le consentement et le retour après connexion.
-- [ ] Ajouter les outils de lecture du tableau de bord dans le navigateur.
-- [ ] Vérifier les permissions, extraire le catalogue et préciser la republication nécessaire.
+- [x] Ajouter le serveur MCP protégé avec trois lectures personnelles, le consentement et le retour après connexion/confirmation du compte ; OAuth activé sur Lovable Cloud déjà présent.
+- [x] Ajouter la lecture du tableau de bord dans le navigateur via WebMCP avec suivi sans données personnelles.
+- [x] Vérifier les limites par compte (19 tests), refus anonyme HTTP 401, métadonnées HTTP 200, retour de connexion et erreur lisible ; catalogue extrait et contrôles automatiques réussis.
+- [ ] Validation OAuth complète avec accord/refus et lecture réelle : aucun compte ne correspond à l’identité du demandeur pour la connexion de test ; nécessite une connexion dans l’aperçu. Le parcours externe nécessite aussi la republication.
 
 ## Évolution multi-organisations — cahier des charges du 9 novembre 2026
 - [x] Phase 1 : audit technique, inventaire réel et proposition de migration, sans changer le site ni ses données ; rapport dans docs/audit-multi-organisations.md.
