@@ -183,6 +183,13 @@
       "when": 1794245630589,
       "tag": "0025_tighten_organization_table_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1794245895398,
+      "tag": "0026_scope_tournament_and_content_permissions",
+      "breakpoints": true
     }
   ]
 }

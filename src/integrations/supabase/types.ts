@@ -1106,6 +1106,18 @@ export type Database = {
         Returns: boolean
       }
       is_platform_admin: { Args: never; Returns: boolean }
+      organization_is_public: {
+        Args: { _organization_id: string }
+        Returns: boolean
+      }
+      tournament_accepts_registration: {
+        Args: { _tournament_id: string }
+        Returns: boolean
+      }
+      tournament_is_public: {
+        Args: { _tournament_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "user"
