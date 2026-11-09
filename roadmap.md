@@ -7,7 +7,7 @@
 - [ ] Phase 2, bascule : limiter tous les chemins admin/HelloAsso/Storage/listes publiques à leur organisation avant ouverture d’un deuxième espace ; création et réaffectation restent volontairement verrouillées dans la base.
   - [x] Étape demandée le 9 novembre : accès et corrections des tournois limités à l’organisation, politiques tournois/contenus basculées, listes historiques et import HelloAsso réservés à Foxes ; 98 tests passent, 16 équipes et 39 résultats inchangés, admin/inscrits/consolante vérifiés.
   - [ ] Ensuite : annuaire et droits locaux, fichiers, transactions complètes et isolation entre deux organisations avant déverrouillage.
-    - [ ] Étape du 9 novembre à 17h45 : rattachement des membres historiques, annuaire et réinitialisations limités à Foxes, droits locaux transactionnels, fichiers préfixés et contrôlés ; puis vérification des parcours existants.
+    - [x] Étape du 9 novembre à 17h45 : deux membres historiques rattachés, annuaire et réinitialisations limités à Foxes, droits locaux transactionnels et journalisés, fichiers préfixés et contrôlés ; ajout/lecture/suppression d’une photo et refus étrangers vérifiés, 39 résultats et trois fichiers historiques conservés.
 - [ ] Phases 3–7 : organisations, collaborateurs, espaces organisateurs, joueurs universels, pages publiques et administration centrale — phases suivantes, après la bascule sécurisée ; non ouvertes pendant cette étape.
 - [ ] Phase 8 : validation isolation, sécurité, historique, anciennes URL et performances — attend les phases précédentes.
 

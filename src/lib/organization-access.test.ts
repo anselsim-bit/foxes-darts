@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { canManageTournament, requireTournamentManager, type OrganizationContext } from "./organization-access";
+import { canManageTournament, requireTournamentManager, requireOrganizationPlayer, requirePlatformAdmin, type OrganizationContext } from "./organization-access";
 
 function context(result: boolean, error: unknown = null) {
   const rpc = vi.fn(async () => ({ data: result, error }));
@@ -19,5 +19,14 @@ describe("server tournament permission boundary", () => {
   it("fails closed when permission validation fails", async () => {
     const { ctx } = context(true, { message: "unavailable" });
     expect(await canManageTournament(ctx, "assigned-tournament")).toBe(false);
+  });
+  it("refuses a password or role target outside the organization", async () => {
+    const chain = { select: () => chain, eq: () => chain, maybeSingle: async () => ({ data: null, error: null }) };
+    const ctx = { userId: "local-admin", supabase: { from: () => chain } } as unknown as OrganizationContext;
+    await expect(requireOrganizationPlayer(ctx, "foxes", "foreign-player")).rejects.toThrow("n'appartient pas");
+  });
+  it("does not let a local admin modify global statistics", async () => {
+    const { ctx } = context(false);
+    await expect(requirePlatformAdmin(ctx)).rejects.toThrow("statistiques globales");
   });
 });
