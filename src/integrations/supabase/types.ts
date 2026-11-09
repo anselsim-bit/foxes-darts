@@ -1046,6 +1046,7 @@ export type Database = {
           organization_id: string | null
           pool_count: number
           pool_double_limit: boolean
+          revision: number
           start_score: number
           start_time: string | null
           status: string
@@ -1074,6 +1075,7 @@ export type Database = {
           organization_id?: string | null
           pool_count?: number
           pool_double_limit?: boolean
+          revision?: number
           start_score?: number
           start_time?: string | null
           status?: string
@@ -1102,6 +1104,7 @@ export type Database = {
           organization_id?: string | null
           pool_count?: number
           pool_double_limit?: boolean
+          revision?: number
           start_score?: number
           start_time?: string | null
           status?: string
@@ -1148,6 +1151,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      actor_manages_tournament: {
+        Args: { _actor: string; _tournament_id: string }
+        Returns: boolean
+      }
       can_manage_organization: {
         Args: { _organization_id: string }
         Returns: boolean
@@ -1156,8 +1163,23 @@ export type Database = {
         Args: { _tournament_id: string }
         Returns: boolean
       }
+      cancel_tournament_registration: {
+        Args: { _tournament_id: string }
+        Returns: undefined
+      }
       change_organization_collaborator: {
         Args: { _organization_id: string; _role: string; _user_id: string }
+        Returns: undefined
+      }
+      commit_tournament_start: {
+        Args: {
+          _actor: string
+          _code: string
+          _matches: Json
+          _revision: number
+          _team_ids: Json
+          _tournament_id: string
+        }
         Returns: undefined
       }
       create_organization_invitation: {
@@ -1203,6 +1225,10 @@ export type Database = {
       profile_readable_by_manager: {
         Args: { _user_id: string }
         Returns: boolean
+      }
+      register_tournament_player: {
+        Args: { _name: string; _tournament_id: string }
+        Returns: undefined
       }
       respond_organization_invitation: {
         Args: { _accept: boolean; _token_hash: string }

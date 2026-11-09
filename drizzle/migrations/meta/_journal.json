@@ -232,6 +232,13 @@
       "when": 1794247559292,
       "tag": "0032_guard_organization_activation_during_validation",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1794247707335,
+      "tag": "0033_atomic_registration_and_start",
+      "breakpoints": true
     }
   ]
 }
