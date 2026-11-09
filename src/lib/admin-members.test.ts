@@ -6,7 +6,7 @@ vi.mock("@tanstack/react-start", () => ({ createServerFn: () => {
   return builder;
 } }));
 vi.mock("@/integrations/supabase/auth-middleware", () => ({ requireSupabaseAuth: {} }));
-vi.mock("@/lib/organization-access", () => ({ requireCentralManager: async () => "foxes" }));
+vi.mock("@/lib/organization-access", () => ({ requireCentralManager: async () => "foxes", requireOrganizationPlayer: async () => {} }));
 vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: { from: mocks.from } }));
 import { adminSetMemberAdmin } from "./admin.functions";
 
