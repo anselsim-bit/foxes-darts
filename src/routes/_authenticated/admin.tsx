@@ -1,3 +1,4 @@
+import { PlatformAdmin } from "@/components/platform-admin";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -43,7 +44,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: AdminPage,
+  component: PlatformAdmin,
 });
 
 const TABS = [

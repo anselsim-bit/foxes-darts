@@ -61,7 +61,7 @@ export const getOrganizationSpace = createServerFn({method:"GET"}).middleware([r
 export const saveOrganization = createServerFn({method:"POST"}).middleware([requireSupabaseAuth]).inputValidator((input:{id:string;name:string;description:string;settings:Record<string,string>})=>input).handler(async ({data,context})=>{
   await manage(context,data.id);
   if(data.name.trim().length<2) throw new Error("Nom trop court.");
-  safeColor(data.settings["primary_color"]);safeColor(data.settings["secondary_color"]);
+  safeColor(data.settings["primary_color"]??"");safeColor(data.settings["secondary_color"]??"");
   const {error}=await context.supabase.rpc("save_organization_settings",{_organization_id:data.id,_name:data.name,_description:data.description,_settings:data.settings});
   if(error) throw new Error("Impossible d'enregistrer les paramètres.");
   return {ok:true};
