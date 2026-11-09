@@ -1,5 +1,11 @@
 # Foxes Darts — Tâches
 
+## Évolution multi-organisations — cahier des charges du 9 novembre 2026
+- [ ] Phase 1 : audit technique, inventaire réel et proposition de migration, sans changer le site ni ses données.
+- [ ] Phase 2 : architecture et migration additive — attend la validation du plan et la vérification de sauvegarde.
+- [ ] Phases 3–7 : organisations, collaborateurs, espaces organisateurs, joueurs universels, pages publiques et administration centrale — attend la phase 2.
+- [ ] Phase 8 : validation isolation, sécurité, historique, anciennes URL et performances — attend les phases précédentes.
+
 ## Compteurs et formats par phase
 - [x] Moyenne et meilleure volée sur tous les compteurs, retour tactile visible et passage anticipé.
 - [x] Formats indépendants pour poules, phase finale et consolante.
