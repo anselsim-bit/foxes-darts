@@ -128,3 +128,21 @@ Les tests de reprise utilisent désormais une navigation simulée explicitement,
 Fichiers applicatifs modifiés : uniquement `src/routes/api/public/hooks/helloasso-sync.ts`. Tests : `src/lib/cron-auth.test.ts`, `src/components/tournament-play.test.tsx`. Documentation et suivi : ce rapport, `AGENTS.md`, `roadmap.md`.
 
 Aucune table, politique de données, compte, droit ou donnée historique n'a été modifié. L'application de la migration reste bloquée par la vérification de la sauvegarde et de l'export demandée dans le plan approuvé.
+
+## 12. Phase 2 — Fondations appliquées le 9 novembre 2026
+
+L'utilisateur a confirmé l'export puis indiqué la sauvegarde du **9 novembre 2026 à 00:28:16 UTC**. Cette date est déclarée par l'utilisateur, pas issue d'un inventaire consulté par l'agent. Aucun fichier Storage n'a été copié ou vérifié comme sauvegardé ; cette étape ne modifie pas les fichiers.
+
+- Migrations 0023–0025 : organisations, rôles plateforme, collaborateurs, paramètres, invitations privées à hash, assignations de managers, liens joueurs, notifications privées et journal d'audit. RLS activée, droits de lecture explicites ; aucun droit client d'écriture, aucune lecture client des invitations et de leurs hashes.
+- Foxes Darts créée comme organisation centrale. Simon, compte confirmé et vérifié par identifiant/email, est SUPER_ADMIN et ORGANIZATION_OWNER ; l'autre admin historique est ORGANIZATION_ADMIN de Foxes, pas SUPER_ADMIN. Les rôles historiques restent compatibles avec le site existant.
+- Rattachement des tournois, photos, classements et actions à Foxes ; identifiants inchangés. Champs de profil facultatifs ajoutés, sans inventer prénom, nom ou photo. Les parties libres et les statistiques globales ne sont pas attribuées artificiellement à une organisation.
+- Références composites : adversaires/vainqueur appartiennent au même tournoi ; une photo liée à un tournoi appartient à la même organisation. Les références différées préservent les suppressions historiques qui remettent les références d'équipe à NULL.
+- La création d'autres organisations et le changement d'organisation des contenus sont bloqués par des triggers, même via le service, jusqu'à la bascule des chemins historiques. Les anciennes politiques et fonctions admin restent globales : **l'isolation multi-organisations complète n'est pas encore livrée** et aucune deuxième organisation ne peut être ouverte à ce stade.
+- Matrice testée : propriétaire, admin local, manager assigné/non assigné, joueur, administrateur général et organisation suspendue. Les checks SQL de gestion refusent les organisations inconnues/suspendues.
+- Correction de compatibilité nécessaire : lecture galerie qualifiée par la FK historique, car la FK composite crée une seconde relation vers les tournois.
+
+**Préservation vérifiée :** avant/après, mêmes nombres et empreintes MD5 de tous les anciens champs pour 1 tournoi, 16 équipes, 39 matchs, 16 inscriptions HelloAsso, 2 profils et 2 parties libres. Empreintes : tournois `f037b421460b082f4047018fc8d340ee`, équipes `d980f16610c4d465273c7226c6c23d36`, matchs `eb81b0574a8b1a7e1dd27fd6400af8de`, HelloAsso `fda1122a127d6f7cface1800f46eb84b`, profils `241ce713bd2ccaafb30c69f61c22ea75`, parties `3c25a97eeb0bad6a7f2f35ea3646b643`.
+
+**Vérifications :** 88/88 tests, 11 fichiers ; dernier build OK après correction. Navigateur connecté avec le compte de Simon : administration accessible, rôle plateforme lu, gestion Foxes autorisée, organisation inconnue refusée, insertion de rôle et lecture des invitations refusées. Tournoi historique, poules, tableau final, consolante et galerie ouverts sans erreur runtime. Aucun score, email ou inscription réelle modifié pour les tests.
+
+**Suite non ouverte :** basculer tous les contrôles historiques (fonctions serveur, RLS, profils/emails, listes publiques, HelloAsso, Storage, Realtime), transactions et droits de correction avant de retirer les verrous ; puis phases 3–8 avec deux organisations et plusieurs identités. Invitations, notifications, création et tableaux de gestion multi-organisations sont des fondations de données uniquement, pas des fonctionnalités utilisables à ce stade.

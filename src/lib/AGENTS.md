@@ -1,0 +1,3 @@
+- Organization management permissions use the shared matrix and SQL checks fed by authenticated memberships, never browser storage, to prevent local-role escalation.
+- Multi-organization onboarding remains database-gated until legacy privileged server, storage and public-list paths are scoped; foundation tables permit client reads only and preserve global player identities/statistics.
+- Photo-to-tournament embeds name the historical foreign key explicitly because the additional organization-integrity relationship makes unqualified embeds ambiguous.

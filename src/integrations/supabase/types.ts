@@ -121,6 +121,7 @@ export type Database = {
           event_date: string | null
           id: string
           media_url: string | null
+          organization_id: string | null
           title: string
         }
         Insert: {
@@ -129,6 +130,7 @@ export type Database = {
           event_date?: string | null
           id?: string
           media_url?: string | null
+          organization_id?: string | null
           title: string
         }
         Update: {
@@ -137,9 +139,311 @@ export type Database = {
           event_date?: string | null
           id?: string
           media_url?: string | null
+          organization_id?: string | null
           title?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "highlights_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          organization_id: string | null
+          payload: Json
+          read_at: string | null
+          recipient_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          organization_id?: string | null
+          payload?: Json
+          read_at?: string | null
+          recipient_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          organization_id?: string | null
+          payload?: Json
+          read_at?: string | null
+          recipient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_audit_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          details: Json
+          id: string
+          organization_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          organization_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          organization_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_audit_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_audit_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_invitations: {
+        Row: {
+          accepted_by: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          organization_id: string
+          role: string
+          status: string
+          token_hash: string
+        }
+        Insert: {
+          accepted_by?: string | null
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          invited_by: string
+          organization_id: string
+          role: string
+          status?: string
+          token_hash: string
+        }
+        Update: {
+          accepted_by?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          organization_id?: string
+          role?: string
+          status?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_invitations_accepted_by_fkey"
+            columns: ["accepted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_invitations_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_invitations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_members: {
+        Row: {
+          created_at: string
+          organization_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          organization_id: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          organization_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_players: {
+        Row: {
+          created_at: string
+          organization_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          organization_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          organization_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_players_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_players_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_settings: {
+        Row: {
+          contact_email: string | null
+          location: string | null
+          logo_path: string | null
+          organization_id: string
+          organization_type: string | null
+          primary_color: string | null
+          secondary_color: string | null
+          updated_at: string
+        }
+        Insert: {
+          contact_email?: string | null
+          location?: string | null
+          logo_path?: string | null
+          organization_id: string
+          organization_type?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contact_email?: string | null
+          location?: string | null
+          logo_path?: string | null
+          organization_id?: string
+          organization_type?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          slug: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          slug: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organizations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       photos: {
         Row: {
@@ -147,6 +451,7 @@ export type Database = {
           created_at: string
           id: string
           image_url: string
+          organization_id: string | null
           tournament_id: string | null
         }
         Insert: {
@@ -154,6 +459,7 @@ export type Database = {
           created_at?: string
           id?: string
           image_url: string
+          organization_id?: string | null
           tournament_id?: string | null
         }
         Update: {
@@ -161,14 +467,55 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string
+          organization_id?: string | null
           tournament_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "photos_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "photos_tournament_id_fkey"
             columns: ["tournament_id"]
             isOneToOne: false
             referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "photos_tournament_organization_fk"
+            columns: ["tournament_id", "organization_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id", "organization_id"]
+          },
+        ]
+      }
+      platform_roles: {
+        Row: {
+          created_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -213,23 +560,32 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_path: string | null
           created_at: string
           display_name: string | null
+          first_name: string | null
           id: string
+          last_name: string | null
           tournament_announcements: boolean
           tournaments_seen_at: string
         }
         Insert: {
+          avatar_path?: string | null
           created_at?: string
           display_name?: string | null
+          first_name?: string | null
           id: string
+          last_name?: string | null
           tournament_announcements?: boolean
           tournaments_seen_at?: string
         }
         Update: {
+          avatar_path?: string | null
           created_at?: string
           display_name?: string | null
+          first_name?: string | null
           id?: string
+          last_name?: string | null
           tournament_announcements?: boolean
           tournaments_seen_at?: string
         }
@@ -279,6 +635,7 @@ export type Database = {
           created_at: string
           id: string
           losses: number
+          organization_id: string | null
           played: number
           player_name: string
           points: number
@@ -290,6 +647,7 @@ export type Database = {
           created_at?: string
           id?: string
           losses?: number
+          organization_id?: string | null
           played?: number
           player_name: string
           points?: number
@@ -301,6 +659,7 @@ export type Database = {
           created_at?: string
           id?: string
           losses?: number
+          organization_id?: string | null
           played?: number
           player_name?: string
           points?: number
@@ -308,7 +667,15 @@ export type Database = {
           season?: string
           wins?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "standings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tournament_access_codes: {
         Row: {
@@ -380,6 +747,49 @@ export type Database = {
           },
         ]
       }
+      tournament_manager_assignments: {
+        Row: {
+          assigned_by: string
+          created_at: string
+          tournament_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_by: string
+          created_at?: string
+          tournament_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_by?: string
+          created_at?: string
+          tournament_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_manager_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_manager_assignments_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_manager_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tournament_matches: {
         Row: {
           created_at: string
@@ -436,6 +846,27 @@ export type Database = {
           winner?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "matches_team_a_same_tournament_fk"
+            columns: ["tournament_id", "team_a"]
+            isOneToOne: false
+            referencedRelation: "tournament_teams"
+            referencedColumns: ["tournament_id", "id"]
+          },
+          {
+            foreignKeyName: "matches_team_b_same_tournament_fk"
+            columns: ["tournament_id", "team_b"]
+            isOneToOne: false
+            referencedRelation: "tournament_teams"
+            referencedColumns: ["tournament_id", "id"]
+          },
+          {
+            foreignKeyName: "matches_winner_same_tournament_fk"
+            columns: ["tournament_id", "winner"]
+            isOneToOne: false
+            referencedRelation: "tournament_teams"
+            referencedColumns: ["tournament_id", "id"]
+          },
           {
             foreignKeyName: "tournament_matches_team_a_fkey"
             columns: ["team_a"]
@@ -537,6 +968,7 @@ export type Database = {
           consolation_double_out: boolean | null
           consolation_start_score: number | null
           created_at: string
+          created_by: string | null
           description: string | null
           double_out: boolean
           end_time: string | null
@@ -549,6 +981,7 @@ export type Database = {
           image_url: string | null
           location: string | null
           max_participants: number | null
+          organization_id: string | null
           pool_count: number
           pool_double_limit: boolean
           start_score: number
@@ -563,6 +996,7 @@ export type Database = {
           consolation_double_out?: boolean | null
           consolation_start_score?: number | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           double_out?: boolean
           end_time?: string | null
@@ -575,6 +1009,7 @@ export type Database = {
           image_url?: string | null
           location?: string | null
           max_participants?: number | null
+          organization_id?: string | null
           pool_count?: number
           pool_double_limit?: boolean
           start_score?: number
@@ -589,6 +1024,7 @@ export type Database = {
           consolation_double_out?: boolean | null
           consolation_start_score?: number | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           double_out?: boolean
           end_time?: string | null
@@ -601,6 +1037,7 @@ export type Database = {
           image_url?: string | null
           location?: string | null
           max_participants?: number | null
+          organization_id?: string | null
           pool_count?: number
           pool_double_limit?: boolean
           start_score?: number
@@ -609,7 +1046,22 @@ export type Database = {
           team_size?: number
           title?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tournaments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournaments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -634,6 +1086,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_organization: {
+        Args: { _organization_id: string }
+        Returns: boolean
+      }
+      can_manage_tournament: {
+        Args: { _tournament_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -641,6 +1101,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_organization_member: {
+        Args: { _organization_id: string }
+        Returns: boolean
+      }
+      is_platform_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
