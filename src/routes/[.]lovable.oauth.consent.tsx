@@ -17,7 +17,7 @@ export const Route = createFileRoute('/.lovable/oauth/consent')({
     if (!search.authorization_id) throw new Error('Cette demande de connexion est incomplète. Relancez la connexion depuis votre agent.');
     const { data, error } = await supabase.auth.getSession();
     if (error) throw new Error('Votre session est indisponible. Veuillez réessayer.');
-    if (!data.session) throw redirect({ to: '/auth', search: { redirect: location.pathname + location.searchStr } });
+    if (!data.session) throw redirect({ to: '/auth', search: { redirect: location.pathname + location.searchStr + location.hash } });
   },
   loader: async ({ location }) => {
     const id = new URLSearchParams(location.searchStr).get('authorization_id');
@@ -29,7 +29,7 @@ export const Route = createFileRoute('/.lovable/oauth/consent')({
     const { data: session } = await supabase.auth.getSession();
     return { details: data, account: session.session?.user.email ?? '' };
   },
-  errorComponent: ({ error }) => <main className="mx-auto max-w-lg px-4 py-16"><h1 className="text-2xl">Connexion non disponible</h1><p role="alert" className="mt-4 text-muted-foreground">{error.message}</p></main>,
+  errorComponent: ({ error }) => <main className="mx-auto max-w-lg px-4 py-16"><h1 className="text-2xl">Connexion non disponible</h1><p role="alert" className="mt-4 text-muted-foreground">{error instanceof Error ? error.message : 'La demande est indisponible. Relancez la connexion depuis votre agent.'}</p></main>,
   component: Consent,
 });
 function Consent() {
