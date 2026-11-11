@@ -111,3 +111,11 @@
 - [x] Deux pages joueur/organisateur, coordonnées complètes privées et conservation d’un compte unique pouvant jouer.
 - [x] Validation et affichage téléphone vérifiés, 13 tests réussis ; coordonnées transmises sans permissions et reprises dans la création d’organisation. Confirmation vérifiée avec une réponse simulée, pas de compte ni d’e-mail réel créé pendant ce contrôle.
 - [ ] Ouverture générale des nouveaux espaces organisateurs : dépend des vérifications multi-organisations encore ouvertes ci-dessus ; le verrou existant est conservé.
+
+## Multi-organisations — suite du 11 novembre 2026
+- [x] Visibilité publique/privée de chaque organisation (page publique masquée si privée).
+- [x] Page publique : logo, couverture, couleur principale et liens réseaux sociaux (https uniquement).
+- [x] Modification d'un tournoi non lancé depuis l'espace organisation ; rôles et statuts en français.
+- [x] Liste d'autorisation de création d'organisation (compte test wayneless).
+- [ ] Ouverture générale de la création : attend la validation par les tests de l'utilisateur.
+- [ ] Restant : parties libres atomiques, concurrence fin de poules, profil universel complet, signalements, pagination complète.
