@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { FitToScreen } from "@/components/fit-to-screen";
-import { QRCodeSVG } from "qrcode.react";
+import { QrImage } from "@/components/qr-image";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Play, Trash2, Trophy, Plus, Check, Pencil, PencilLine, Mail, KeyRound, ChevronDown, X, Maximize2 } from "lucide-react";
 import { toast } from "sonner";
@@ -555,13 +555,11 @@ list.map(({ i, ms, rows }) => {
           </form>
           {accessCode && typeof window !== "undefined" && (
             <div className="mt-4 flex flex-wrap items-center gap-4">
-              <div className="rounded-lg bg-foreground p-3">
-                <QRCodeSVG
-                  value={`${window.location.origin}/tournois/${tournamentId}/jouer?code=${encodeURIComponent(accessCode)}`}
-                  size={160}
-                  aria-label="QR code d'accès au tournoi"
-                />
-              </div>
+              <QrImage
+                value={`${window.location.origin}/tournois/${tournamentId}/jouer?code=${encodeURIComponent(accessCode)}`}
+                fileName={`qr-code-tournoi-${tournamentId.slice(0, 8)}.png`}
+                label="QR code d'accès au tournoi"
+              />
               <p className="max-w-xs text-xs text-muted-foreground">
                 QR code d'accès (visible uniquement par les admins). Le scanner ouvre le tournoi sans saisir le code ;
                 il devra être scanné à nouveau seulement si vous modifiez le code.
