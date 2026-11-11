@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { FitToScreen } from "@/components/fit-to-screen";
 import { QRCodeSVG } from "qrcode.react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Play, Trash2, Trophy, Plus, Check, Pencil, PencilLine, Mail, KeyRound, ChevronDown, X } from "lucide-react";
+import { Play, Trash2, Trophy, Plus, Check, Pencil, PencilLine, Mail, KeyRound, ChevronDown, X, Maximize2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,6 +66,8 @@ export function TournamentBoard({
   const [poolView, setPoolView] = useState<"all" | number>("all");
   const [view, setView] = useState<"pools" | "final" | "consolation">("pools");
   const [busy, setBusy] = useState(false);
+  const [screenOpen, setScreenOpen] = useState(false);
+  const [screenViews, setScreenViews] = useState<("pools" | "final" | "consolation")[]>([]);
   const [accessCode, setAccessCode] = useState<string | null>(null);
   const [codeDraft, setCodeDraft] = useState("");
 
@@ -177,7 +180,45 @@ export function TournamentBoard({
     return left === 0 ? "Finale" : left === 1 ? "Demi-finales" : left === 2 ? "Quarts de finale" : `Tour ${r}`;
   };
 
-  const finalSection =
+  const renderPools = (list: typeof poolData, admin: boolean) =>
+list.map(({ i, ms, rows }) => {
+              return (
+                <div key={i} className="tournament-pool">
+                  <h3 className="text-lg text-primary">{poolName(i)}</h3>
+                  <table className="mt-2 w-full text-sm">
+                    <thead className="text-xs text-muted-foreground">
+                      <tr>
+                        <th className="text-left">#</th>
+                        <th className="text-left">{isTeam ? "Équipe" : "Joueur"}</th>
+                        <th>J</th>
+                        <th>V</th>
+                        <th>D</th>
+                        <th title="Points restants cumulés sur les matchs perdus — le moins possible">Pts</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((r, k) => (
+                        <tr key={r.team} className={k < 2 ? "font-semibold" : "text-muted-foreground"}>
+                          <td>{k + 1}</td>
+                          <td>{name(r.team)}</td>
+                          <td className="text-center">{r.played}</td>
+                          <td className="text-center">{r.wins}</td>
+                          <td className="text-center">{r.losses}</td>
+                          <td className="text-center">{r.diff}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="mt-3 space-y-1.5">
+                    {ms.map((m) => (
+                      <MatchRow key={m.id} m={m} name={name} admin={admin} onSave={(a, b) => run(() => reportMatch({ data: { matchId: m.id, scoreA: a, scoreB: b } }), "Résultat enregistré.")} />
+                    ))}
+                  </div>
+                </div>
+              );
+            });
+
+  const renderFinal = (admin: boolean) =>
     bracket.length > 0 ? (
       <div>
         <h2 className="text-2xl">Tableau final</h2>
@@ -271,7 +312,7 @@ export function TournamentBoard({
       </div>
     ) : null;
 
-  const consolationSection =
+  const renderConsolation = (admin: boolean) =>
     consolation.length > 0 ? (
       <div>
         <h2 className="text-2xl">Consolante</h2>
@@ -325,6 +366,20 @@ export function TournamentBoard({
       </div>
     ) : null;
 
+  const screenOptions = [
+    ...(showPools ? [["pools", "Poules"] as const] : []),
+    ...(hasFinal ? [["final", "Tableau final"] as const] : []),
+    ...(hasConsolation ? [["consolation", "Consolante"] as const] : []),
+  ];
+  const openScreen = () => {
+    setScreenViews((cur) => (cur.length ? cur : [view && screenOptions.some(([v]) => v === view) ? view : screenOptions[0]![0]]));
+    setScreenOpen(true);
+    void document.documentElement.requestFullscreen?.().catch(() => {});
+  };
+  const closeScreen = () => {
+    setScreenOpen(false);
+    if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
+  };
   return (
     <section className="mt-10 space-y-8 border-t border-border pt-8">
       <div>
@@ -516,6 +571,22 @@ export function TournamentBoard({
         </div>
       )}
 
+      {screenOptions.length > 0 && (
+        <Button variant="outline" onClick={openScreen} className="h-10 px-4">
+          <Maximize2 className="h-4 w-4" /> Plein écran
+        </Button>
+      )}
+
+      {screenOpen && (
+        <TournamentScreen
+          options={screenOptions}
+          selected={screenViews}
+          onToggle={(v) => setScreenViews((cur) => (cur.includes(v) ? (cur.length > 1 ? cur.filter((x) => x !== v) : cur) : [...cur, v]))}
+          onClose={closeScreen}
+          render={(v) => (v === "pools" ? <div><h2 className="text-2xl">Poules</h2><div className={`mt-4 grid gap-4 ${poolData.length > 1 ? (screenViews.length === 1 ? "grid-cols-2 xl:grid-cols-4" : "grid-cols-2") : ""}`}>{renderPools(poolData, false)}</div></div> : v === "final" ? renderFinal(false) : renderConsolation(false))}
+        />
+      )}
+
       {several && (
         <div className="flex flex-wrap gap-2">
           {(
@@ -555,49 +626,14 @@ export function TournamentBoard({
             </div>
           </div>
           <div className={`mt-4 grid gap-4 ${poolView === "all" ? "md:grid-cols-2" : ""}`}>
-            {poolData.filter((p) => poolView === "all" || p.i === poolView).map(({ i, ms, rows }) => {
-              return (
-                <div key={i} className="tournament-pool">
-                  <h3 className="text-lg text-primary">{poolName(i)}</h3>
-                  <table className="mt-2 w-full text-sm">
-                    <thead className="text-xs text-muted-foreground">
-                      <tr>
-                        <th className="text-left">#</th>
-                        <th className="text-left">{isTeam ? "Équipe" : "Joueur"}</th>
-                        <th>J</th>
-                        <th>V</th>
-                        <th>D</th>
-                        <th title="Points restants cumulés sur les matchs perdus — le moins possible">Pts</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.map((r, k) => (
-                        <tr key={r.team} className={k < 2 ? "font-semibold" : "text-muted-foreground"}>
-                          <td>{k + 1}</td>
-                          <td>{name(r.team)}</td>
-                          <td className="text-center">{r.played}</td>
-                          <td className="text-center">{r.wins}</td>
-                          <td className="text-center">{r.losses}</td>
-                          <td className="text-center">{r.diff}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  <div className="mt-3 space-y-1.5">
-                    {ms.map((m) => (
-                      <MatchRow key={m.id} m={m} name={name} admin={admin} onSave={(a, b) => run(() => reportMatch({ data: { matchId: m.id, scoreA: a, scoreB: b } }), "Résultat enregistré.")} />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+            {renderPools(poolData.filter((p) => poolView === "all" || p.i === poolView), admin)}
           </div>
         </div>
       )}
 
-      {showFinalView && finalSection}
+      {showFinalView && renderFinal(admin)}
 
-      {showConsolationView && consolationSection}
+      {showConsolationView && renderConsolation(admin)}
     </section>
   );
 }
@@ -718,6 +754,54 @@ function MatchRow({
           </Button>
         </form>
       )}
+    </div>
+  );
+}
+
+type ScreenView = "pools" | "final" | "consolation";
+
+function TournamentScreen({ options, selected, onToggle, onClose, render }: {
+  options: readonly (readonly [ScreenView, string])[];
+  selected: ScreenView[];
+  onToggle: (v: ScreenView) => void;
+  onClose: () => void;
+  render: (v: ScreenView) => React.ReactNode;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    // Leaving browser fullscreen with Esc also closes the display.
+    const onChange = () => { if (!document.fullscreenElement) onClose(); };
+    window.addEventListener("keydown", onKey);
+    document.addEventListener("fullscreenchange", onChange);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.removeEventListener("fullscreenchange", onChange);
+      document.body.style.overflow = prev;
+    };
+  }, [onClose]);
+  const shown = options.filter(([v]) => selected.includes(v));
+  return (
+    <div role="dialog" aria-modal="true" aria-label="Affichage plein écran du tournoi" className="fixed inset-0 z-[100] flex flex-col bg-background p-4">
+      <div className="flex items-center gap-2 pr-12">
+        <span className="mr-2 text-sm text-muted-foreground">Afficher :</span>
+        {options.map(([v, label]) => (
+          <Button key={v} size="sm" variant={selected.includes(v) ? "default" : "outline"} aria-pressed={selected.includes(v)} onClick={() => onToggle(v)}>
+            {label}
+          </Button>
+        ))}
+      </div>
+      <button type="button" onClick={onClose} aria-label="Quitter le plein écran" className="absolute right-3 top-3 rounded-full border border-border bg-card p-2 text-foreground hover:border-primary">
+        <X className="h-5 w-5" />
+      </button>
+      <div className="mt-4 grid min-h-0 flex-1 gap-6" style={{ gridTemplateColumns: `repeat(${shown.length}, minmax(0, 1fr))` }}>
+        {shown.map(([v]) => (
+          <div key={v} className="min-h-0 min-w-0">
+            <FitToScreen>{render(v)}</FitToScreen>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
