@@ -9,12 +9,18 @@ export function FitToScreen({ children }: { children: ReactNode }) {
     const o = outer.current, i = inner.current;
     if (!o || !i) return;
     const fit = () => {
+      const fits = (x: number) => {
+        i.style.width = `${o.clientWidth / x}px`;
+        return i.scrollHeight * x <= o.clientHeight + 1;
+      };
       let s = 1;
-      for (let k = 0; k < 6; k++) {
-        i.style.width = `${o.clientWidth / s}px`;
-        const next = Math.min(1, o.clientHeight / Math.max(1, i.scrollHeight), (o.clientWidth / Math.max(1, i.scrollWidth)) * s);
-        if (Math.abs(next - s) < 0.01) { s = next; break; }
-        s = next;
+      if (!fits(1)) {
+        let lo = 0.15, hi = 1;
+        for (let k = 0; k < 12; k++) {
+          const mid = (lo + hi) / 2;
+          if (fits(mid)) lo = mid; else hi = mid;
+        }
+        s = lo;
       }
       i.style.width = `${o.clientWidth / s}px`;
       setScale(s);

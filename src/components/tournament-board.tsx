@@ -783,7 +783,7 @@ function TournamentScreen({ options, selected, onToggle, onClose, render }: {
   }, [onClose]);
   const shown = options.filter(([v]) => selected.includes(v));
   return (
-    <div role="dialog" aria-modal="true" aria-label="Affichage plein écran du tournoi" className="fixed inset-0 z-[100] flex flex-col bg-background p-4">
+    <div role="dialog" aria-modal="true" aria-label="Affichage plein écran du tournoi" className="fixed left-0 top-0 z-[100] flex h-[100dvh] w-screen flex-col bg-background p-4">
       <div className="flex items-center gap-2 pr-12">
         <span className="mr-2 text-sm text-muted-foreground">Afficher :</span>
         {options.map(([v, label]) => (
