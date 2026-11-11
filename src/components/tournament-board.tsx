@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { FitToScreen } from "@/components/fit-to-screen";
 import { QRCodeSVG } from "qrcode.react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -765,7 +765,7 @@ function TournamentScreen({ options, selected, onToggle, onClose, render }: {
   selected: ScreenView[];
   onToggle: (v: ScreenView) => void;
   onClose: () => void;
-  render: (v: ScreenView) => React.ReactNode;
+  render: (v: ScreenView) => ReactNode;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
