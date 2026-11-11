@@ -267,6 +267,13 @@
       "when": 1794391329570,
       "tag": "0037_organization_public_read_visibility",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1794392218753,
+      "tag": "0038_atomic_free_game_and_reports",
+      "breakpoints": true
     }
   ]
 }
