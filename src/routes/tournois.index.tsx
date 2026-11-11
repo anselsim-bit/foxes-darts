@@ -11,7 +11,7 @@ const tournamentsQuery = queryOptions({
 });
 
 export const Route = createFileRoute("/tournois/")({
-  validateSearch: (search: Record<string, unknown>): { organisation?: string } => ({ organisation: typeof search["organisation"] === "string" ? search["organisation"] : undefined }),
+  validateSearch: (search: Record<string, unknown>): { organisation?: string | undefined } => ({ organisation: typeof search["organisation"] === "string" ? search["organisation"] : undefined }),
   loader: ({ context }) => context.queryClient.ensureQueryData(tournamentsQuery),
   head: () => ({
     meta: [
