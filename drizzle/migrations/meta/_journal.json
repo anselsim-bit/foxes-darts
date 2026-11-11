@@ -253,6 +253,13 @@
       "when": 1794390770256,
       "tag": "0035_organization_onboarding_allowlist",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1794391318507,
+      "tag": "0036_organization_visibility",
+      "breakpoints": true
     }
   ]
 }
