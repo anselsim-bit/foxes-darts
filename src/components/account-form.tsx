@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Target } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/platform-ui";
 import { organizerFields, signupMetadata, signupDestination, type SignupKind } from "@/lib/signup-data";
 
-export function AccountForm({ kind, redirectTo }: { kind?: SignupKind; redirectTo?: string }) {
-  const [mode] = useState<"login" | "signup">(kind ? "signup" : "login");
+export function AccountForm({ kind, redirectTo }: { kind?: SignupKind; redirectTo?: string | undefined }) {
+  const mode = kind ? "signup" : "login";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
@@ -18,6 +18,14 @@ export function AccountForm({ kind, redirectTo }: { kind?: SignupKind; redirectT
   const [confirmEmail, setConfirmEmail] = useState(false);
   const navigate = useNavigate();
   const goBack = () => navigate({ to: signupDestination(kind ?? "player", redirectTo) });
+  useEffect(() => {
+    if (kind || !redirectTo) return;
+    let active = true;
+    void supabase.auth.getUser().then(({ data }) => {
+      if (active && data.user) void navigate({ to: redirectTo });
+    });
+    return () => { active = false; };
+  }, [kind, redirectTo, navigate]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
