@@ -138,8 +138,13 @@ export const getTournament = createServerFn({ method: "GET" })
       .from("tournament_teams")
       .select("id", { count: "exact", head: true })
       .eq("tournament_id", t.id);
+    const { data: orgSettings } = t.organization_id
+      ? await supabase.rpc("get_public_organization_settings", { _organization_id: t.organization_id })
+      : { data: null };
+    const primary = (orgSettings as { primary_color?: string | null } | null)?.primary_color ?? null;
     return {
       ...t,
+      primary_color: primary,
       image_url: resolveImage(t.image_url, signed),
       registrations_count: count ?? 0,
     };
