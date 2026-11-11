@@ -246,6 +246,13 @@
       "when": 1794247808482,
       "tag": "0034_atomic_match_commit_and_progression",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1794390770256,
+      "tag": "0035_organization_onboarding_allowlist",
+      "breakpoints": true
     }
   ]
 }
