@@ -112,6 +112,8 @@ export function Game({
   const remaining = (scores[playerIdx] ?? start) - (pendingBust === true ? 0 : current.reduce((a, d) => a + d.value, 0));
   const activeDoubleOut = requiresDouble(doubleOut, poolDoubleLimit, doubleAttempts[playerIdx] ?? 0);
   const notifiedSimple = useRef(new Set<number>());
+  // Clé unique par partie terminée : un double envoi (réseau lent, double clic) n'enregistre qu'une fois.
+  const saveKey = useRef<string | null>(null);
   useEffect(() => {
     for (const index of notifiedSimple.current) {
       if ((doubleAttempts[index] ?? 0) < 5) notifiedSimple.current.delete(index);
@@ -174,14 +176,17 @@ export function Game({
     setTurns(turns.slice(0, -1));
     setCurrent(last.darts.slice(0, -1));
     setSaved(false);
+    saveKey.current = null;
   };
 
   const save = async () => {
     if (winner === null) return;
+    if (!saveKey.current) saveKey.current = crypto.randomUUID();
     setSaving(true);
     try {
       await saveGameResult({
         data: {
+          clientKey: saveKey.current,
           tournamentId,
           startScore: start,
           doubleOut,
