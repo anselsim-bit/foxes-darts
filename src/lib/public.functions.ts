@@ -142,8 +142,16 @@ export const getTournament = createServerFn({ method: "GET" })
       ? await supabase.rpc("get_public_organization_settings", { _organization_id: t.organization_id })
       : { data: null };
     const theme = (orgSettings ?? null) as { primary_color?: string | null; secondary_color?: string | null; theme_colors?: Record<string, string> } | null;
+    let organizer: { name: string; slug: string; logoUrl: string | null } | null = null;
+    if (t.organization_id) {
+      const { data: org } = await supabase.from("organizations").select("name, slug").eq("id", t.organization_id).maybeSingle();
+      const logoPath = (orgSettings as { logo_path?: string | null } | null)?.logo_path ?? null;
+      const signedLogo = logoPath ? await signImageUrls(supabase, [logoPath], t.organization_id) : {};
+      if (org) organizer = { name: org.name, slug: org.slug, logoUrl: logoPath ? signedLogo[logoPath] ?? null : null };
+    }
     return {
       ...t,
+      organizer,
       primary_color: theme?.primary_color ?? null,
       theme: theme ? { primary_color: theme.primary_color ?? null, secondary_color: theme.secondary_color ?? null, theme_colors: theme.theme_colors ?? {} } : null,
       image_url: resolveImage(t.image_url, signed),

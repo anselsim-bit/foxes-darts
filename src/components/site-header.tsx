@@ -1,4 +1,4 @@
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, useMatches, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Menu, X, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,16 @@ export function SiteHeader() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [newCount, setNewCount] = useState(0);
   const navigate = useNavigate();
+  // On a tournament page, show the organizing club instead of Foxes Darts.
+  const organizer = useMatches({
+    select: (ms) => {
+      for (const m of ms) {
+        const o = (m.loaderData as { organizer?: { name: string; slug: string; logoUrl: string | null } | null } | undefined)?.organizer;
+        if (o) return o;
+      }
+      return null;
+    },
+  });
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const currentHref = useRouterState({ select: (s) => s.location.href });
   const authSearch = currentHref === "/auth" ? {} : { redirect: currentHref };
@@ -78,15 +88,26 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2">
-          <img
-            src={logoAsset.url}
-            alt="Logo Foxes Darts"
-            className="h-10 w-10 rounded-full object-cover"
-            style={{ objectPosition: "50% 45%" }}
-          />
-          <span className="font-display text-lg uppercase tracking-wide">
-            Foxes <span className="text-gradient-ember">Darts</span>
-          </span>
+          {organizer ? (
+            <>
+              {organizer.logoUrl && (
+                <img src={organizer.logoUrl} alt={`Logo ${organizer.name}`} className="h-10 w-10 rounded-full object-cover" />
+              )}
+              <span className="max-w-[12rem] truncate font-display text-lg uppercase tracking-wide sm:max-w-xs">{organizer.name}</span>
+            </>
+          ) : (
+            <>
+              <img
+                src={logoAsset.url}
+                alt="Logo Foxes Darts"
+                className="h-10 w-10 rounded-full object-cover"
+                style={{ objectPosition: "50% 45%" }}
+              />
+              <span className="font-display text-lg uppercase tracking-wide">
+                Foxes <span className="text-gradient-ember">Darts</span>
+              </span>
+            </>
+          )}
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
