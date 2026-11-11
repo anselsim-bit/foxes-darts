@@ -110,3 +110,19 @@ export const getPlatformAdmin=createServerFn({method:"GET"}).middleware([require
   return {organizations:orgs.data??[],users:users.data??[],audit:audit.data??[],roles:roles.data??[],counts:counts.data as Record<string,number>|null,totalOrganizations:orgs.count??0,totalUsers:users.count??0};
 });
 export const setOrganizationStatus=createServerFn({method:"POST"}).middleware([requireSupabaseAuth]).inputValidator((input:{id:string;status:string})=>input).handler(async ({data,context})=>{await requirePlatformAdmin(context);const {error}=await context.supabase.rpc("set_organization_status",{_organization_id:data.id,_status:data.status});if(error)throw new Error("Modification du statut refusée.");return {ok:true};});
+export const submitReport=createServerFn({method:"POST"}).middleware([requireSupabaseAuth]).inputValidator((input:{organizationId?:string|null;tournamentId?:string|null;reason:string})=>{const reason=String(input.reason??"").trim().slice(0,1000);if(reason.length<5)throw new Error("Décrivez le problème en quelques mots (5 caractères minimum).");const id=(v:unknown)=>typeof v==="string"&&/^[0-9a-f-]{36}$/i.test(v)?v:null;const organizationId=id(input.organizationId),tournamentId=id(input.tournamentId);if(!organizationId&&!tournamentId)throw new Error("Signalement invalide.");return {organizationId,tournamentId,reason};}).handler(async ({data,context})=>{
+  const {count}=await context.supabase.from("content_reports").select("id",{count:"exact",head:true}).eq("reporter_id",context.userId).gte("created_at",new Date(Date.now()-86400000).toISOString());
+  if((count??0)>=10)throw new Error("Trop de signalements aujourd'hui, réessayez demain.");
+  const {error}=await context.supabase.from("content_reports").insert({reporter_id:context.userId,organization_id:data.organizationId,tournament_id:data.tournamentId,reason:data.reason});
+  if(error)throw new Error("Signalement impossible.");return {ok:true};
+});
+export const listReports=createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).handler(async ({context})=>{
+  await requirePlatformAdmin(context);
+  const {data}=await context.supabase.from("content_reports").select("id,reason,status,created_at,organizations(name,slug),tournaments(id,title),profiles(display_name)").order("created_at",{ascending:false}).limit(100);
+  return data??[];
+});
+export const resolveReport=createServerFn({method:"POST"}).middleware([requireSupabaseAuth]).inputValidator((input:{id:string;status:"resolved"|"dismissed"})=>({id:String(input.id),status:input.status==="dismissed"?"dismissed" as const:"resolved" as const})).handler(async ({data,context})=>{
+  await requirePlatformAdmin(context);
+  const {error}=await context.supabase.from("content_reports").update({status:data.status,resolved_at:new Date().toISOString()}).eq("id",data.id);
+  if(error)throw new Error("Mise à jour impossible.");return {ok:true};
+});
