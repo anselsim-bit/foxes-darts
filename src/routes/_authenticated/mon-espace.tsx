@@ -45,6 +45,8 @@ function MonEspace() {
   const { data } = useSuspenseQuery(mySpaceQuery);
   const queryClient = useQueryClient();
   const [displayName, setDisplayName] = useState(data.profile.display_name);
+  const [firstName, setFirstName] = useState(data.profile.first_name);
+  const [lastName, setLastName] = useState(data.profile.last_name);
   const [saving, setSaving] = useState(false);
   const [announcements, setAnnouncements] = useState(data.profile.tournament_announcements);
 
@@ -65,7 +67,7 @@ function MonEspace() {
   const saveProfile = async () => {
     setSaving(true);
     try {
-      await updateMyProfile({ data: { displayName } });
+      await updateMyProfile({ data: { displayName, firstName, lastName } });
       toast.success("Profil mis à jour.");
       queryClient.invalidateQueries({ queryKey: ["my-space"] });
     } catch (e) {
@@ -111,6 +113,14 @@ function MonEspace() {
               }}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             />
+          </div>
+          <div className="flex-1 min-w-40">
+            <label className="mb-1 block text-sm font-medium" htmlFor="firstName">Prénom</label>
+            <input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); if (!saving) void saveProfile(); } }} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
+          </div>
+          <div className="flex-1 min-w-40">
+            <label className="mb-1 block text-sm font-medium" htmlFor="lastName">Nom</label>
+            <input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); if (!saving) void saveProfile(); } }} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
           </div>
           <button
             onClick={saveProfile}
