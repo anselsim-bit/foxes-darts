@@ -60,16 +60,25 @@ export const listTournaments = createServerFn({ method: "GET" }).handler(async (
   if (error) throw new Error(error.message);
   const rows = data ?? [];
   const signed: Record<string, string> = {};
+  const covers: Record<string, string> = {};
   for (const orgId of new Set(rows.map((t) => t.organization_id ?? ""))) {
     const paths = rows.filter((t) => (t.organization_id ?? "") === orgId).map((t) => t.image_url ?? "").filter(Boolean);
+    // Tournaments without their own image fall back to the organization's public cover.
+    let coverPath: string | null = null;
+    if (orgId && rows.some((t) => t.organization_id === orgId && !t.image_url)) {
+      const { data: info } = await supabase.rpc("get_public_organization_settings", { _organization_id: orgId });
+      coverPath = (info as { cover_path?: string | null } | null)?.cover_path ?? null;
+      if (coverPath) paths.push(coverPath);
+    }
     if (paths.length) Object.assign(signed, await signImageUrls(supabase, paths, orgId || undefined));
+    if (coverPath && signed[coverPath]) covers[orgId] = signed[coverPath]!;
   }
   return rows.map(({ tournament_teams, organizations, ...t }) => ({
     ...t,
     organization_name: (organizations as { name: string; slug: string } | null)?.name ?? null,
     organization_slug: (organizations as { name: string; slug: string } | null)?.slug ?? null,
     registrations_count: tournament_teams[0]?.count ?? 0,
-    image_url: resolveImage(t.image_url, signed),
+    image_url: resolveImage(t.image_url, signed) ?? covers[t.organization_id ?? ""] ?? null,
   }));
 });
 
@@ -149,12 +158,15 @@ export const getTournament = createServerFn({ method: "GET" })
       const signedLogo = logoPath ? await signImageUrls(supabase, [logoPath], t.organization_id) : {};
       if (org) organizer = { name: org.name, slug: org.slug, logoUrl: logoPath ? signedLogo[logoPath] ?? null : null };
     }
+    let coverUrl: string | null = null;
+    const coverPath = (orgSettings as { cover_path?: string | null } | null)?.cover_path ?? null;
+    if (!t.image_url && coverPath && t.organization_id) coverUrl = (await signImageUrls(supabase, [coverPath], t.organization_id))[coverPath] ?? null;
     return {
       ...t,
       organizer,
       primary_color: theme?.primary_color ?? null,
       theme: theme ? { primary_color: theme.primary_color ?? null, secondary_color: theme.secondary_color ?? null, theme_colors: theme.theme_colors ?? {} } : null,
-      image_url: resolveImage(t.image_url, signed),
+      image_url: resolveImage(t.image_url, signed) ?? coverUrl,
       registrations_count: count ?? 0,
     };
   });
