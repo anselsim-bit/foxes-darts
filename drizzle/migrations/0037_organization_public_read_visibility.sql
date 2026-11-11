@@ -1,0 +1,2 @@
+DROP POLICY organizations_public_read ON public.organizations;
+CREATE POLICY organizations_public_read ON public.organizations FOR SELECT TO anon, authenticated USING (status = 'active' AND visibility = 'public');

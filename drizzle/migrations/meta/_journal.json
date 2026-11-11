@@ -260,6 +260,13 @@
       "when": 1794391318507,
       "tag": "0036_organization_visibility",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1794391329570,
+      "tag": "0037_organization_public_read_visibility",
+      "breakpoints": true
     }
   ]
 }
