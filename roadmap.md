@@ -106,3 +106,7 @@
 ## État de validation de la livraison complète
 - [x] Création d’un espace et tournoi via les formulaires, isolation avec le second compte, lancement et résultat 2–1 vérifiés ; données temporaires retirées et empreinte des 39 matchs Foxes inchangée.
 - [ ] Compléments détaillés dans docs/multi-organisations-livraison.md : invitation bout en bout, profil/avatar, édition locale complète, publication privée, statistiques atomiques, limites et personnalisation publique ; ouverture toujours verrouillée.
+
+## Inscriptions distinctes — 11 novembre 2026
+- [ ] Deux pages joueur/organisateur, coordonnées complètes privées et conservation d’un compte unique pouvant jouer.
+- [ ] Vérifier validation, accès aux formulaires et reprise des coordonnées sans attribuer de permissions depuis l’inscription.

@@ -29,3 +29,5 @@
 - Every text input that has an associated action (add, rename, register, validate, save) must trigger that action on Enter — use a real `<form>` with a submit button where possible, otherwise an Enter key handler — so typing never needs a mouse.
 - Boards subscribe to tournament table changes with effect cleanup. Code-validated live_legs updates remain provisional; only final reporting advances teams — shows live legs without prematurely changing brackets.
 - Pool standings add only the loser's remaining points (winner takes none); fewer points ranks higher. The main bracket, small_final (semi-final losers, 3rd place) and consolation bracket (non-qualifiers, when the flag is on) are generated automatically by generateFinalsIfPoolsDone when the last pool result is saved — no admin button; every knockout stage is two winning legs, only pools are single-leg.
+
+- Separate signup routes share AccountForm; organizer signup metadata contains private contact preferences only, never permissions; organization ownership still requires the gated transactional creation flow.
