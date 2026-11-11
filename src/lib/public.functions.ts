@@ -25,7 +25,7 @@ export function publicClient() {
 // Photos live in a private bucket: paths are turned into short-lived signed URLs.
 // Signing uses the server-only admin client so the bucket needs no public read rule;
 // only paths already referenced by published rows are signed.
-async function signImageUrls(
+export async function signImageUrls(
   supabase: ReturnType<typeof publicClient>,
   paths: string[],
   organizationId?: string,
