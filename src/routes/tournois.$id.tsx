@@ -3,6 +3,7 @@ import { queryOptions, useSuspenseQuery, useQueryClient } from "@tanstack/react-
 import { useEffect, useState } from "react";
 import { CalendarDays, MapPin, Ticket, Users } from "lucide-react";
 import { toast } from "sonner";
+import heroImg from "@/assets/hero-darts.jpg";
 import { getTournament } from "@/lib/public.functions";
 import {
   registerForTournament,
@@ -117,13 +118,11 @@ function TournamentDetail() {
         ← Tous les tournois
       </Link>
 
-      {tournament.image_url && (
-        <img
-          src={tournament.image_url}
-          alt={tournament.title}
-          className="mt-6 max-h-96 w-full rounded-2xl border border-border object-cover"
-        />
-      )}
+      <img
+        src={tournament.image_url || heroImg}
+        alt={tournament.title}
+        className="mt-6 max-h-96 w-full rounded-2xl border border-border object-cover"
+      />
 
       <h1 className="mt-6 break-words text-3xl sm:text-4xl">{tournament.title}</h1>
 
