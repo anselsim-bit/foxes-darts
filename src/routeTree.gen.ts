@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SlugRouteImport } from './routes/$slug'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ClassementsRouteImport } from './routes/classements'
@@ -35,11 +36,15 @@ import { Route as ApiPublicHooksHelloassoSyncRouteImport } from './routes/api/pu
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
-import { Route as OSlugTournamentIdRouteImport } from './routes/o.$slug.tournament.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SlugRoute = SlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -171,14 +176,10 @@ const LovableEmailTransactionalPreviewRoute =
     path: '/lovable/email/transactional/preview',
     getParentRoute: () => rootRouteImport,
   } as any)
-const OSlugTournamentIdRoute = OSlugTournamentIdRouteImport.update({
-  id: '/tournament/$id',
-  path: '/tournament/$id',
-  getParentRoute: () => OSlugRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$slug': typeof SlugRoute
   '/auth': typeof AuthRoute
   '/classements': typeof ClassementsRoute
   '/compteur': typeof CompteurRoute
@@ -193,7 +194,7 @@ export interface FileRoutesByFullPath {
   '/mon-espace': typeof AuthenticatedMonEspaceRoute
   '/inscription/joueur': typeof InscriptionJoueurRoute
   '/inscription/organisateur': typeof InscriptionOrganisateurRoute
-  '/o/$slug': typeof OSlugRouteWithChildren
+  '/o/$slug': typeof OSlugRoute
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois/': typeof TournoisIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -203,10 +204,10 @@ export interface FileRoutesByFullPath {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
-  '/o/$slug/tournament/$id': typeof OSlugTournamentIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$slug': typeof SlugRoute
   '/auth': typeof AuthRoute
   '/classements': typeof ClassementsRoute
   '/compteur': typeof CompteurRoute
@@ -221,7 +222,7 @@ export interface FileRoutesByTo {
   '/mon-espace': typeof AuthenticatedMonEspaceRoute
   '/inscription/joueur': typeof InscriptionJoueurRoute
   '/inscription/organisateur': typeof InscriptionOrganisateurRoute
-  '/o/$slug': typeof OSlugRouteWithChildren
+  '/o/$slug': typeof OSlugRoute
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois': typeof TournoisIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -231,12 +232,12 @@ export interface FileRoutesByTo {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
-  '/o/$slug/tournament/$id': typeof OSlugTournamentIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/$slug': typeof SlugRoute
   '/auth': typeof AuthRoute
   '/classements': typeof ClassementsRoute
   '/compteur': typeof CompteurRoute
@@ -251,7 +252,7 @@ export interface FileRoutesById {
   '/_authenticated/mon-espace': typeof AuthenticatedMonEspaceRoute
   '/inscription/joueur': typeof InscriptionJoueurRoute
   '/inscription/organisateur': typeof InscriptionOrganisateurRoute
-  '/o/$slug': typeof OSlugRouteWithChildren
+  '/o/$slug': typeof OSlugRoute
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois/': typeof TournoisIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -261,12 +262,12 @@ export interface FileRoutesById {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
-  '/o/$slug/tournament/$id': typeof OSlugTournamentIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/$slug'
     | '/auth'
     | '/classements'
     | '/compteur'
@@ -291,10 +292,10 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
-    | '/o/$slug/tournament/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/$slug'
     | '/auth'
     | '/classements'
     | '/compteur'
@@ -319,11 +320,11 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
-    | '/o/$slug/tournament/$id'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/$slug'
     | '/auth'
     | '/classements'
     | '/compteur'
@@ -348,12 +349,12 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
-    | '/o/$slug/tournament/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  SlugRoute: typeof SlugRoute
   AuthRoute: typeof AuthRoute
   ClassementsRoute: typeof ClassementsRoute
   CompteurRoute: typeof CompteurRoute
@@ -363,7 +364,7 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   InscriptionJoueurRoute: typeof InscriptionJoueurRoute
   InscriptionOrganisateurRoute: typeof InscriptionOrganisateurRoute
-  OSlugRoute: typeof OSlugRouteWithChildren
+  OSlugRoute: typeof OSlugRoute
   TournoisIdRoute: typeof TournoisIdRoute
   TournoisIndexRoute: typeof TournoisIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
@@ -381,6 +382,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$slug': {
+      id: '/$slug'
+      path: '/$slug'
+      fullPath: '/$slug'
+      preLoaderRoute: typeof SlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -558,13 +566,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/o/$slug/tournament/$id': {
-      id: '/o/$slug/tournament/$id'
-      path: '/tournament/$id'
-      fullPath: '/o/$slug/tournament/$id'
-      preLoaderRoute: typeof OSlugTournamentIdRouteImport
-      parentRoute: typeof OSlugRoute
-    }
   }
 }
 
@@ -590,19 +591,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
-interface OSlugRouteChildren {
-  OSlugTournamentIdRoute: typeof OSlugTournamentIdRoute
-}
-
-const OSlugRouteChildren: OSlugRouteChildren = {
-  OSlugTournamentIdRoute: OSlugTournamentIdRoute,
-}
-
-const OSlugRouteWithChildren = OSlugRoute._addFileChildren(OSlugRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  SlugRoute: SlugRoute,
   AuthRoute: AuthRoute,
   ClassementsRoute: ClassementsRoute,
   CompteurRoute: CompteurRoute,
@@ -613,7 +605,7 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   InscriptionJoueurRoute: InscriptionJoueurRoute,
   InscriptionOrganisateurRoute: InscriptionOrganisateurRoute,
-  OSlugRoute: OSlugRouteWithChildren,
+  OSlugRoute: OSlugRoute,
   TournoisIdRoute: TournoisIdRoute,
   TournoisIndexRoute: TournoisIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,

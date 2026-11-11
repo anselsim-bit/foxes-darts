@@ -52,18 +52,22 @@ function resolveImage(path: string | null, signed: Record<string, string>): stri
 
 export const listTournaments = createServerFn({ method: "GET" }).handler(async () => {
   const supabase = publicClient();
+  // Tous les tournois publics, toutes organisations confondues (RLS filtre les organisations privées).
   const { data, error } = await supabase
     .from("tournaments")
-    .select("id, title, event_date, start_time, end_time, format, max_participants, team_size, pool_count, start_score, double_out, final_start_score, final_double_out, consolation_start_score, consolation_double_out, pool_double_limit, consolation_double_limit, consolation, status, location, description, helloasso_url, image_url, tournament_teams(count)")
-    .eq("organization_id", await centralOrganizationId(supabase))
+    .select("id, title, event_date, start_time, end_time, format, max_participants, team_size, pool_count, start_score, double_out, final_start_score, final_double_out, consolation_start_score, consolation_double_out, pool_double_limit, consolation_double_limit, consolation, status, location, description, helloasso_url, image_url, organization_id, organizations(name, slug), tournament_teams(count)")
     .order("event_date", { ascending: false });
   if (error) throw new Error(error.message);
-  const signed = await signImageUrls(
-    supabase,
-    (data ?? []).map((t) => t.image_url ?? "").filter(Boolean),
-  );
-  return (data ?? []).map(({ tournament_teams, ...t }) => ({
+  const rows = data ?? [];
+  const signed: Record<string, string> = {};
+  for (const orgId of new Set(rows.map((t) => t.organization_id ?? ""))) {
+    const paths = rows.filter((t) => (t.organization_id ?? "") === orgId).map((t) => t.image_url ?? "").filter(Boolean);
+    if (paths.length) Object.assign(signed, await signImageUrls(supabase, paths, orgId || undefined));
+  }
+  return rows.map(({ tournament_teams, organizations, ...t }) => ({
     ...t,
+    organization_name: (organizations as { name: string; slug: string } | null)?.name ?? null,
+    organization_slug: (organizations as { name: string; slug: string } | null)?.slug ?? null,
     registrations_count: tournament_teams[0]?.count ?? 0,
     image_url: resolveImage(t.image_url, signed),
   }));

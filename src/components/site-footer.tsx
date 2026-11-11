@@ -18,12 +18,6 @@ export function SiteFooter() {
           <Link to="/tournois" className="hover:text-foreground">
             Tournois
           </Link>
-          <Link to="/galerie" className="hover:text-foreground">
-            Galerie
-          </Link>
-          <Link to="/classements" className="hover:text-foreground">
-            Classements
-          </Link>
         </nav>
         <p className="text-xs text-muted-foreground">
           © {new Date().getFullYear()} Foxes Darts — Association de fléchettes
