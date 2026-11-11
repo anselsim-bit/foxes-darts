@@ -123,3 +123,8 @@
 - [x] Accueil et Tournois : tous les tournois de toutes les organisations publiques, filtre par organisation.
 - [x] Galerie et Classements retirés du menu (pages conservées pour plus tard).
 - [x] Prénom et nom modifiables dans Mon espace.
+- [x] Parties libres : enregistrement + statistiques en une seule opération, sans doublon en cas de double envoi.
+- [x] Derniers résultats de poule simultanés : nouvel essai automatique, phases finales générées une seule fois.
+- [x] Signalements (pages organisation/tournoi) et traitement dans l'administration centrale.
+- [x] Photo de profil dans Mon espace.
+- [ ] Ouverture générale de la création d'organisations : attend la décision de l'utilisateur.

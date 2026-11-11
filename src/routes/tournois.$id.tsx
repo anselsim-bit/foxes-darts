@@ -11,6 +11,7 @@ import {
 } from "@/lib/player.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { TournamentBoard } from "@/components/tournament-board";
+import { ReportButton } from "@/components/report-button";
 import { TournamentPlayButton } from "@/components/tournament-play";
 
 const tournamentQuery = (id: string) =>
@@ -235,6 +236,7 @@ function TournamentDetail() {
         isTeam={tournament.format === "equipe"}
         consolationEnabled={tournament.consolation}
       />
+      <div className="mt-12 border-t border-border pt-4"><ReportButton tournamentId={id} /></div>
     </div>
   );
 }

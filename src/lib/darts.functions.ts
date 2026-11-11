@@ -101,6 +101,7 @@ export const confirmMemberIdentity = createServerFn({ method: "POST" })
 
 
 type GameInput = {
+  clientKey?: string | null | undefined;
   tournamentId?: string | null | undefined;
   startScore: number;
   doubleOut: boolean;
@@ -123,7 +124,9 @@ export const saveGameResult = createServerFn({ method: "POST" })
     }));
     if (players.filter((p) => p.won).length !== 1) throw new Error("Une partie a un seul gagnant");
     const startScore = [301, 501, 701].includes(Number(input.startScore)) ? Number(input.startScore) : 501;
+    const clientKey = typeof input.clientKey === "string" && /^[0-9a-f-]{36}$/i.test(input.clientKey) ? input.clientKey : crypto.randomUUID();
     return {
+      clientKey,
       players,
       startScore,
       doubleOut: Boolean(input.doubleOut),
@@ -142,33 +145,17 @@ export const saveGameResult = createServerFn({ method: "POST" })
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const winner = data.players.find((p) => p.won)!;
-    const { error: gErr } = await supabaseAdmin.from("games").insert({
-      tournament_id: data.tournamentId,
-      start_score: data.startScore,
-      double_out: data.doubleOut,
-      winner_name: winner.name,
-      recorded_by: context.userId,
-      players: data.players.map((p) => ({ name: p.name, user_id: p.userId, won: p.won, best_visit: p.bestVisit })),
+    // Partie + statistiques en une seule transaction, idempotente grâce à clientKey.
+    const { data: saved, error } = await supabaseAdmin.rpc("record_free_game", {
+      _recorded_by: context.userId,
+      _client_key: data.clientKey,
+      _tournament_id: data.tournamentId as string,
+      _start_score: data.startScore,
+      _double_out: data.doubleOut,
+      _winner_name: winner.name,
+      _players: data.players.map((p) => ({ name: p.name, user_id: p.userId, won: p.won, best_visit: p.bestVisit })),
+      _solo: data.players.length === 1,
     });
-    if (gErr) throw new Error(gErr.message);
-    if (ids.length === 0) return { saved: 0 };
-    const { data: existing } = await supabaseAdmin
-      .from("player_stats")
-      .select("user_id, matches_played, wins, losses, best_score")
-      .in("user_id", ids);
-    const solo = data.players.length === 1; // solo practice: no win/loss counted
-    const rows = members.map((p) => {
-      const cur = existing?.find((e) => e.user_id === p.userId);
-      return {
-        user_id: p.userId as string,
-        matches_played: (cur?.matches_played ?? 0) + 1,
-        wins: (cur?.wins ?? 0) + (!solo && p.won ? 1 : 0),
-        losses: (cur?.losses ?? 0) + (!solo && !p.won ? 1 : 0),
-        best_score: Math.max(cur?.best_score ?? 0, p.bestVisit),
-        updated_at: new Date().toISOString(),
-      };
-    });
-    const { error } = await supabaseAdmin.from("player_stats").upsert(rows, { onConflict: "user_id" });
-    if (error) throw new Error(error.message);
-    return { saved: rows.length };
+    if (error) throw new Error("Enregistrement impossible, réessayez.");
+    return { saved: saved ?? 0 };
   });

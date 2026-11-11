@@ -72,7 +72,7 @@ export const getMyProfile = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("profiles")
-      .select("display_name, first_name, last_name, tournament_announcements")
+      .select("display_name, first_name, last_name, avatar_path, tournament_announcements")
       .eq("id", context.userId)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -80,6 +80,7 @@ export const getMyProfile = createServerFn({ method: "GET" })
       display_name: data?.display_name ?? "",
       first_name: data?.first_name ?? "",
       last_name: data?.last_name ?? "",
+      avatar_url: data?.avatar_path ? (await context.supabase.storage.from("tournament-photos").createSignedUrl(data.avatar_path, 3600)).data?.signedUrl ?? null : null,
       tournament_announcements: data?.tournament_announcements ?? true,
     };
   });
@@ -134,5 +135,17 @@ export const setTournamentAnnouncements = createServerFn({ method: "POST" })
       .update({ tournament_announcements: data.enabled })
       .eq("id", context.userId);
     if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** Photo de profil : le fichier est déjà envoyé dans avatars/<id>/ par le membre ; on n'accepte que son propre dossier. */
+export const setMyAvatar = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { path: string | null }) => input)
+  .handler(async ({ data, context }) => {
+    const path = data.path;
+    if (path !== null && !new RegExp(`^avatars/${context.userId}/[A-Za-z0-9-]+\\.(png|jpe?g|webp)$`, "i").test(path)) throw new Error("Image invalide.");
+    const { error } = await context.supabase.from("profiles").update({ avatar_path: path }).eq("id", context.userId);
+    if (error) throw new Error("Photo non enregistrée.");
     return { ok: true };
   });

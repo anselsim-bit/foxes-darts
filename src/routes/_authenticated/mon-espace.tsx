@@ -9,6 +9,7 @@ import {
   getMyStats,
   getMyProfile,
   updateMyProfile,
+  setMyAvatar,
   setTournamentAnnouncements,
   cancelRegistration,
 } from "@/lib/player.functions";
@@ -96,6 +97,24 @@ function MonEspace() {
       {/* Profil */}
       <section className="mt-8 rounded-xl border border-border bg-card p-6">
         <h2 className="text-xl">Mon profil</h2>
+        <div className="mt-4 flex items-center gap-4">
+          {data.profile.avatar_url ? <img src={data.profile.avatar_url} alt="Ma photo de profil" className="h-16 w-16 rounded-full border-2 border-primary object-cover" /> : <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-border text-xl font-display">{(displayName || "?").slice(0, 1).toUpperCase()}</div>}
+          <label className="cursor-pointer rounded-md border border-input px-3 py-2 text-sm hover:border-primary">
+            Changer la photo
+            <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              if (file.size > 3 * 1024 * 1024) { toast.error("Image trop lourde (3 Mo maximum)."); return; }
+              const { data: auth } = await supabase.auth.getUser();
+              if (!auth.user) return;
+              const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+              const path = `avatars/${auth.user.id}/${crypto.randomUUID()}.${ext}`;
+              const { error } = await supabase.storage.from("tournament-photos").upload(path, file, { contentType: file.type });
+              if (error) { toast.error("Envoi impossible."); return; }
+              try { await setMyAvatar({ data: { path } }); toast.success("Photo mise à jour."); queryClient.invalidateQueries({ queryKey: ["my-space"] }); } catch (err) { toast.error(err instanceof Error ? err.message : "Erreur"); }
+            }} />
+          </label>
+        </div>
         <div className="mt-4 flex flex-wrap items-end gap-3">
           <div className="flex-1 min-w-52">
             <label className="mb-1 block text-sm font-medium" htmlFor="displayName">

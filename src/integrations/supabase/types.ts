@@ -14,8 +14,64 @@ export type Database = {
   }
   public: {
     Tables: {
+      content_reports: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string | null
+          reason: string
+          reporter_id: string
+          resolved_at: string | null
+          status: string
+          tournament_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id?: string | null
+          reason: string
+          reporter_id: string
+          resolved_at?: string | null
+          status?: string
+          tournament_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string | null
+          reason?: string
+          reporter_id?: string
+          resolved_at?: string | null
+          status?: string
+          tournament_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_reports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_reports_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       games: {
         Row: {
+          client_key: string | null
           created_at: string
           double_out: boolean
           id: string
@@ -26,6 +82,7 @@ export type Database = {
           winner_name: string
         }
         Insert: {
+          client_key?: string | null
           created_at?: string
           double_out?: boolean
           id?: string
@@ -36,6 +93,7 @@ export type Database = {
           winner_name: string
         }
         Update: {
+          client_key?: string | null
           created_at?: string
           double_out?: boolean
           id?: string
@@ -1181,6 +1239,7 @@ export type Database = {
         Args: { _actor: string; _tournament_id: string }
         Returns: boolean
       }
+      avatar_owner: { Args: { _path: string }; Returns: string }
       can_manage_organization: {
         Args: { _organization_id: string }
         Returns: boolean
@@ -1264,6 +1323,19 @@ export type Database = {
       profile_readable_by_manager: {
         Args: { _user_id: string }
         Returns: boolean
+      }
+      record_free_game: {
+        Args: {
+          _client_key: string
+          _double_out: boolean
+          _players: Json
+          _recorded_by: string
+          _solo: boolean
+          _start_score: number
+          _tournament_id: string
+          _winner_name: string
+        }
+        Returns: number
       }
       register_tournament_player: {
         Args: { _name: string; _tournament_id: string }
