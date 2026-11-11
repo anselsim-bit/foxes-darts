@@ -62,7 +62,7 @@ export const saveOrganization = createServerFn({method:"POST"}).middleware([requ
   await manage(context,data.id);
   if(data.name.trim().length<2) throw new Error("Nom trop court.");
   safeColor(data.settings["primary_color"]??"");safeColor(data.settings["secondary_color"]??"");
-  const social=Object.fromEntries(["website","facebook","instagram"].map(k=>[k,(data.settings[k]??"").trim()]).filter(([,v])=>/^https:\/\/[^\s]{3,300}$/.test(v)));
+  const social=Object.fromEntries(["website","facebook","instagram"].map(k=>[k,(data.settings[k]??"").trim()]).filter(([,v])=>/^https:\/\/[^\s]{3,300}$/.test(v??"")));
   if(["website","facebook","instagram"].some(k=>(data.settings[k]??"").trim()&&!social[k])) throw new Error("Les liens doivent commencer par https://");
   const {error}=await context.supabase.rpc("save_organization_settings",{_organization_id:data.id,_name:data.name,_description:data.description,_settings:{...data.settings,social_links:social}});
   if(error) throw new Error("Impossible d'enregistrer les paramètres.");
