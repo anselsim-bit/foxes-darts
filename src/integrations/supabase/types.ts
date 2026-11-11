@@ -1370,6 +1370,10 @@ export type Database = {
         Args: { _tournament_id: string }
         Returns: boolean
       }
+      tournaments_overlap: {
+        Args: { _a: string; _b: string }
+        Returns: boolean
+      }
       transfer_organization_ownership: {
         Args: { _organization_id: string; _user_id: string }
         Returns: undefined
