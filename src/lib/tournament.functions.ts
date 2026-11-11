@@ -100,12 +100,109 @@ async function generateFinalsIfPoolsDone(supabase: SupabaseClient<Database>, tou
   return true;
 }
 
-/** Deux derniers résultats de poule envoyés en même temps peuvent chacun voir l'autre poule inachevée : on revérifie une fois. */
-async function generateFinalsWithRetry(supabase: SupabaseClient<Database>, tournamentId: string): Promise<boolean> {
-  if (await generateFinalsIfPoolsDone(supabase, tournamentId)) return true;
-  await new Promise((r) => setTimeout(r, 400));
-  return generateFinalsIfPoolsDone(supabase, tournamentId);
+
+export function normalizeCode(code: string | undefined | null) {
+  return String(code ?? "").trim().toUpperCase().replace(/\s+/g, "").slice(0, 20);
 }
+
+/** Code d'accès du tournoi défini par l'admin (null si aucun). */
+async function currentCode(tournamentId: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("tournament_settings_codes")
+    .select("code")
+    .eq("tournament_id", tournamentId)
+    .maybeSingle();
+  return data?.code ?? null;
+}
+
+/** Vérifie le code d'accès du tournoi. */
+async function hasValidCode(tournamentId: string, code: string | undefined) {
+  const c = normalizeCode(code);
+  if (!c) return false;
+  const { data: tournament } = await publicClient().from("tournaments").select("status, organizations(status)").eq("id", tournamentId).maybeSingle();
+  if (tournament?.status !== "started" || tournament.organizations?.status !== "active") return false;
+  return (await currentCode(tournamentId)) === c;
+}
+
+/** Enregistre le résultat d'un match. Admin, capitaine d'une des deux équipes, ou code d'accès actif. */
+export const reportMatch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { matchId: string; scoreA: number; scoreB: number; legsA?: number; legsB?: number; code?: string | undefined }) => input)
+  .handler(async ({ data, context }) => reportAuthorizedMatch(data, context));
+
+/** Code-only entry point: does not grant member statistics or admin access. */
+export const reportTournamentMatch = createServerFn({ method: "POST" })
+  .inputValidator((input: { matchId: string; scoreA: number; scoreB: number; legsA?: number; legsB?: number; code: string }) => input)
+  .handler(async ({ data }) => reportAuthorizedMatch(data));
+
+async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; scoreB: number; legsA?: number; legsB?: number; code?: string | undefined }, context?: Ctx) {
+    const { data: m, error } = await publicClient()
+      .from("tournament_matches")
+      .select("id, tournament_id, stage, round, position, team_a, team_b, winner")
+      .eq("id", data.matchId)
+      .single();
+    if (error || !m) throw new Error("Match introuvable.");
+    if (!m.team_a || !m.team_b) throw new Error("Les deux adversaires ne sont pas encore connus.");
+    const manager = context ? await canManageTournament(context, m.tournament_id) : false;
+    assertResultWritable(m.winner, manager);
+    if (!manager && !(await hasValidCode(m.tournament_id, data.code))) {
+      if (!context) throw new Error("Code d'accès invalide ou tournoi inactif.");
+      const { data: playable } = await context.supabase.from("tournaments").select("status, organizations(status)").eq("id", m.tournament_id).maybeSingle();
+      if (playable?.status !== "started" || playable.organizations?.status !== "active") throw new Error("Tournoi inactif.");
+      const { data: caps } = await context.supabase.from("tournament_teams").select("captain_id").in("id", [m.team_a, m.team_b]);
+      if (!(caps ?? []).some((c) => c.captain_id === context.userId))
+        throw new Error("Seul un administrateur, un joueur du match ou un code d'accès actif permet de saisir le résultat.");
+    }
+    if (!Number.isFinite(data.scoreA) || !Number.isFinite(data.scoreB)) throw new Error("Scores invalides.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const a = Math.max(0, Math.floor(data.scoreA));
+    const b = Math.max(0, Math.floor(data.scoreB));
+    if (a === b) throw new Error("Il faut un vainqueur (scores différents).");
+    const legs = m.stage !== "pool" ? validateFinalLegs(data.legsA, data.legsB) : null;
+    if (legs && ((a < b) !== (legs.legsA > legs.legsB))) throw new Error("Le gagnant doit avoir remporté deux manches.");
+    // Aux fléchettes, le vainqueur est celui qui a le moins de points restants (0).
+    const winner = a < b ? m.team_a : m.team_b;
+    // Deux derniers résultats de poule simultanés : la base sérialise et refuse celui qui n'a pas les phases finales ;
+    // on reprend alors un instantané frais (jusqu'à 3 essais) pour générer les phases finales sans erreur pour le joueur.
+    let commitError: { message: string } | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+
+      commitError = error;
+      if (!error || !String(error.message).includes("Final drafts required")) break;
+    }
+    if (commitError) throw new Error("Le tournoi a changé ou a déjà commencé. Rechargez son tableau.");
+    return { ok: true };
+  });
+
+/**
+ * Génère le tableau final, la petite finale et la consolante à partir des poules.
+ * Ne fait rien (renvoie false) si la phase finale existe déjà ou si des matchs de poule
+ * ne sont pas terminés : sûre à appeler après chaque résultat de poule.
+ */
+async function generateFinalsIfPoolsDone(supabase: SupabaseClient<Database>, tournamentId: string): Promise<boolean> {
+  const { data: t } = await supabase.from("tournaments").select("pool_count, consolation").eq("id", tournamentId).single();
+  const { data: matches } = await supabase
+    .from("tournament_matches")
+    .select("stage, pool_index, team_a, team_b, score_a, score_b, winner")
+    .eq("tournament_id", tournamentId);
+  const all = matches ?? [];
+  if (all.some((m) => m.stage === "bracket" || m.stage === "consolation" || m.stage === "small_final")) return false;
+  const pool = all.filter((m) => m.stage === "pool");
+  if (pool.length === 0 || pool.some((m) => !m.winner)) return false;
+  const standings = Array.from({ length: t?.pool_count ?? 0 }, (_, i) => {
+    const ms = pool.filter((m) => m.pool_index === i);
+    const teams = [...new Set(ms.flatMap((m) => [m.team_a, m.team_b]).filter((id): id is string => id !== null))];
+    return poolStandings(teams, ms);
+  });
+  const drafts = buildPoolFinals(standings, t?.consolation !== false);
+  const { error } = await supabase.from("tournament_matches").insert(drafts.map(toRow(tournamentId)));
+  // 23505 : un autre résultat simultané a déjà généré les phases finales (créneaux uniques) — rien à faire.
+  if (error?.code === "23505") return false;
+  if (error) throw new Error(error.message);
+  return true;
+}
+
 
 export function normalizeCode(code: string | undefined | null) {
   return String(code ?? "").trim().toUpperCase().replace(/\s+/g, "").slice(0, 20);
