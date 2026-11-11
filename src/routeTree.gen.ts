@@ -23,6 +23,8 @@ import { Route as AuthenticatedCreateOrganizationRouteImport } from './routes/_a
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedInvitationRouteImport } from './routes/_authenticated/invitation'
 import { Route as AuthenticatedMonEspaceRouteImport } from './routes/_authenticated/mon-espace'
+import { Route as InscriptionJoueurRouteImport } from './routes/inscription.joueur'
+import { Route as InscriptionOrganisateurRouteImport } from './routes/inscription.organisateur'
 import { Route as OSlugRouteImport } from './routes/o.$slug'
 import { Route as TournoisIndexRouteImport } from './routes/tournois.index'
 import { Route as TournoisIdRouteImport } from './routes/tournois.$id'
@@ -106,6 +108,16 @@ const AuthenticatedMonEspaceRoute = AuthenticatedMonEspaceRouteImport.update({
   path: '/mon-espace',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const InscriptionJoueurRoute = InscriptionJoueurRouteImport.update({
+  id: '/inscription/joueur',
+  path: '/inscription/joueur',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InscriptionOrganisateurRoute = InscriptionOrganisateurRouteImport.update({
+  id: '/inscription/organisateur',
+  path: '/inscription/organisateur',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OSlugRoute = OSlugRouteImport.update({
   id: '/o/$slug',
   path: '/o/$slug',
@@ -179,6 +191,8 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/invitation': typeof AuthenticatedInvitationRoute
   '/mon-espace': typeof AuthenticatedMonEspaceRoute
+  '/inscription/joueur': typeof InscriptionJoueurRoute
+  '/inscription/organisateur': typeof InscriptionOrganisateurRoute
   '/o/$slug': typeof OSlugRouteWithChildren
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois/': typeof TournoisIndexRoute
@@ -205,6 +219,8 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/invitation': typeof AuthenticatedInvitationRoute
   '/mon-espace': typeof AuthenticatedMonEspaceRoute
+  '/inscription/joueur': typeof InscriptionJoueurRoute
+  '/inscription/organisateur': typeof InscriptionOrganisateurRoute
   '/o/$slug': typeof OSlugRouteWithChildren
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois': typeof TournoisIndexRoute
@@ -233,6 +249,8 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/invitation': typeof AuthenticatedInvitationRoute
   '/_authenticated/mon-espace': typeof AuthenticatedMonEspaceRoute
+  '/inscription/joueur': typeof InscriptionJoueurRoute
+  '/inscription/organisateur': typeof InscriptionOrganisateurRoute
   '/o/$slug': typeof OSlugRouteWithChildren
   '/tournois/$id': typeof TournoisIdRoute
   '/tournois/': typeof TournoisIndexRoute
@@ -261,6 +279,8 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/invitation'
     | '/mon-espace'
+    | '/inscription/joueur'
+    | '/inscription/organisateur'
     | '/o/$slug'
     | '/tournois/$id'
     | '/tournois/'
@@ -287,6 +307,8 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/invitation'
     | '/mon-espace'
+    | '/inscription/joueur'
+    | '/inscription/organisateur'
     | '/o/$slug'
     | '/tournois/$id'
     | '/tournois'
@@ -314,6 +336,8 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/invitation'
     | '/_authenticated/mon-espace'
+    | '/inscription/joueur'
+    | '/inscription/organisateur'
     | '/o/$slug'
     | '/tournois/$id'
     | '/tournois/'
@@ -337,6 +361,8 @@ export interface RootRouteChildren {
   McpRoute: typeof McpRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  InscriptionJoueurRoute: typeof InscriptionJoueurRoute
+  InscriptionOrganisateurRoute: typeof InscriptionOrganisateurRoute
   OSlugRoute: typeof OSlugRouteWithChildren
   TournoisIdRoute: typeof TournoisIdRoute
   TournoisIndexRoute: typeof TournoisIndexRoute
@@ -447,6 +473,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/mon-espace'
       preLoaderRoute: typeof AuthenticatedMonEspaceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/inscription/joueur': {
+      id: '/inscription/joueur'
+      path: '/inscription/joueur'
+      fullPath: '/inscription/joueur'
+      preLoaderRoute: typeof InscriptionJoueurRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inscription/organisateur': {
+      id: '/inscription/organisateur'
+      path: '/inscription/organisateur'
+      fullPath: '/inscription/organisateur'
+      preLoaderRoute: typeof InscriptionOrganisateurRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/o/$slug': {
       id: '/o/$slug'
@@ -571,6 +611,8 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  InscriptionJoueurRoute: InscriptionJoueurRoute,
+  InscriptionOrganisateurRoute: InscriptionOrganisateurRoute,
   OSlugRoute: OSlugRouteWithChildren,
   TournoisIdRoute: TournoisIdRoute,
   TournoisIndexRoute: TournoisIndexRoute,
