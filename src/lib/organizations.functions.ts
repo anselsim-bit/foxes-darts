@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { publicClient, signImageUrls } from "./public.functions";
 import { organizationSlug, safeColor } from "./platform-validation";
+import { themeColorsFromForm } from "./organization-theme";
 import { requirePlatformAdmin, type OrganizationContext } from "./organization-access";
 
 async function manage(ctx: OrganizationContext, id: string) {
@@ -64,7 +65,7 @@ export const saveOrganization = createServerFn({method:"POST"}).middleware([requ
   safeColor(data.settings["primary_color"]??"");safeColor(data.settings["secondary_color"]??"");
   const social=Object.fromEntries(["website","facebook","instagram"].map(k=>[k,(data.settings[k]??"").trim()]).filter(([,v])=>/^https:\/\/[^\s]{3,300}$/.test(v??"")));
   if(["website","facebook","instagram"].some(k=>(data.settings[k]??"").trim()&&!social[k])) throw new Error("Les liens doivent commencer par https://");
-  const {error}=await context.supabase.rpc("save_organization_settings",{_organization_id:data.id,_name:data.name,_description:data.description,_settings:{...data.settings,social_links:social}});
+  const {error}=await context.supabase.rpc("save_organization_settings",{_organization_id:data.id,_name:data.name,_description:data.description,_settings:{...data.settings,social_links:social,theme_colors:themeColorsFromForm(data.settings)}});
   if(error) throw new Error("Impossible d'enregistrer les paramètres.");
   return {ok:true};
 });

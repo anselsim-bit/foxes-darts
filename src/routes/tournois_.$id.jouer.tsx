@@ -63,7 +63,7 @@ function TournamentPlayPage() {
   }, []);
 
   return (
-    <div style={organizationThemeStyle(tournament.primary_color)} className="mx-auto max-w-4xl px-4 py-12">
+    <div style={organizationThemeStyle(tournament.theme)} className="mx-auto max-w-4xl px-4 py-12">
       <Link to="/tournois/$id" params={{ id }} className="text-sm text-muted-foreground hover:text-foreground">
         ← Retour au tournoi
       </Link>
