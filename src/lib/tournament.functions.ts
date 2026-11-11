@@ -94,8 +94,17 @@ async function generateFinalsIfPoolsDone(supabase: SupabaseClient<Database>, tou
   });
   const drafts = buildPoolFinals(standings, t?.consolation !== false);
   const { error } = await supabase.from("tournament_matches").insert(drafts.map(toRow(tournamentId)));
+  // 23505 : un autre résultat simultané a déjà généré les phases finales (créneaux uniques) — rien à faire.
+  if (error?.code === "23505") return false;
   if (error) throw new Error(error.message);
   return true;
+}
+
+/** Deux derniers résultats de poule envoyés en même temps peuvent chacun voir l'autre poule inachevée : on revérifie une fois. */
+async function generateFinalsWithRetry(supabase: SupabaseClient<Database>, tournamentId: string): Promise<boolean> {
+  if (await generateFinalsIfPoolsDone(supabase, tournamentId)) return true;
+  await new Promise((r) => setTimeout(r, 400));
+  return generateFinalsIfPoolsDone(supabase, tournamentId);
 }
 
 export function normalizeCode(code: string | undefined | null) {
