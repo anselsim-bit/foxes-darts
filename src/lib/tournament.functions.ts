@@ -163,17 +163,24 @@ async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; sc
     if (legs && ((a < b) !== (legs.legsA > legs.legsB))) throw new Error("Le gagnant doit avoir remporté deux manches.");
     // Aux fléchettes, le vainqueur est celui qui a le moins de points restants (0).
     const winner = a < b ? m.team_a : m.team_b;
-    let finals: MatchDraft[] = [];
-    if (m.stage === "pool") {
-      const { data: settings } = await supabaseAdmin.from("tournaments").select("pool_count, consolation").eq("id", m.tournament_id).single();
-      const { data: snapshot } = await supabaseAdmin.from("tournament_matches").select("id,stage,pool_index,team_a,team_b,score_a,score_b,winner").eq("tournament_id", m.tournament_id);
-      const pool = (snapshot ?? []).filter(x => x.stage === "pool").map(x => x.id === m.id ? { ...x, score_a: a, score_b: b, winner } : x);
-      if (pool.length && pool.every(x => x.winner) && !(snapshot ?? []).some(x => x.stage !== "pool")) {
-        const standings = Array.from({ length: settings?.pool_count ?? 0 }, (_, i) => { const matches = pool.filter(x => x.pool_index === i); const ids = [...new Set(matches.flatMap(x => [x.team_a, x.team_b]).filter((id): id is string => !!id))]; return poolStandings(ids, matches); });
-        finals = buildPoolFinals(standings, settings?.consolation !== false);
+    // Deux derniers résultats de poule simultanés : la base sérialise et refuse celui qui n'a pas les phases finales ;
+    // on reprend un instantané frais (3 essais max) pour générer les phases finales sans erreur côté joueur.
+    let commitError: { message: string } | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      let finals: MatchDraft[] = [];
+      if (m.stage === "pool") {
+        const { data: settings } = await supabaseAdmin.from("tournaments").select("pool_count, consolation").eq("id", m.tournament_id).single();
+        const { data: snapshot } = await supabaseAdmin.from("tournament_matches").select("id,stage,pool_index,team_a,team_b,score_a,score_b,winner").eq("tournament_id", m.tournament_id);
+        const pool = (snapshot ?? []).filter(x => x.stage === "pool").map(x => x.id === m.id ? { ...x, score_a: a, score_b: b, winner } : x);
+        if (pool.length && pool.every(x => x.winner) && !(snapshot ?? []).some(x => x.stage !== "pool")) {
+          const standings = Array.from({ length: settings?.pool_count ?? 0 }, (_, i) => { const matches = pool.filter(x => x.pool_index === i); const ids = [...new Set(matches.flatMap(x => [x.team_a, x.team_b]).filter((id): id is string => !!id))]; return poolStandings(ids, matches); });
+          finals = buildPoolFinals(standings, settings?.consolation !== false);
+        }
       }
+      const { error } = await supabaseAdmin.rpc("commit_tournament_result", { _actor: (context?.userId ?? null) as unknown as string, _match_id: m.id, _code: normalizeCode(data.code), _score_a: a, _score_b: b, _legs_a: (legs?.legsA ?? null) as unknown as number, _legs_b: (legs?.legsB ?? null) as unknown as number, _finals: finals as unknown as import("@/integrations/supabase/types").Json });
+      commitError = error;
+      if (!error || !String(error.message).includes("Final drafts required")) break;
     }
-    const { error: commitError } = await supabaseAdmin.rpc("commit_tournament_result", { _actor: (context?.userId ?? null) as unknown as string, _match_id: m.id, _code: normalizeCode(data.code), _score_a: a, _score_b: b, _legs_a: (legs?.legsA ?? null) as unknown as number, _legs_b: (legs?.legsB ?? null) as unknown as number, _finals: finals as unknown as import("@/integrations/supabase/types").Json });
     if (commitError) throw new Error("Résultat non enregistré : le tableau a changé ou une correction touche un match déjà commencé. Réessayez après actualisation.");
     return { ok: true };
 }
