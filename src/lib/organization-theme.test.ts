@@ -12,3 +12,14 @@ describe("organizationThemeStyle", () => {
     expect(organizationThemeStyle("red;x")).toBeUndefined();
   });
 });
+describe("organization custom colors", () => {
+  it("applies each chosen element color", () => {
+    const s = organizationThemeStyle({ primary_color: "#2255ff", theme_colors: { background: "#ffffff", foreground: "#111111", card: "#eeeeee" } }) as Record<string, string>;
+    expect(s["--background"]).toBe("#ffffff");
+    expect(s["--foreground"]).toBe("#111111");
+    expect(s["--card"]).toBe("#eeeeee");
+  });
+  it("ignores invalid values", () => {
+    expect(organizationThemeStyle({ theme_colors: { background: "url(x)" } })).toBeUndefined();
+  });
+});

@@ -114,7 +114,7 @@ function TournamentDetail() {
   };
 
   return (
-    <div style={organizationThemeStyle(tournament.primary_color)} className="mx-auto max-w-6xl px-4 py-10">
+    <div style={organizationThemeStyle(tournament.theme)} className="mx-auto max-w-6xl px-4 py-10">
       <Link to="/tournois" className="text-sm text-muted-foreground hover:text-foreground">
         ← Tous les tournois
       </Link>

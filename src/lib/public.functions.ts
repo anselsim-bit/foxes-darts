@@ -141,10 +141,11 @@ export const getTournament = createServerFn({ method: "GET" })
     const { data: orgSettings } = t.organization_id
       ? await supabase.rpc("get_public_organization_settings", { _organization_id: t.organization_id })
       : { data: null };
-    const primary = (orgSettings as { primary_color?: string | null } | null)?.primary_color ?? null;
+    const theme = (orgSettings ?? null) as { primary_color?: string | null; secondary_color?: string | null; theme_colors?: Record<string, string> } | null;
     return {
       ...t,
-      primary_color: primary,
+      primary_color: theme?.primary_color ?? null,
+      theme: theme ? { primary_color: theme.primary_color ?? null, secondary_color: theme.secondary_color ?? null, theme_colors: theme.theme_colors ?? {} } : null,
       image_url: resolveImage(t.image_url, signed),
       registrations_count: count ?? 0,
     };
