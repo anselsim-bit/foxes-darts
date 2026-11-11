@@ -72,23 +72,27 @@ export const getMyProfile = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("profiles")
-      .select("display_name, tournament_announcements")
+      .select("display_name, first_name, last_name, tournament_announcements")
       .eq("id", context.userId)
       .maybeSingle();
     if (error) throw new Error(error.message);
     return {
       display_name: data?.display_name ?? "",
+      first_name: data?.first_name ?? "",
+      last_name: data?.last_name ?? "",
       tournament_announcements: data?.tournament_announcements ?? true,
     };
   });
 
 export const updateMyProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { displayName: string }) => input)
+  .inputValidator((input: { displayName: string; firstName?: string; lastName?: string }) => input)
   .handler(async ({ data, context }) => {
+    const displayName = data.displayName.trim().slice(0, 60);
+    if (displayName.length < 2) throw new Error("Nom de joueur trop court.");
     const { error } = await context.supabase
       .from("profiles")
-      .update({ display_name: data.displayName })
+      .update({ display_name: displayName, ...(data.firstName !== undefined ? { first_name: data.firstName.trim().slice(0, 60) || null } : {}), ...(data.lastName !== undefined ? { last_name: data.lastName.trim().slice(0, 60) || null } : {}) })
       .eq("id", context.userId);
     if (error) throw new Error(error.message);
     return { ok: true };

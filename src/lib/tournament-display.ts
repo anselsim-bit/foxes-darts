@@ -2,6 +2,7 @@ export type TournamentCategory = "upcoming" | "ongoing" | "finished";
 
 export type TournamentDisplay = {
   id: string;
+  organization_name?: string | null;
   title: string;
   event_date: string;
   start_time: string | null;

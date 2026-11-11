@@ -119,3 +119,7 @@
 - [x] Liste d'autorisation de création d'organisation (compte test wayneless).
 - [ ] Ouverture générale de la création : attend la validation par les tests de l'utilisateur.
 - [ ] Restant : parties libres atomiques, concurrence fin de poules, profil universel complet, signalements, pagination complète.
+- [x] Adresse simple /nom-organisation (ancienne /o/... redirigée), noms réservés protégés.
+- [x] Accueil et Tournois : tous les tournois de toutes les organisations publiques, filtre par organisation.
+- [x] Galerie et Classements retirés du menu (pages conservées pour plus tard).
+- [x] Prénom et nom modifiables dans Mon espace.

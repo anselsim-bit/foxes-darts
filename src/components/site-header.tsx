@@ -9,8 +9,6 @@ import logoAsset from "@/assets/foxes-logo.png.asset.json";
 const NAV = [
   { to: "/", label: "Accueil" },
   { to: "/tournois", label: "Tournois" },
-  { to: "/galerie", label: "Galerie" },
-  { to: "/classements", label: "Classements" },
   { to: "/compteur", label: "Compteur" },
 ] as const;
 
