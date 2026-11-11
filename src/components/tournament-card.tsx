@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { CalendarDays, MapPin, Users, Ticket, ArrowRight, LockKeyhole } from "lucide-react";
+import heroImg from "@/assets/hero-darts.jpg";
 import { Button } from "@/components/ui/button";
 import { isTournamentFull, type TournamentCategory, type TournamentDisplay } from "@/lib/tournament-display";
 
@@ -14,7 +15,7 @@ export function TournamentCard({ tournament: t, category }: { tournament: Tourna
         aria-label={`Voir ${t.title}`}
         className="absolute inset-0 z-10 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
       />
-      {t.image_url && <img src={t.image_url} alt={t.title} className="h-44 w-full object-cover" loading="lazy" />}
+      {<img src={t.image_url || heroImg} alt={t.title} className="h-44 w-full object-cover" loading="lazy" />}
       <div className="flex flex-1 flex-col p-5">
         {t.organization_name && <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-primary">{t.organization_name}</p>}
         <h3 className="break-words text-lg transition-colors group-hover:text-primary">{t.title}</h3>
