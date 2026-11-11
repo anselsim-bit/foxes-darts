@@ -8,6 +8,7 @@ export const registerForTournament = createServerFn({ method: "POST" })
     const { error } = await context.supabase.rpc("register_tournament_player", { _tournament_id: data.tournamentId, _name: data.teamName ?? "" });
     if (error) {
       if (error.message.includes("TOURNAMENT_FULL")) return { ok: false, message: "Le tournoi est complet." };
+      if (error.message.includes("SCHEDULE_CONFLICT")) return { ok: false, message: "Vous êtes déjà inscrit à un autre tournoi qui se déroule en même temps." };
       if (error.message.includes("ALREADY_REGISTERED")) return { ok: false, message: "Vous êtes déjà inscrit." };
       throw new Error("Inscription impossible : tournoi fermé ou indisponible.");
     }

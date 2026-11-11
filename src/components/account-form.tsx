@@ -13,6 +13,8 @@ export function AccountForm({ kind, redirectTo }: { kind?: SignupKind; redirectT
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [contact, setContact] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [confirmEmail, setConfirmEmail] = useState(false);
@@ -45,7 +47,7 @@ export function AccountForm({ kind, redirectTo }: { kind?: SignupKind; redirectT
           email,
           password,
           options: {
-            data: signupMetadata(kind ?? "player", displayName, contact),
+            data: signupMetadata(kind ?? "player", displayName, contact, { firstName, lastName }),
             emailRedirectTo: `${window.location.origin}/auth?redirect=${encodeURIComponent(signupDestination(kind ?? "player", redirectTo))}`,
           },
         });
@@ -101,6 +103,12 @@ export function AccountForm({ kind, redirectTo }: { kind?: SignupKind; redirectT
               className="w-full rounded-md border border-input bg-card px-3 py-2 text-sm outline-none focus:border-primary"
               placeholder="Ex : RenardVolant"
             />
+          </div>
+        )}
+        {mode === "signup" && kind === "player" && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Prénom" name="firstName" required maxLength={60} autoComplete="given-name" value={firstName} onChange={e => setFirstName(e.target.value)} />
+            <Field label="Nom" name="lastName" required maxLength={60} autoComplete="family-name" value={lastName} onChange={e => setLastName(e.target.value)} />
           </div>
         )}
         {mode === "signup" && kind === "organizer" && (
