@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { publicClient } from "./public.functions";
+import { publicClient, signImageUrls } from "./public.functions";
 import { organizationSlug, safeColor } from "./platform-validation";
 import { requirePlatformAdmin, type OrganizationContext } from "./organization-access";
 
@@ -38,7 +38,7 @@ export const getDashboard = createServerFn({method:"GET"}).middleware([requireSu
   return {profile:profile.data,organizations:[...organizations.values()],registrations:registrations.data??[],stats:stats.data,notifications:notifications.data??[],games:games.data??[],superAdmin:!!superAdmin,userId:context.userId};
 });
 export const getOrganizationSpace = createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).inputValidator((input:{slug:string})=>input).handler(async ({data,context})=>{
-  const {data:org,error}=await context.supabase.from("organizations").select("id,name,slug,status,description").eq("slug",data.slug).single();
+  const {data:org,error}=await context.supabase.from("organizations").select("id,name,slug,status,description,visibility").eq("slug",data.slug).single();
   if(error||!org) throw new Error("Organisation introuvable.");
   const {data:membership}=await context.supabase.from("organization_members").select("role").eq("organization_id",org.id).eq("user_id",context.userId).maybeSingle();
   const {data:superAdmin}=await context.supabase.rpc("is_platform_admin");
@@ -62,7 +62,9 @@ export const saveOrganization = createServerFn({method:"POST"}).middleware([requ
   await manage(context,data.id);
   if(data.name.trim().length<2) throw new Error("Nom trop court.");
   safeColor(data.settings["primary_color"]??"");safeColor(data.settings["secondary_color"]??"");
-  const {error}=await context.supabase.rpc("save_organization_settings",{_organization_id:data.id,_name:data.name,_description:data.description,_settings:data.settings});
+  const social=Object.fromEntries(["website","facebook","instagram"].map(k=>[k,(data.settings[k]??"").trim()]).filter(([,v])=>/^https:\/\/[^\s]{3,300}$/.test(v??"")));
+  if(["website","facebook","instagram"].some(k=>(data.settings[k]??"").trim()&&!social[k])) throw new Error("Les liens doivent commencer par https://");
+  const {error}=await context.supabase.rpc("save_organization_settings",{_organization_id:data.id,_name:data.name,_description:data.description,_settings:{...data.settings,social_links:social}});
   if(error) throw new Error("Impossible d'enregistrer les paramètres.");
   return {ok:true};
 });
@@ -92,10 +94,13 @@ export const markNotificationRead=createServerFn({method:"POST"}).middleware([re
 export const publicOrganization=createServerFn({method:"GET"}).inputValidator((input:{slug:string;tournamentId?:string})=>input).handler(async ({data})=>{
   const sb=publicClient();const {data:org,error}=await sb.from("organizations").select("id,name,slug,description,status").eq("slug",data.slug).single();if(error||!org)throw new Error("Organisation introuvable.");
   const {data:info}=await sb.rpc("get_public_organization_settings",{_organization_id:org.id});
+  const raw=(info??{}) as Record<string,unknown>;const media=[raw["logo_path"],raw["cover_path"]].filter((p):p is string=>typeof p==="string");
+  const signed=media.length?await signImageUrls(sb,media,org.id):{};
+  const branding={logoUrl:typeof raw["logo_path"]==="string"?signed[raw["logo_path"]]??null:null,coverUrl:typeof raw["cover_path"]==="string"?signed[raw["cover_path"]]??null:null,social:(raw["social_links"]??{}) as Record<string,string>};
   const {data:ts}=await sb.from("tournaments").select("id,title,event_date,status,description,location").eq("organization_id",org.id).order("event_date",{ascending:false}).limit(100);
   if(data.tournamentId&&!ts?.some(t=>t.id===data.tournamentId))throw new Error("Ce tournoi n'appartient pas à cette organisation.");
   const {data:standings}=await sb.from("standings").select("season,rank,player_name,points").eq("organization_id",org.id).order("rank").limit(50);
-  return {org,settings:info as Record<string,string>|null,tournaments:ts??[],standings:standings??[]};
+  return {org,branding,settings:info as Record<string,string>|null,tournaments:ts??[],standings:standings??[]};
 });
 export const getPlatformAdmin=createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).inputValidator((input:{search?:string;page?:number})=>input).handler(async ({data,context})=>{
   await requirePlatformAdmin(context);const page=Math.max(0,data.page??0);const search=(data.search??"").replace(/[%,_]/g,"").slice(0,100);

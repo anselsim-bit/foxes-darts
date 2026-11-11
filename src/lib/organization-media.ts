@@ -10,6 +10,6 @@ export function organizationMediaPath(organizationId: string, kind: MediaKind, f
 /** Historical unprefixed assets belong exclusively to the central club. */
 export function mediaBelongsToOrganization(path: string, organizationId: string, centralId: string) {
   if (path.includes("..") || path.includes("\\") || path.startsWith("/")) return false;
-  if (path.startsWith(`organizations/${organizationId}/`)) return /^organizations\/[0-9a-f-]{36}\/(tournaments|photos|highlights)\/[^/]+$/i.test(path);
+  if (path.startsWith(`organizations/${organizationId}/`)) return /^organizations\/[0-9a-f-]{36}\/(tournaments|photos|highlights|logos|covers)\/[^/]+$/i.test(path);
   return organizationId === centralId && /^(tournaments|photos|highlights)\/[^/]+$/.test(path);
 }
