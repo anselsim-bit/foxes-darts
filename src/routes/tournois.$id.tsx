@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { CalendarDays, MapPin, Ticket, Users } from "lucide-react";
 import { toast } from "sonner";
 import heroImg from "@/assets/hero-darts.jpg";
+import { organizationThemeStyle } from "@/lib/organization-theme";
 import { getTournament } from "@/lib/public.functions";
 import {
   registerForTournament,
@@ -113,7 +114,7 @@ function TournamentDetail() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
+    <div style={organizationThemeStyle(tournament.primary_color)} className="mx-auto max-w-6xl px-4 py-10">
       <Link to="/tournois" className="text-sm text-muted-foreground hover:text-foreground">
         ← Tous les tournois
       </Link>

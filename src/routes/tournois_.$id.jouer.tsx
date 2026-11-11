@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { organizationThemeStyle } from "@/lib/organization-theme";
 import { getTournament } from "@/lib/public.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { TournamentPlay } from "@/components/tournament-play";
@@ -62,7 +63,7 @@ function TournamentPlayPage() {
   }, []);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12">
+    <div style={organizationThemeStyle(tournament.primary_color)} className="mx-auto max-w-4xl px-4 py-12">
       <Link to="/tournois/$id" params={{ id }} className="text-sm text-muted-foreground hover:text-foreground">
         ← Retour au tournoi
       </Link>
