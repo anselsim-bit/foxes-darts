@@ -108,5 +108,6 @@
 - [ ] Compléments détaillés dans docs/multi-organisations-livraison.md : invitation bout en bout, profil/avatar, édition locale complète, publication privée, statistiques atomiques, limites et personnalisation publique ; ouverture toujours verrouillée.
 
 ## Inscriptions distinctes — 11 novembre 2026
-- [ ] Deux pages joueur/organisateur, coordonnées complètes privées et conservation d’un compte unique pouvant jouer.
-- [ ] Vérifier validation, accès aux formulaires et reprise des coordonnées sans attribuer de permissions depuis l’inscription.
+- [x] Deux pages joueur/organisateur, coordonnées complètes privées et conservation d’un compte unique pouvant jouer.
+- [x] Validation et affichage téléphone vérifiés, 13 tests réussis ; coordonnées transmises sans permissions et reprises dans la création d’organisation. Confirmation vérifiée avec une réponse simulée, pas de compte ni d’e-mail réel créé pendant ce contrôle.
+- [ ] Ouverture générale des nouveaux espaces organisateurs : dépend des vérifications multi-organisations encore ouvertes ci-dessus ; le verrou existant est conservé.
