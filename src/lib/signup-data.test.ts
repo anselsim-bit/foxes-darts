@@ -15,7 +15,8 @@ describe("Inscriptions joueur et organisateur", () => {
     expect(() => signupMetadata("organizer", "Camille", { ...contact, phone: "" })).toThrow();
   });
   it("n’impose pas de coordonnées d’organisation au joueur", () => {
-    expect(signupMetadata("player", "Renard", {})).toEqual({ display_name: "Renard", signup_kind: "player" });
+    expect(signupMetadata("player", "Renard", {}, { firstName: "Paul", lastName: "Durand" })).toEqual({ display_name: "Renard", signup_kind: "player", first_name: "Paul", last_name: "Durand" });
+    expect(() => signupMetadata("player", "Renard", {}, { firstName: "Paul" })).toThrow();
   });
   it("oriente chaque inscription vers son espace", () => {
     expect(signupDestination("organizer")).toBe("/create-organization");
