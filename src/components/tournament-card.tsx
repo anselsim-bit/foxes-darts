@@ -16,6 +16,7 @@ export function TournamentCard({ tournament: t, category }: { tournament: Tourna
       />
       {t.image_url && <img src={t.image_url} alt={t.title} className="h-44 w-full object-cover" loading="lazy" />}
       <div className="flex flex-1 flex-col p-5">
+        {t.organization_name && <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-primary">{t.organization_name}</p>}
         <h3 className="break-words text-lg transition-colors group-hover:text-primary">{t.title}</h3>
         <div className="mt-3 space-y-1.5 text-sm text-muted-foreground">
           <p className="flex items-start gap-2"><CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><span>{date}{t.start_time ? ` · ${t.start_time.slice(0, 5).replace(":", "h")}${t.end_time ? ` – ${t.end_time.slice(0, 5).replace(":", "h")}` : ""}` : ""}</span></p>
