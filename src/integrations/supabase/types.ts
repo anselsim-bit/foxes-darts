@@ -475,6 +475,7 @@ export type Database = {
           responsible_name: string | null
           secondary_color: string | null
           social_links: Json
+          theme_colors: Json
           updated_at: string
         }
         Insert: {
@@ -492,6 +493,7 @@ export type Database = {
           responsible_name?: string | null
           secondary_color?: string | null
           social_links?: Json
+          theme_colors?: Json
           updated_at?: string
         }
         Update: {
@@ -509,6 +511,7 @@ export type Database = {
           responsible_name?: string | null
           secondary_color?: string | null
           social_links?: Json
+          theme_colors?: Json
           updated_at?: string
         }
         Relationships: [
@@ -1256,6 +1259,7 @@ export type Database = {
         Args: { _organization_id: string; _role: string; _user_id: string }
         Returns: undefined
       }
+      clean_theme_colors: { Args: { _raw: Json }; Returns: Json }
       commit_tournament_result: {
         Args: {
           _actor: string
