@@ -31,3 +31,4 @@
 - Pool standings add only the loser's remaining points (winner takes none); fewer points ranks higher. The main bracket, small_final (semi-final losers, 3rd place) and consolation bracket (non-qualifiers, when the flag is on) are generated automatically by generateFinalsIfPoolsDone when the last pool result is saved — no admin button; every knockout stage is two winning legs, only pools are single-leg.
 
 - Separate signup routes share AccountForm; organizer signup metadata contains private contact preferences only, never permissions; organization ownership still requires the gated transactional creation flow.
+- Organization creation is gated by the platform_release_flags 'organization_onboarding' switch (platform admin toggle; allowlist and platform admins bypass), and per-organization tournament caps live in organizations.tournament_limit (NULL = unlimited) enforced by a DB trigger — a future subscription will drive these same controls.
