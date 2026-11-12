@@ -37,6 +37,7 @@ import { Route as ApiPublicHooksTournamentRemindersRouteImport } from './routes/
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
+import { Route as AuthenticatedDashboardOrganizationsSlugTournoisIdRouteImport } from './routes/_authenticated/dashboard_.organizations.$slug_.tournois.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -183,6 +184,12 @@ const LovableEmailTransactionalPreviewRoute =
     path: '/lovable/email/transactional/preview',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedDashboardOrganizationsSlugTournoisIdRoute =
+  AuthenticatedDashboardOrganizationsSlugTournoisIdRouteImport.update({
+    id: '/dashboard_/organizations/$slug_/tournois/$id',
+    path: '/dashboard/organizations/$slug/tournois/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -212,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/dashboard/organizations/$slug/tournois/$id': typeof AuthenticatedDashboardOrganizationsSlugTournoisIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -241,6 +249,7 @@ export interface FileRoutesByTo {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/dashboard/organizations/$slug/tournois/$id': typeof AuthenticatedDashboardOrganizationsSlugTournoisIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -272,6 +281,7 @@ export interface FileRoutesById {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/_authenticated/dashboard_/organizations/$slug_/tournois/$id': typeof AuthenticatedDashboardOrganizationsSlugTournoisIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -303,6 +313,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
+    | '/dashboard/organizations/$slug/tournois/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -332,6 +343,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
+    | '/dashboard/organizations/$slug/tournois/$id'
   id:
     | '__root__'
     | '/'
@@ -362,6 +374,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
+    | '/_authenticated/dashboard_/organizations/$slug_/tournois/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -587,6 +600,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/dashboard_/organizations/$slug_/tournois/$id': {
+      id: '/_authenticated/dashboard_/organizations/$slug_/tournois/$id'
+      path: '/dashboard/organizations/$slug/tournois/$id'
+      fullPath: '/dashboard/organizations/$slug/tournois/$id'
+      preLoaderRoute: typeof AuthenticatedDashboardOrganizationsSlugTournoisIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -597,6 +617,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedInvitationRoute: typeof AuthenticatedInvitationRoute
   AuthenticatedMonEspaceRoute: typeof AuthenticatedMonEspaceRoute
   AuthenticatedDashboardOrganizationsSlugRoute: typeof AuthenticatedDashboardOrganizationsSlugRoute
+  AuthenticatedDashboardOrganizationsSlugTournoisIdRoute: typeof AuthenticatedDashboardOrganizationsSlugTournoisIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -607,6 +628,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMonEspaceRoute: AuthenticatedMonEspaceRoute,
   AuthenticatedDashboardOrganizationsSlugRoute:
     AuthenticatedDashboardOrganizationsSlugRoute,
+  AuthenticatedDashboardOrganizationsSlugTournoisIdRoute:
+    AuthenticatedDashboardOrganizationsSlugTournoisIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

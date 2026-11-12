@@ -55,6 +55,7 @@ export function TournamentBoard({
   maxParticipants,
   isTeam,
   consolationEnabled = false,
+  section = "all",
 }: {
   tournamentId: string;
   status: string;
@@ -62,6 +63,7 @@ export function TournamentBoard({
   maxParticipants: number | null;
   isTeam: boolean;
   consolationEnabled?: boolean;
+  section?: "all" | "participants" | "access" | "matches";
 }) {
   const qc = useQueryClient();
   const { data } = useQuery({
@@ -71,7 +73,7 @@ export function TournamentBoard({
   const [admin, setAdmin] = useState(false);
   const [newTeam, setNewTeam] = useState("");
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
-  const [showTeams, setShowTeams] = useState(false);
+  const [showTeams, setShowTeams] = useState(section === "participants");
   const [poolView, setPoolView] = useState<"all" | number>("all");
   const [view, setView] = useState<"pools" | "final" | "consolation">("pools");
   const [busy, setBusy] = useState(false);
@@ -99,6 +101,7 @@ export function TournamentBoard({
     const reload = () => {
       qc.invalidateQueries({ queryKey: ["board", tournamentId] });
       qc.invalidateQueries({ queryKey: ["tournament", tournamentId] });
+      qc.invalidateQueries({ queryKey: ["organization-space"] });
     };
     const channel = supabase
       .channel(`tournament-board-${tournamentId}`)
@@ -114,6 +117,7 @@ export function TournamentBoard({
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["board", tournamentId] });
     qc.invalidateQueries({ queryKey: ["tournament", tournamentId] });
+      qc.invalidateQueries({ queryKey: ["organization-space"] });
   };
   const run = async (fn: () => Promise<unknown>, ok: string) => {
     setBusy(true);
@@ -381,7 +385,7 @@ list.map(({ i, ms, rows }) => {
     ...(hasConsolation ? [["consolation", "Consolante"] as const] : []),
   ];
   const openScreen = () => {
-    setScreenViews((cur) => (cur.length ? cur : [view && screenOptions.some(([v]) => v === view) ? view : screenOptions[0]![0]]));
+    setScreenViews((cur) => (cur.length ? cur : [view && screenOptions.some(([v]) => v === view) ? view : (screenOptions[0]?.[0] ?? "pools")]));
     setScreenOpen(true);
     void document.documentElement.requestFullscreen?.().catch(() => {});
   };
@@ -391,7 +395,7 @@ list.map(({ i, ms, rows }) => {
   };
   return (
     <section className="mt-10 space-y-8 border-t border-border pt-8">
-      <div>
+      {(section === "all" || section === "participants") && <div>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-2xl">
             {label} <span className="text-muted-foreground">({teams.length}{maxParticipants ? ` / ${maxParticipants}` : ""})</span>
@@ -515,9 +519,9 @@ list.map(({ i, ms, rows }) => {
             </button>
           </div>
         )}
-      </div>
+      </div>}
 
-      {admin && (
+      {admin && (section === "all" || section === "access") && (
         <div className="border-y border-border py-5">
           <h3 className="flex items-center gap-2 text-sm font-semibold">
             <KeyRound className="h-4 w-4 text-primary" /> Code d'accès du tournoi
@@ -579,6 +583,7 @@ list.map(({ i, ms, rows }) => {
         </div>
       )}
 
+      {(section === "all" || section === "matches") && <>
       {screenOptions.length > 0 && (
         <Button variant="outline" onClick={openScreen} className="h-10 px-4">
           <Maximize2 className="h-4 w-4" /> Plein écran
@@ -642,6 +647,7 @@ list.map(({ i, ms, rows }) => {
       {showFinalView && renderFinal(admin)}
 
       {showConsolationView && renderConsolation(admin)}
+      </>}
     </section>
   );
 }
