@@ -148,7 +148,7 @@ export function Game({
     };
     void sync();
     return () => { active = false; if (retry) clearTimeout(retry); };
-  }, [match?.id, accessCode, legsToWin, legsA, legsB, legSides, legRests, reported]);
+  }, [match?.id, accessCode, legsToWin, legsA, legsB, legSides, legRests.join(','), reported]);
 
   const endTurn = (darts: Dart[], bust: boolean) => {
     const total = darts.reduce((a, d) => a + d.value, 0);
