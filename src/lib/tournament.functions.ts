@@ -128,15 +128,15 @@ async function hasValidCode(tournamentId: string, code: string | undefined) {
 /** Enregistre le résultat d'un match. Admin, capitaine d'une des deux équipes, ou code d'accès actif. */
 export const reportMatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { matchId: string; scoreA: number; scoreB: number; legsA?: number; legsB?: number; code?: string | undefined }) => input)
+  .inputValidator((input: { matchId: string; scoreA: number; scoreB: number; legsA?: number; legsB?: number; legWinners?: LegSide[]; code?: string | undefined }) => input)
   .handler(async ({ data, context }) => reportAuthorizedMatch(data, context));
 
 /** Code-only entry point: does not grant member statistics or admin access. */
 export const reportTournamentMatch = createServerFn({ method: "POST" })
-  .inputValidator((input: { matchId: string; scoreA: number; scoreB: number; legsA?: number; legsB?: number; code: string }) => input)
+  .inputValidator((input: { matchId: string; scoreA: number; scoreB: number; legsA?: number; legsB?: number; legWinners?: LegSide[]; code: string }) => input)
   .handler(async ({ data }) => reportAuthorizedMatch(data));
 
-async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; scoreB: number; legsA?: number; legsB?: number; code?: string | undefined }, context?: Ctx) {
+async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; scoreB: number; legsA?: number; legsB?: number; legWinners?: LegSide[]; code?: string | undefined }, context?: Ctx) {
     const { data: m, error } = await publicClient()
       .from("tournament_matches")
       .select("id, tournament_id, stage, round, position, team_a, team_b, winner")
@@ -161,6 +161,7 @@ async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; sc
     if (a === b) throw new Error("Il faut un vainqueur (scores différents).");
     const legs = m.stage !== "pool" ? validateFinalLegs(data.legsA, data.legsB) : null;
     if (legs && ((a < b) !== (legs.legsA > legs.legsB))) throw new Error("Le gagnant doit avoir remporté deux manches.");
+    const legWinners = legs ? validateLegWinners(data.legWinners, legs.legsA, legs.legsB) : null;
     // Aux fléchettes, le vainqueur est celui qui a le moins de points restants (0).
     const winner = a < b ? m.team_a : m.team_b;
     // Deux derniers résultats de poule simultanés : la base sérialise et refuse celui qui n'a pas les phases finales ;
@@ -177,7 +178,7 @@ async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; sc
           finals = buildPoolFinals(standings, settings?.consolation !== false);
         }
       }
-      const { error } = await supabaseAdmin.rpc("commit_tournament_result", { _actor: (context?.userId ?? null) as unknown as string, _match_id: m.id, _code: normalizeCode(data.code), _score_a: a, _score_b: b, _legs_a: (legs?.legsA ?? null) as unknown as number, _legs_b: (legs?.legsB ?? null) as unknown as number, _finals: finals as unknown as import("@/integrations/supabase/types").Json });
+      const { error } = await supabaseAdmin.rpc("commit_tournament_result", { _actor: (context?.userId ?? null) as unknown as string, _match_id: m.id, _code: normalizeCode(data.code), _score_a: a, _score_b: b, _legs_a: (legs?.legsA ?? null) as unknown as number, _legs_b: (legs?.legsB ?? null) as unknown as number, _finals: finals as unknown as import("@/integrations/supabase/types").Json, _leg_winners: (legWinners ?? null) as unknown as import("@/integrations/supabase/types").Json });
       commitError = error;
       if (!error || !String(error.message).includes("Final drafts required")) break;
     }
