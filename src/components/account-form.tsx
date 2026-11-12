@@ -18,6 +18,9 @@ export function AccountForm({ kind, redirectTo }: { kind?: SignupKind; redirectT
   const [contact, setContact] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [confirmEmail, setConfirmEmail] = useState(false);
+  const [forgotPassword, setForgotPassword] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
   const goBack = () => navigate({ to: signupDestination(kind ?? "player", redirectTo) });
   useEffect(() => {
@@ -31,6 +34,20 @@ export function AccountForm({ kind, redirectTo }: { kind?: SignupKind; redirectT
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage("");
+    if (forgotPassword) {
+      setBusy(true);
+      try {
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) throw error;
+        setResetSent(true);
+      } catch {
+        setErrorMessage("Le lien n’a pas pu être envoyé. Réessayez dans quelques instants.");
+      } finally { setBusy(false); }
+      return;
+    }
     if (mode === "signup" && password !== password2) {
       toast.error("Les deux mots de passe ne sont pas identiques.");
       return;
@@ -60,7 +77,8 @@ export function AccountForm({ kind, redirectTo }: { kind?: SignupKind; redirectT
         }
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Une erreur est survenue.");
+      const invalid = err instanceof Error && /invalid login credentials|invalid_credentials/i.test(err.message);
+      setErrorMessage(mode === "signup" ? err instanceof Error ? err.message : "L’inscription n’a pas abouti." : invalid ? "L’adresse e-mail ou le mot de passe est incorrect." : err instanceof Error && /email not confirmed/i.test(err.message) ? "Confirmez votre adresse e-mail avant de vous connecter." : "La connexion n’a pas abouti. Réessayez dans quelques instants.");
     } finally {
       setBusy(false);
     }
@@ -87,8 +105,10 @@ export function AccountForm({ kind, redirectTo }: { kind?: SignupKind; redirectT
         <Target className="h-7 w-7 text-primary-foreground" />
       </span>
       <h1 className="mt-6 text-3xl">
-        {mode === "login" ? "Connexion" : kind === "organizer" ? "Inscription organisateur" : "Inscription joueur"}
+        {forgotPassword ? "Mot de passe oublié" : mode === "login" ? "Connexion" : kind === "organizer" ? "Inscription organisateur" : "Inscription joueur"}
       </h1>
+      {forgotPassword && <p className="mt-3 text-center text-muted-foreground">{resetSent ? "Si un compte correspond à cette adresse, un lien de réinitialisation vous a été envoyé. Vérifiez aussi vos courriers indésirables." : "Indiquez l’adresse e-mail associée à votre compte pour recevoir un lien de réinitialisation."}</p>}
+      {resetSent ? <Button type="button" variant="link" className="mt-4" onClick={() => { setForgotPassword(false); setResetSent(false); setErrorMessage(""); }}>Retour à la connexion</Button> : <>
       <form onSubmit={submit} className="mt-8 w-full space-y-4">
         {mode === "signup" && (
           <div>
@@ -131,7 +151,7 @@ export function AccountForm({ kind, redirectTo }: { kind?: SignupKind; redirectT
             placeholder="vous@exemple.fr"
           />
         </div>
-        <div>
+        {!forgotPassword && <div>
           <label className="mb-1 block text-sm font-medium" htmlFor="password">
             Mot de passe
           </label>
@@ -141,11 +161,11 @@ export function AccountForm({ kind, redirectTo }: { kind?: SignupKind; redirectT
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            minLength={6}
+            minLength={mode === "signup" ? 6 : undefined}
             className="w-full rounded-md border border-input bg-card px-3 py-2 text-sm outline-none focus:border-primary"
             placeholder="6 caractères minimum"
           />
-        </div>
+        </div>}
         {mode === "signup" && (
           <div>
             <label className="mb-1 block text-sm font-medium" htmlFor="password2">
@@ -167,17 +187,20 @@ export function AccountForm({ kind, redirectTo }: { kind?: SignupKind; redirectT
             )}
           </div>
         )}
+        {errorMessage && <p role="alert" className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">{errorMessage}</p>}
         <Button
           type="submit"
           disabled={busy}
           className="w-full rounded-md bg-primary px-4 py-3 font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
         >
-          {busy ? "..." : mode === "login" ? "Se connecter" : "Créer mon compte"}
+          {busy ? "..." : forgotPassword ? "Envoyer le lien de réinitialisation" : mode === "login" ? "Se connecter" : "Créer mon compte"}
         </Button>
       </form>
+      {mode === "login" && <Button type="button" variant="link" className="mt-2" onClick={() => { setForgotPassword(v => !v); setErrorMessage(""); }}>{forgotPassword ? "Retour à la connexion" : "Mot de passe oublié ?"}</Button>}
 
       {mode === "signup" && <Button variant="link" asChild><Link to="/auth" search={redirectTo ? { redirect: redirectTo } : {}}>Déjà un compte ? Connectez-vous</Link></Button>}
-      {mode === "login" && <div className="mt-6 flex flex-wrap justify-center gap-3"><Button variant="outline" asChild><Link to="/inscription/joueur" search={redirectTo ? { redirect: redirectTo } : {}}>Inscription joueur</Link></Button><Button variant="outline" asChild><Link to="/inscription/organisateur">Inscription organisateur</Link></Button></div>}
+      {mode === "login" && !forgotPassword && <div className="mt-6 flex flex-wrap justify-center gap-3"><Button variant="outline" asChild><Link to="/inscription/joueur" search={redirectTo ? { redirect: redirectTo } : {}}>Inscription joueur</Link></Button><Button variant="outline" asChild><Link to="/inscription/organisateur">Inscription organisateur</Link></Button></div>}
+      </>}
     </div>
   );
 }

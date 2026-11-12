@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
@@ -25,19 +26,23 @@ function ResetPassword() {
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
   const [busy, setBusy] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
+    const recoveryLink = new URLSearchParams(window.location.hash.slice(1)).get("type") === "recovery";
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "PASSWORD_RECOVERY" || session) setReady(true);
+      if (event === "PASSWORD_RECOVERY" || (recoveryLink && session)) setReady(true);
     });
-    supabase.auth.getSession().then(({ data: s }) => {
-      if (s.session) setReady(true);
+    if (recoveryLink) void supabase.auth.getUser().then(({ data: s }) => {
+      if (s.user) setReady(true);
     });
     return () => data.subscription.unsubscribe();
   }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!ready) return;
+    setErrorMessage("");
     if (password !== password2) { toast.error("Les deux mots de passe ne sont pas identiques."); return; }
     setBusy(true);
     try {
@@ -46,7 +51,7 @@ function ResetPassword() {
       toast.success("Mot de passe modifié !");
       navigate({ to: "/mon-espace" });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erreur");
+      setErrorMessage("Le mot de passe n’a pas pu être modifié. Le lien a peut-être expiré : demandez-en un nouveau.");
     } finally {
       setBusy(false);
     }
@@ -61,16 +66,17 @@ function ResetPassword() {
       <h1 className="mt-6 text-3xl">Nouveau mot de passe</h1>
       {!ready ? (
         <p className="mt-4 text-center text-sm text-muted-foreground">
-          Ouvrez cette page depuis le lien reçu par e-mail. Si le lien a expiré, demandez-en un nouveau à un administrateur.
+          Ouvrez cette page depuis le lien reçu par e-mail. Si le lien a expiré, utilisez « Mot de passe oublié ? » sur la page de connexion.
         </p>
       ) : (
         <form onSubmit={submit} className="mt-8 w-full space-y-4">
           <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Nouveau mot de passe" aria-label="Nouveau mot de passe" autoComplete="new-password" className={cls} />
           <input type="password" required minLength={6} value={password2} onChange={(e) => setPassword2(e.target.value)} placeholder="Confirmer le mot de passe" aria-label="Confirmer le mot de passe" autoComplete="new-password" className={cls} />
           {password2.length > 0 && password2 !== password && <p className="text-xs text-destructive">Les mots de passe ne correspondent pas.</p>}
-          <button type="submit" disabled={busy} className="w-full rounded-md bg-primary px-4 py-3 font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60">
+          {errorMessage && <p role="alert" className="text-sm text-destructive">{errorMessage}</p>}
+          <Button type="submit" disabled={busy} className="w-full">
             {busy ? "..." : "Enregistrer"}
-          </button>
+          </Button>
         </form>
       )}
     </div>
