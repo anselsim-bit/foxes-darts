@@ -1,7 +1,7 @@
 # Foxes Darts — Tâches
 
 ## Inscriptions exclusivement HelloAsso — 12 novembre 2026
-- [ ] Bloquer les inscriptions membres et invités hors HelloAsso lorsqu’un lien existe, préserver les ajouts organisateur et vérifier les protections.
+- [x] Bloquer les inscriptions membres et invités hors HelloAsso lorsqu’un lien existe ; ajout organisateur conservé, 14 tests réussis et refus connecté vérifié sans modifier les inscrits.
 
 ## Gestion dédiée d’un tournoi — 12 novembre 2026
 - [x] Ajouter une page organisateur avec inscrits, paramètres, tableau et accès, en réutilisant les contrôles existants.
