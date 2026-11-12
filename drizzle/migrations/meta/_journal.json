@@ -309,6 +309,13 @@
       "when": 1794475035791,
       "tag": "0043_guest_registrations_and_leg_rests",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1794475567380,
+      "tag": "0044_guest_partner_names",
+      "breakpoints": true
     }
   ]
 }

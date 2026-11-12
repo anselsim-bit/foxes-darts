@@ -1,0 +1,1 @@
+ALTER TABLE public.tournament_guest_registrations ADD COLUMN IF NOT EXISTS partner_first_name text CHECK (partner_first_name IS NULL OR char_length(partner_first_name) <= 60), ADD COLUMN IF NOT EXISTS partner_last_name text CHECK (partner_last_name IS NULL OR char_length(partner_last_name) <= 60);
