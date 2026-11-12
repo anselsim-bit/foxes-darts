@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { GuestRegistrationsList } from "@/components/guest-registration";
+import { ManualPlayerForm } from "@/components/manual-player-form";
 import { FitToScreen } from "@/components/fit-to-screen";
 import { QrImage } from "@/components/qr-image";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -13,7 +14,6 @@ import {
   startTournament,
   reportMatch,
   amIAdmin,
-  adminAddTeam,
   adminRenameTeam,
   adminDeleteTeam,
   adminSendTournamentLink,
@@ -71,7 +71,6 @@ export function TournamentBoard({
     queryFn: () => getTournamentBoard({ data: { id: tournamentId } }),
   });
   const [admin, setAdmin] = useState(false);
-  const [newTeam, setNewTeam] = useState("");
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
   const [showTeams, setShowTeams] = useState(section === "participants");
   const [poolView, setPoolView] = useState<"all" | number>("all");
@@ -467,23 +466,7 @@ list.map(({ i, ms, rows }) => {
         {admin && status === "open" && (
           <div className="mt-4 flex flex-wrap gap-2">
             {!full || !maxParticipants ? (
-              <form
-                className="flex min-w-0 flex-wrap gap-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  run(() => adminAddTeam({ data: { tournamentId, name: newTeam } }), "Ajouté.").then(() => setNewTeam(""));
-                }}
-              >
-                <input
-                  value={newTeam}
-                  onChange={(e) => setNewTeam(e.target.value)}
-                  placeholder={isTeam ? "Nom de l'équipe" : "Nom du joueur"}
-                  className="min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                />
-                <button type="submit" className="btn-ember px-3 py-2 text-sm">
-                  <Plus className="h-4 w-4" /> Ajouter
-                </button>
-              </form>
+              <ManualPlayerForm tournamentId={tournamentId} doublette={isTeam} />
             ) : null}
             <button
               disabled={!full || busy}
