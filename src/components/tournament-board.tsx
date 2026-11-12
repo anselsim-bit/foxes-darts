@@ -4,7 +4,7 @@ import { ManualPlayerForm } from "@/components/manual-player-form";
 import { FitToScreen } from "@/components/fit-to-screen";
 import { QrImage } from "@/components/qr-image";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Play, Trash2, Trophy, Plus, Check, Pencil, PencilLine, Mail, KeyRound, ChevronDown, X, Maximize2 } from "lucide-react";
+import { Play, Trash2, Trophy, Plus, Check, Pencil, PencilLine, Mail, KeyRound, ChevronDown, X, Maximize2, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -59,6 +59,7 @@ export function TournamentBoard({
   isTeam,
   consolationEnabled = false,
   section = "all",
+  printTitle,
 }: {
   tournamentId: string;
   status: string;
@@ -67,6 +68,7 @@ export function TournamentBoard({
   isTeam: boolean;
   consolationEnabled?: boolean;
   section?: "all" | "participants" | "access" | "matches";
+  printTitle?: string;
 }) {
   const qc = useQueryClient();
   const { data } = useQuery({
@@ -409,17 +411,52 @@ list.map(({ i, ms, rows }) => {
           <h2 className="text-2xl">
             {label} <span className="text-muted-foreground">({teams.length}{maxParticipants ? ` / ${maxParticipants}` : ""})</span>
           </h2>
-          <button
-            type="button"
-            aria-expanded={showTeams}
-            onClick={() => setShowTeams((v) => !v)}
-            className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
-          >
-            {showTeams ? "Masquer la liste" : "Afficher la liste"}
-            <ChevronDown className={`h-4 w-4 transition-transform ${showTeams ? "rotate-180" : ""}`} />
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            {admin && section === "participants" && <Button variant="outline" disabled={!teams.length || payments.isPending || payments.isError} onClick={() => { setShowTeams(true); window.print(); }}><Printer className="h-4 w-4" />Imprimer la liste</Button>}
+            <Button variant="outline" aria-expanded={showTeams} onClick={() => setShowTeams((v) => !v)}>
+              {showTeams ? "Masquer la liste" : "Afficher la liste"}
+              <ChevronDown className={`h-4 w-4 transition-transform ${showTeams ? "rotate-180" : ""}`} />
+            </Button>
+          </div>
         </div>
-        {showTeams && (
+        {section === "participants" && <div className={`team-list-print mt-4 ${showTeams ? "" : "hidden"}`}>
+          <div className="team-list-print-heading hidden"><h1>{printTitle ?? "Liste du tournoi"}</h1><p>{label} : {teams.length} · {new Date().toLocaleDateString("fr-FR")}</p></div>
+          <table aria-label={`Liste des ${label.toLowerCase()}`} className="w-full table-fixed border-collapse text-sm">
+            <thead><tr className="border-b border-border text-left text-muted-foreground">
+              <th scope="col" className="w-10 py-3 pr-2">N°</th>
+              <th scope="col" className="py-3 pr-2">{isTeam ? "Équipe" : "Joueur"}</th>
+              {admin && status === "open" && <th scope="col" className="team-list-actions w-20 py-3 text-center"><span className="sr-only">Actions</span></th>}
+              {admin && <th scope="col" className="w-28 py-3 text-right">Paiement</th>}
+            </tr></thead>
+            <tbody>{teams.map((t, index) => {
+              const payment = payments.data?.find((p) => p.id === t.id);
+              return <tr key={t.id} className="border-b border-border">
+                <td className="py-3 pr-2 align-middle text-muted-foreground">{index + 1}</td>
+                <td className="break-words py-3 pr-2 font-medium">
+                  {renaming?.id === t.id ? <form className="flex flex-wrap items-center gap-1" onSubmit={(e) => { e.preventDefault(); void run(() => adminRenameTeam({ data: { id: t.id, name: renaming.name } }), "Nom modifié.").then(() => setRenaming(null)); }}>
+                    <input autoFocus aria-label="Nouveau nom de l'équipe" value={renaming.name} onChange={(e) => setRenaming({ id: t.id, name: e.target.value })} onKeyDown={(e) => { if (e.key === "Escape") setRenaming(null); }} className="min-w-0 flex-1 rounded-md border border-input bg-background px-2 py-1 outline-none focus:border-primary" />
+                    <Button type="submit" variant="ghost" size="icon" aria-label="Valider le nouveau nom"><Check className="h-4 w-4" /></Button>
+                    <Button type="button" variant="ghost" size="icon" aria-label="Annuler" onClick={() => setRenaming(null)}><X className="h-4 w-4" /></Button>
+                  </form> : t.name}
+                </td>
+                {admin && status === "open" && <td className="team-list-actions py-3"><div className="flex justify-center">
+                  <Button variant="ghost" size="icon" title="Renommer" aria-label={`Renommer ${t.name}`} onClick={() => setRenaming({ id: t.id, name: t.name })}><Pencil className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" title="Retirer" aria-label={`Retirer ${t.name}`} onClick={() => void run(() => adminDeleteTeam({ data: { id: t.id } }), "Retiré.")}><Trash2 className="h-4 w-4" /></Button>
+                </div></td>}
+                {admin && <td className="py-3 text-right align-middle">
+                  <label className="inline-flex items-center justify-end gap-2" title={payment?.helloasso ? "Payé via HelloAsso" : undefined}>
+                    <span className="text-xs text-muted-foreground">{payment ? payment.paid ? "Payé" : "Non payé" : "…"}</span>
+                    <Checkbox className="team-list-payment-control" aria-label={`Payé — ${t.name}`} checked={payment?.paid ?? false} disabled={busy || !payment || payment.helloasso} onCheckedChange={(checked) => void run(() => setTeamPayment({ data: { id: t.id, paid: checked === true } }), checked === true ? "Paiement enregistré." : "Équipe marquée non payée.")} />
+                    <span className="team-list-print-check hidden" aria-hidden="true">{payment?.paid ? "☑" : "☐"}</span>
+                  </label>
+                </td>}
+              </tr>;
+            })}</tbody>
+          </table>
+          {!teams.length && <p className="py-4 text-sm text-muted-foreground">Aucun inscrit pour le moment.</p>}
+          {admin && payments.isError && <p role="alert" className="mt-3 text-sm text-destructive">Impossible de charger les paiements. <Button variant="link" onClick={() => void payments.refetch()}>Réessayer</Button></p>}
+        </div>}
+        {showTeams && section !== "participants" && (
           <div className="mt-3 flex flex-wrap gap-2">
             {teams.map((t) =>
               renaming?.id === t.id ? (
@@ -453,19 +490,6 @@ list.map(({ i, ms, rows }) => {
               ) : (
                 <span key={t.id} className="inline-flex max-w-full flex-wrap items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm">
                   <span className="min-w-0 break-words">{t.name}</span>
-                  {admin && section === "participants" && (() => {
-                    const payment = payments.data?.find((p) => p.id === t.id);
-                    return <label className="inline-flex shrink-0 items-center gap-2 border-l border-border pl-2 text-xs text-muted-foreground" title={payment?.helloasso ? "Payé via HelloAsso" : undefined}>
-                      <Checkbox
-                        aria-label={`Payé — ${t.name}`}
-                        checked={payment?.paid ?? false}
-                        disabled={busy || !payment || payment.helloasso}
-                        onCheckedChange={(checked) => void run(() => setTeamPayment({ data: { id: t.id, paid: checked === true } }), checked === true ? "Paiement enregistré." : "Équipe marquée non payée.")}
-                      />
-                      {payment ? payment.paid ? "Payé" : "Non payé" : "…"}
-                      {payment?.helloasso && <span className="text-primary">HelloAsso</span>}
-                    </label>;
-                  })()}
                   {admin && status === "open" && (
                     <>
                       <button
@@ -483,7 +507,6 @@ list.map(({ i, ms, rows }) => {
               )
             )}
             {teams.length === 0 && <p className="text-sm text-muted-foreground">Aucun inscrit pour le moment.</p>}
-            {admin && section === "participants" && payments.isError && <p role="alert" className="w-full text-sm text-destructive">Impossible de charger les paiements. <Button variant="link" onClick={() => void payments.refetch()}>Réessayer</Button></p>}
           </div>
         )}
         {admin && <GuestRegistrationsList tournamentId={tournamentId} />}

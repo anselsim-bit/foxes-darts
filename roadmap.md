@@ -1,5 +1,9 @@
 # Foxes Darts — Tâches
 
+## Liste imprimable — 12 novembre 2026
+- [x] Tableau des équipes en gestion avec paiement tout à droite et bouton Imprimer la liste.
+- [x] Tableau réel connecté vérifié, bouton d’impression déclenché et PDF produit avec uniquement la liste ; paiement à droite, téléphone sans débordement, trois tests de paiement réussis.
+
 ## Paiement des équipes — 12 novembre 2026
 - [x] Afficher Payé / Non payé avec une coche dans la gestion, modification réservée aux gestionnaires.
 - [x] Marquer automatiquement les équipes HelloAsso payées ; paiement manuel modifié, relu après rechargement et restauré ; téléphone sans débordement, 33 tests réussis, paiements exclus des lectures publiques.

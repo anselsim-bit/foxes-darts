@@ -1,0 +1,1 @@
+- Organizer team-list printing uses existing authorized board data and scoped print CSS; exclude other sections and edit controls to avoid extra data access and produce a standalone paper list.
