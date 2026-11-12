@@ -19,6 +19,7 @@ export const createOrganization = createServerFn({method:"POST"}).middleware([re
   let result=await context.supabase.rpc("create_organization_space",{_name:data.name,_slug:slug,_description:data.description,_settings:data.settings});
   let finalSlug=slug;
   if(result.error?.code==="23505") {finalSlug=`${slug}-${crypto.randomUUID().slice(0,8)}`;result=await context.supabase.rpc("create_organization_space",{_name:data.name,_slug:finalSlug,_description:data.description,_settings:data.settings});}
+  if(result.error?.message?.includes("awaits validation")) throw new Error("La création d’organisations est momentanément fermée. Elle sera bientôt ouverte avec un abonnement.");
   if(result.error) throw new Error("Création impossible. Vérifiez les informations ou réessayez plus tard.");
   return {id:result.data,slug:finalSlug};
 });
@@ -39,7 +40,7 @@ export const getDashboard = createServerFn({method:"GET"}).middleware([requireSu
   return {profile:profile.data,organizations:[...organizations.values()],registrations:registrations.data??[],stats:stats.data,notifications:notifications.data??[],games:games.data??[],superAdmin:!!superAdmin,userId:context.userId};
 });
 export const getOrganizationSpace = createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).inputValidator((input:{slug:string})=>input).handler(async ({data,context})=>{
-  const {data:org,error}=await context.supabase.from("organizations").select("id,name,slug,status,description,visibility").eq("slug",data.slug).single();
+  const {data:org,error}=await context.supabase.from("organizations").select("id,name,slug,status,description,visibility,tournament_limit").eq("slug",data.slug).single();
   if(error||!org) throw new Error("Organisation introuvable.");
   const {data:membership}=await context.supabase.from("organization_members").select("role").eq("organization_id",org.id).eq("user_id",context.userId).maybeSingle();
   const {data:superAdmin}=await context.supabase.rpc("is_platform_admin");
@@ -105,10 +106,11 @@ export const publicOrganization=createServerFn({method:"GET"}).inputValidator((i
 });
 export const getPlatformAdmin=createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).inputValidator((input:{search?:string;page?:number})=>input).handler(async ({data,context})=>{
   await requirePlatformAdmin(context);const page=Math.max(0,data.page??0);const search=(data.search??"").replace(/[%,_]/g,"").slice(0,100);
-  let orgQuery=context.supabase.from("organizations").select("id,name,slug,status,created_at",{count:"exact"}).order("created_at",{ascending:false});if(search)orgQuery=orgQuery.ilike("name",`%${search}%`);
+  let orgQuery=context.supabase.from("organizations").select("id,name,slug,status,created_at,tournament_limit",{count:"exact"}).order("created_at",{ascending:false});if(search)orgQuery=orgQuery.ilike("name",`%${search}%`);
   let usersQuery=context.supabase.from("profiles").select("id,display_name,first_name,last_name,created_at",{count:"exact"}).order("created_at",{ascending:false});if(search)usersQuery=usersQuery.ilike("display_name",`%${search}%`);
   const [orgs,users,audit,roles,counts]=await Promise.all([orgQuery.range(page*25,page*25+24),usersQuery.range(page*25,page*25+24),context.supabase.from("organization_audit_events").select("id,action,organization_id,created_at,details").order("created_at",{ascending:false}).limit(50),context.supabase.from("organization_members").select("user_id,role,organizations(name)").limit(200),context.supabase.rpc("platform_counts")]);
-  return {organizations:orgs.data??[],users:users.data??[],audit:audit.data??[],roles:roles.data??[],counts:counts.data as Record<string,number>|null,totalOrganizations:orgs.count??0,totalUsers:users.count??0};
+  const {data:flag}=await context.supabase.from("platform_release_flags").select("enabled").eq("name","organization_onboarding").maybeSingle();
+  return {organizations:orgs.data??[],users:users.data??[],audit:audit.data??[],roles:roles.data??[],counts:counts.data as Record<string,number>|null,totalOrganizations:orgs.count??0,totalUsers:users.count??0,onboardingOpen:Boolean(flag?.enabled)};
 });
 export const setOrganizationStatus=createServerFn({method:"POST"}).middleware([requireSupabaseAuth]).inputValidator((input:{id:string;status:string})=>input).handler(async ({data,context})=>{await requirePlatformAdmin(context);const {error}=await context.supabase.rpc("set_organization_status",{_organization_id:data.id,_status:data.status});if(error)throw new Error("Modification du statut refusée.");return {ok:true};});
 export const submitReport=createServerFn({method:"POST"}).middleware([requireSupabaseAuth]).inputValidator((input:{organizationId?:string|null;tournamentId?:string|null;reason:string})=>{const reason=String(input.reason??"").trim().slice(0,1000);if(reason.length<5)throw new Error("Décrivez le problème en quelques mots (5 caractères minimum).");const id=(v:unknown)=>typeof v==="string"&&/^[0-9a-f-]{36}$/i.test(v)?v:null;const organizationId=id(input.organizationId),tournamentId=id(input.tournamentId);if(!organizationId&&!tournamentId)throw new Error("Signalement invalide.");return {organizationId,tournamentId,reason};}).handler(async ({data,context})=>{
@@ -127,3 +129,7 @@ export const resolveReport=createServerFn({method:"POST"}).middleware([requireSu
   const {error}=await context.supabase.from("content_reports").update({status:data.status,resolved_at:new Date().toISOString()}).eq("id",data.id);
   if(error)throw new Error("Mise à jour impossible.");return {ok:true};
 });
+
+export const setOrganizationOnboarding=createServerFn({method:"POST"}).middleware([requireSupabaseAuth]).inputValidator((input:{enabled:boolean})=>({enabled:input.enabled===true})).handler(async ({data,context})=>{await requirePlatformAdmin(context);const {error}=await context.supabase.rpc("set_organization_onboarding",{_enabled:data.enabled});if(error)throw new Error("Modification refusée.");return {ok:true};});
+export const setOrganizationTournamentLimit=createServerFn({method:"POST"}).middleware([requireSupabaseAuth]).inputValidator((input:{id:string;limit:number|null})=>{const limit=input.limit===null?null:Math.floor(Number(input.limit));if(limit!==null&&(!Number.isFinite(limit)||limit<0||limit>10000))throw new Error("Nombre de tournois invalide.");return {id:String(input.id),limit};}).handler(async ({data,context})=>{await requirePlatformAdmin(context);const {error}=await context.supabase.rpc("set_organization_tournament_limit",{_organization_id:data.id,_limit:data.limit as number});if(error)throw new Error("Modification refusée.");return {ok:true};});
+export const getOnboardingOpen=createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).handler(async ({context})=>{const {data}=await context.supabase.rpc("organization_onboarding_open");return {open:Boolean(data)};});
