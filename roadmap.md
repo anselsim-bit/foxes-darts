@@ -2,7 +2,7 @@
 
 ## Liste imprimable — 12 novembre 2026
 - [x] Tableau des équipes en gestion avec paiement tout à droite et bouton Imprimer la liste.
-- [ ] Vérifier le tableau connecté, l’impression isolée et l’affichage téléphone.
+- [x] Tableau réel connecté vérifié, bouton d’impression déclenché et PDF produit avec uniquement la liste ; paiement à droite, téléphone sans débordement, trois tests de paiement réussis.
 
 ## Paiement des équipes — 12 novembre 2026
 - [x] Afficher Payé / Non payé avec une coche dans la gestion, modification réservée aux gestionnaires.

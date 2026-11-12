@@ -507,7 +507,6 @@ list.map(({ i, ms, rows }) => {
               )
             )}
             {teams.length === 0 && <p className="text-sm text-muted-foreground">Aucun inscrit pour le moment.</p>}
-            {admin && section === "participants" && payments.isError && <p role="alert" className="w-full text-sm text-destructive">Impossible de charger les paiements. <Button variant="link" onClick={() => void payments.refetch()}>Réessayer</Button></p>}
           </div>
         )}
         {admin && <GuestRegistrationsList tournamentId={tournamentId} />}
