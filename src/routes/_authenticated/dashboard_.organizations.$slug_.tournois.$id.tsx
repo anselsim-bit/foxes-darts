@@ -66,7 +66,7 @@ function TournamentManagement() {
   if (!tournament) return <p className="p-10">Tournoi indisponible.</p>;
   const editable = tournament.status !== "started" && tournament.status !== "finished";
   const status = tournament.status === "started" ? "En cours" : tournament.status === "finished" ? "Terminé" : "Inscriptions ouvertes";
-  return <main className="mx-auto max-w-6xl px-4 py-8">
+  return <div className="mx-auto max-w-6xl px-4 py-8">
     <Button asChild variant="ghost" className="mb-5"><Link to="/dashboard/organizations/$slug" params={{ slug }}><ArrowLeft className="h-4 w-4" />{data.org.name}</Link></Button>
     <header className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-6">
       <div className="min-w-0"><p className="mb-2 text-sm font-medium text-primary">Gestion du tournoi · {status}</p><h1 className="break-words text-3xl">{tournament.title}</h1><p className="mt-2 text-sm text-muted-foreground">{new Date(`${tournament.event_date}T12:00:00`).toLocaleDateString("fr-FR")} {tournament.start_time ? `· ${tournament.start_time.slice(0, 5)}` : ""} · {tournament.format === "equipe" ? "Doublette" : "Solo"}</p></div>
@@ -80,5 +80,5 @@ function TournamentManagement() {
         {tournament.helloasso_url && <section><h2 className="mb-3 text-xl">Inscriptions HelloAsso ({contacts.helloasso.length})</h2>{contacts.helloasso.length ? contacts.helloasso.map((r) => <div key={r.id} className="grid min-w-0 gap-1 border-b border-border py-3 sm:grid-cols-2"><div><p>{r.first_name} {r.last_name}{r.partner_first_name ? ` & ${r.partner_first_name} ${r.partner_last_name ?? ""}` : ""}</p>{r.email && <a className="break-all text-sm text-primary" href={`mailto:${r.email}`}>{r.email}</a>}</div><p className="text-sm text-muted-foreground sm:text-right">{r.tier_name} · {(r.amount_cents / 100).toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}</p></div>) : <p className="text-sm text-muted-foreground">Aucune inscription HelloAsso importée.</p>}</section>}
       </div>}
     </>}
-  </main>;
+  </div>;
 }
