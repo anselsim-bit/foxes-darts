@@ -323,6 +323,13 @@
       "when": 1794475979684,
       "tag": "0045_price_org_soft_delete",
       "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1794477747061,
+      "tag": "0046_helloasso_player_registration_channel",
+      "breakpoints": true
     }
   ]
 }

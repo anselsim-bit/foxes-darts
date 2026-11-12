@@ -1,0 +1,8 @@
+CREATE FUNCTION public.foxes_self_registration_allowed(_tournament_id uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$ SELECT EXISTS(SELECT 1 FROM public.tournaments WHERE id=_tournament_id AND nullif(btrim(helloasso_url),'') IS NULL) $$;
+REVOKE ALL ON FUNCTION public.foxes_self_registration_allowed(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.foxes_self_registration_allowed(uuid) TO authenticated, service_role;
+ALTER POLICY "Users can register themselves" ON public.registrations WITH CHECK(user_id=auth.uid() AND public.tournament_accepts_registration(tournament_id) AND public.foxes_self_registration_allowed(tournament_id));
+ALTER POLICY "Captain or admin inserts team" ON public.tournament_teams WITH CHECK(public.can_manage_tournament(tournament_id) OR (captain_id=auth.uid() AND public.tournament_accepts_registration(tournament_id) AND public.foxes_self_registration_allowed(tournament_id)));
+CREATE FUNCTION public.guard_helloasso_registration() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN PERFORM 1 FROM public.tournaments WHERE id=NEW.tournament_id FOR UPDATE; IF NOT public.foxes_self_registration_allowed(NEW.tournament_id) AND NOT public.can_manage_tournament(NEW.tournament_id) THEN RAISE EXCEPTION 'HELLOASSO_REGISTRATION_REQUIRED'; END IF; RETURN NEW; END $$;
+REVOKE ALL ON FUNCTION public.guard_helloasso_registration() FROM PUBLIC;
+CREATE TRIGGER registrations_helloasso_channel BEFORE INSERT ON public.registrations FOR EACH ROW EXECUTE FUNCTION public.guard_helloasso_registration();
