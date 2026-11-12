@@ -55,7 +55,7 @@ describe("Tournament device recovery", () => {
     fireEvent.click(screen.getByRole("button", { name: "Annuler" })); checkout();
     vi.mocked(reportTournamentMatch).mockResolvedValue({ ok: true });
     fireEvent.click(screen.getByRole("button", { name: "Envoyer le résultat au tableau du tournoi" }));
-    await waitFor(() => expect(reportTournamentMatch).toHaveBeenCalledWith({ data: { matchId: "match-1", scoreA: 0, scoreB: 301, code: "FOXES", legsA: 2, legsB: 1, legWinners: ["a", "b", "a"] } }));
+    await waitFor(() => expect(reportTournamentMatch).toHaveBeenCalledWith({ data: { matchId: "match-1", scoreA: 0, scoreB: 301, code: "FOXES", legsA: 2, legsB: 1, legWinners: ["a", "b", "a"], legRests: [301, 301, 301] } }));
     await waitFor(() => expect(localStorage.getItem(deviceDraftKey("test"))).toBeNull(), { timeout: 5000 });
     expect(navigation).toHaveBeenCalledWith({ to: "/tournois/$id", params: { id: "test" } });
   }, 15000);
