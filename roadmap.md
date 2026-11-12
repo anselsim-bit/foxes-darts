@@ -1,8 +1,8 @@
 # Foxes Darts — Tâches
 
 ## Paiement des équipes — 12 novembre 2026
-- [ ] Afficher Payé / Non payé avec une coche dans la gestion, modification réservée aux gestionnaires.
-- [ ] Marquer automatiquement les équipes HelloAsso payées ; vérifier l'enregistrement et la confidentialité.
+- [x] Afficher Payé / Non payé avec une coche dans la gestion, modification réservée aux gestionnaires.
+- [x] Marquer automatiquement les équipes HelloAsso payées ; paiement manuel modifié, relu après rechargement et restauré ; téléphone sans débordement, 33 tests réussis, paiements exclus des lectures publiques.
 
 ## Ajout manuel organisateur — 12 novembre 2026
 - [x] Bouton Ajouter ouvrant les champs adaptés au solo ou à la doublette, avec contact obligatoire et nom d’équipe facultatif.
