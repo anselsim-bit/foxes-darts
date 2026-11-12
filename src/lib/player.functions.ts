@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { doubletteName } from "./team-name";
+import { allowsFoxesRegistration } from "./registration-channel";
 
 export const registerForTournament = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -12,7 +13,8 @@ export const registerForTournament = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data, context }) => {
     let name = data.teamName;
-    const { data: t } = await context.supabase.from("tournaments").select("format").eq("id", data.tournamentId).maybeSingle();
+    const { data: t } = await context.supabase.from("tournaments").select("format,helloasso_url").eq("id", data.tournamentId).maybeSingle();
+    if (!allowsFoxesRegistration(t?.helloasso_url)) return { ok: false, message: "Les inscriptions à ce tournoi se font uniquement sur HelloAsso. Contactez l’organisateur pour un ajout manuel." };
     if (t?.format === "equipe") {
       if (!data.partnerFirstName || !data.partnerLastName) return { ok: false, message: "Indiquez le prénom et le nom du second joueur." };
       if (!name) {
@@ -193,7 +195,8 @@ export const registerGuestForTournament = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: t } = await supabaseAdmin.from("tournaments").select("status, helloasso_url, event_date, format").eq("id", data.tournamentId).maybeSingle();
-    if (!t || t.status !== "open" || t.helloasso_url) return { ok: false, message: "Inscriptions fermées pour ce tournoi." };
+    if (!allowsFoxesRegistration(t?.helloasso_url)) return { ok: false, message: "Les inscriptions à ce tournoi se font uniquement sur HelloAsso." };
+    if (!t || t.status !== "open") return { ok: false, message: "Inscriptions fermées pour ce tournoi." };
     const { data: accepts } = await supabaseAdmin.rpc("tournament_accepts_registration", { _tournament_id: data.tournamentId });
     if (accepts === false) return { ok: false, message: "Inscriptions fermées pour ce tournoi." };
     const { data: dup } = await supabaseAdmin.from("tournament_guest_registrations").select("id").eq("tournament_id", data.tournamentId).eq("email", data.email).maybeSingle();
