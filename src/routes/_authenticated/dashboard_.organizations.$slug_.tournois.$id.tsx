@@ -1,6 +1,10 @@
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { ArrowLeft, ExternalLink, Settings2, Users, Trophy, KeyRound } from "lucide-react";
+import { queryOptions, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { ArrowLeft, ExternalLink, Settings2, Users, Trophy, KeyRound, RefreshCw } from "lucide-react";
+import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
+import { adminSyncHelloAsso } from "@/lib/admin.functions";
 import { getOrganizationSpace } from "@/lib/organizations.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { TournamentSettingsForm } from "@/components/tournament-settings-form";
@@ -62,6 +66,9 @@ function TournamentManagement() {
   const { data } = useSuspenseQuery(spaceOptions(slug));
   const { data: contacts } = useSuspenseQuery(contactsOptions(id));
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const syncHelloAsso = useServerFn(adminSyncHelloAsso);
+  const [syncing, setSyncing] = useState(false);
   const tournament = data.tournaments.find((t) => t.id === id);
   if (!tournament) return <p className="p-10">Tournoi indisponible.</p>;
   const editable = tournament.status !== "started" && tournament.status !== "finished";
@@ -74,6 +81,22 @@ function TournamentManagement() {
     </header>
     <nav aria-label="Gestion du tournoi" className="my-6 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">{tabs.map(({ key, label, icon: Icon }) => <Button key={key} asChild variant={tab === key ? "default" : "outline"} className="h-auto min-h-10 whitespace-normal"><Link to="/dashboard/organizations/$slug/tournois/$id" params={{ slug, id }} search={{ tab: key }} aria-current={tab === key ? "page" : undefined}><Icon className="h-4 w-4 shrink-0" />{label}</Link></Button>)}</nav>
     {tab === "settings" ? editable ? <TournamentSettingsForm data={data} tournament={tournament} onSaved={async () => { await router.invalidate({ sync: true }); }} /> : <section><h2 className="text-xl">Paramètres du tournoi</h2><p className="my-4 text-muted-foreground">Les paramètres ne sont plus modifiables après le lancement du tournoi.</p><dl className="grid gap-4 sm:grid-cols-2">{[["Lieu", tournament.location || "Non renseigné"], ["Horaires", `${tournament.start_time?.slice(0,5) || "—"} – ${tournament.end_time?.slice(0,5) || "—"}`], ["Tarif", tournament.price_cents ? `${tournament.price_cents / 100} €` : "Gratuit"], ["HelloAsso", tournament.helloasso_url || "Non utilisé"]].map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-sm text-muted-foreground">{label}</dt><dd className="break-words">{value}</dd></div>)}</dl></section> : <>
+      {tab === "participants" && tournament.helloasso_url && data.org.slug === "foxes-darts" && <div className="mb-6 flex flex-wrap justify-end gap-3">
+        <Button variant="outline" disabled={syncing} onClick={async () => {
+          setSyncing(true);
+          try {
+            const result = await syncHelloAsso({ data: { tournamentId: id } });
+            await queryClient.invalidateQueries({ queryKey: ["tournament-management-contacts", id] });
+            await queryClient.invalidateQueries({ queryKey: ["tournament-board", id] });
+            await queryClient.invalidateQueries({ queryKey: ["organization-space", slug] });
+            await router.invalidate({ sync: true });
+            if (result.failures.length) toast.error("Synchronisation partielle : certaines inscriptions n’ont pas pu être récupérées.");
+            else toast.success(`${result.imported} inscription(s) HelloAsso synchronisée(s).`);
+          } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Synchronisation HelloAsso impossible.");
+          } finally { setSyncing(false); }
+        }}><RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin motion-reduce:animate-none" : ""}`} />{syncing ? "Synchronisation en cours…" : "Synchroniser HelloAsso"}</Button>
+      </div>}
       <TournamentBoard tournamentId={id} status={tournament.status} poolCount={tournament.pool_count} maxParticipants={tournament.max_participants} isTeam={tournament.format === "equipe"} consolationEnabled={tournament.consolation} section={tab} />
       {tab === "participants" && <div className="mt-8 space-y-8">
         <section><h2 className="mb-3 text-xl">Inscriptions des membres ({contacts.members.length})</h2>{contacts.members.length ? contacts.members.map((r) => <div key={r.id} className="flex flex-wrap justify-between gap-2 border-b border-border py-3"><span>{r.profiles?.display_name ?? "Joueur"}</span><span className="text-sm text-muted-foreground">{new Date(r.created_at).toLocaleDateString("fr-FR")}</span></div>) : <p className="text-sm text-muted-foreground">Aucune inscription de membre.</p>}</section>

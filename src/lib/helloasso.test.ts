@@ -178,6 +178,14 @@ describe("syncHelloAsso capacity", () => {
     expect(mocks.ops.filter((o) => o.op === "insert")).toEqual([{ table: "tournament_teams", op: "insert", payload: { tournament_id: "t1", name: "Les Renards", captain_id: null, helloasso_item_id: 1 } }]);
   });
 
+  it("limite l’import manuel au tournoi affiché", async () => {
+    mocks.state.tournaments = [tournamentRow, { ...tournamentRow, id: "t2" }];
+    await syncHelloAsso({ force: true, organizationId: "foxes-id", tournamentId: "t2" });
+    const inserts = mocks.ops.filter((o) => o.op === "insert");
+    expect(inserts).toHaveLength(2);
+    expect(inserts.map((o) => (o.payload as { tournament_id: string }).tournament_id)).toEqual(["t2", "t2"]);
+  });
+
   it("préserve le nom verrouillé par l’organisateur lors de l’import", async () => {
     mocks.state.existingTeams = [{ id: "team-1", name: "Nom choisi par admin", name_locked: true, helloasso_item_id: 1 }];
     vi.stubGlobal("fetch", vi.fn(async (url: string | URL | Request) => String(url).includes("oauth2/token") ? json({ access_token: "tok" }) : json(itemsBody([ticket(1, { customFields: [{ name: "Nom d’équipe", answer: "Les Renards" }] })]))));

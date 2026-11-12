@@ -1,5 +1,10 @@
 # Foxes Darts — Tâches
 
+## Synchronisation HelloAsso — 12 novembre 2026
+- [ ] Rétablir l’import manuel sur la page de gestion, limité au tournoi affiché.
+- [ ] Remplacer l’import horaire par deux imports à 8 h et 20 h, heure de Paris, y compris lors du changement d’heure.
+- [ ] Vérifier l’import connecté, les tests et les horaires enregistrés, sans modifier les résultats historiques.
+
 ## Connexion et description — 12 novembre 2026
 - [x] Afficher les erreurs de connexion en rouge et proposer l’envoi d’un lien de réinitialisation par e-mail ; envoi réel confirmé dans le journal des e-mails.
 - [x] Agrandir la description et proposer une mise en forme avec émojis, conservée sur la page du tournoi ; tournoi temporaire créé, relu publiquement puis supprimé.

@@ -1020,7 +1020,7 @@ function HelloAssoSection() {
   const sync = async () => {
     setSyncing(true);
     try {
-      const r = await adminSyncHelloAsso();
+      const r = await adminSyncHelloAsso({ data: {} });
       if (r.failures.length) toast.error(`Import partiel : ${r.failures.join(" · ")}`);
       else toast.success(`${r.imported} inscrit(s) HelloAsso à jour.`);
       queryClient.invalidateQueries({ queryKey: ["admin-helloasso"] });
@@ -1035,7 +1035,7 @@ function HelloAssoSection() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl">Inscrits via HelloAsso</h2>
-          <p className="text-sm text-muted-foreground">Mis à jour automatiquement toutes les heures, sauf pour les tournois complets.</p>
+          <p className="text-sm text-muted-foreground">Mis à jour à 8 h et 20 h (heure de Paris), sauf pour les tournois complets ou lancés.</p>
         </div>
         <button
           onClick={sync}

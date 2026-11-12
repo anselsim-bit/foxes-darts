@@ -289,11 +289,17 @@ export const adminListHelloAsso = createServerFn({ method: "GET" })
 
 export const adminSyncHelloAsso = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((input: { tournamentId?: string } | undefined) => input ?? {})
+  .handler(async ({ data, context }) => {
     const organizationId = await requireAdmin(context);
+    if (data.tournamentId) {
+      const { data: tournament, error } = await context.supabase.from("tournaments")
+        .select("id").eq("id", data.tournamentId).eq("organization_id", organizationId).maybeSingle();
+      if (error || !tournament) throw new Error("Ce tournoi n’est pas disponible dans votre organisation.");
+    }
     const { syncHelloAsso } = await import("./helloasso.server");
     // L'admin garde la main : le bouton rafraîchit même un tournoi complet.
-    return syncHelloAsso({ force: true, organizationId });
+    return syncHelloAsso({ force: true, organizationId, tournamentId: data.tournamentId });
   });
 
 export const adminListPlayerStats = createServerFn({ method: "GET" })

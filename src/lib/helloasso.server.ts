@@ -110,7 +110,7 @@ export function teamNameOf(r: {
   return holder || `Participant HelloAsso #${r.item_id}`;
 }
 
-export async function syncHelloAsso(opts: { force?: boolean; organizationId?: string } = {}) {
+export async function syncHelloAsso(opts: { force?: boolean; organizationId?: string; tournamentId?: string } = {}) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const centralId = await centralOrganizationId(supabaseAdmin);
   if (opts.organizationId && opts.organizationId !== centralId) throw new Error("La connexion HelloAsso actuelle est réservée à Foxes Darts.");
@@ -127,6 +127,7 @@ export async function syncHelloAsso(opts: { force?: boolean; organizationId?: st
   type TournamentRow = NonNullable<typeof tournaments>[number];
   const pending: TournamentRow[] = [];
   for (const t of tournaments ?? []) {
+    if (opts.tournamentId && t.id !== opts.tournamentId) continue;
     if (!opts.force && t.status !== "open") continue;
     if (parseHelloAssoUrl(t.helloasso_url ?? "")?.org !== HELLOASSO_ORG) continue;
     if (!opts.force && t.max_participants != null) {
