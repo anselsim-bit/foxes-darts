@@ -1419,6 +1419,19 @@ export type Database = {
         Returns: boolean
       }
       organization_onboarding_open: { Args: never; Returns: boolean }
+      organizer_add_tournament_players: {
+        Args: {
+          _email: string
+          _first_name: string
+          _last_name: string
+          _partner_first_name?: string
+          _partner_last_name?: string
+          _phone: string
+          _team_name?: string
+          _tournament_id: string
+        }
+        Returns: string
+      }
       platform_counts: { Args: never; Returns: Json }
       profile_readable_by_manager: {
         Args: { _user_id: string }

@@ -330,6 +330,13 @@
       "when": 1794477747061,
       "tag": "0046_helloasso_player_registration_channel",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1794495264107,
+      "tag": "0047_organizer_add_tournament_players",
+      "breakpoints": true
     }
   ]
 }
