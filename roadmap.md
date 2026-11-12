@@ -1,8 +1,8 @@
 # Foxes Darts — Tâches
 
 ## Gestion dédiée d’un tournoi — 12 novembre 2026
-- [ ] Ajouter une page organisateur avec inscrits, paramètres, tableau et accès, en réutilisant les contrôles existants.
-- [ ] Vérifier le parcours connecté et l’affichage sur téléphone.
+- [x] Ajouter une page organisateur avec inscrits, paramètres, tableau et accès, en réutilisant les contrôles existants.
+- [x] Vérifier le parcours connecté, les listes réelles, les onglets et l’affichage sur téléphone ; paramètres du tournoi terminé verrouillés, aucun résultat ni inscription modifié.
 
 ## Intégrations d’agents — 9 novembre 2026
 - [x] Ajouter le serveur MCP protégé avec trois lectures personnelles, le consentement et le retour après connexion/confirmation du compte ; OAuth activé sur Lovable Cloud déjà présent.
