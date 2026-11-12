@@ -65,7 +65,11 @@ export function extractPartner(fields?: CustomField[]) {
     const label = stripAccents(f.name ?? "").toLowerCase();
     if (!answer || !PARTNER_HINTS.some((h) => label.includes(h))) continue;
     const clean = label.replace(/[^a-z]/g, "");
-    if (clean.includes("prenom")) firstName = answer;
+    if (clean.includes("prenom") && clean.replace("prenom", "").includes("nom")) {
+      const [first, ...surname] = answer.split(/\s+/);
+      firstName = first ?? null;
+      lastName = surname.join(" ") || null;
+    } else if (clean.includes("prenom")) firstName = answer;
     else if (clean.includes("nom")) lastName = answer;
   }
   return firstName || lastName ? { firstName, lastName } : null;
@@ -104,8 +108,10 @@ export function teamNameOf(r: {
 }, dup: Set<string> = new Set(), doublette = false) {
   const declared = doublette ? extractTeamName(r.custom_fields ?? undefined) : null;
   if (declared) return declared;
-  const holder = shortName(r.first_name, r.last_name, dup);
-  const partner = shortName(r.partner_first_name ?? null, r.partner_last_name ?? null, dup);
+  const duplicates = new Set(dup);
+  if (r.first_name?.trim().toLowerCase() === r.partner_first_name?.trim().toLowerCase() && r.first_name?.trim()) duplicates.add(r.first_name.trim().toLowerCase());
+  const holder = shortName(r.first_name, r.last_name, duplicates);
+  const partner = shortName(r.partner_first_name ?? null, r.partner_last_name ?? null, duplicates);
   if (holder && partner) return `${holder} & ${partner}`;
   return holder || `Participant HelloAsso #${r.item_id}`;
 }
@@ -209,17 +215,16 @@ export async function syncHelloAsso(opts: { force?: boolean; organizationId?: st
           const seen = new Map<string, number>();
           const bump = (k: string) => { if (k) seen.set(k, (seen.get(k) ?? 0) + 1); };
           for (const r of rows) {
-            const slots = new Set([
+            const slots = [
               (r.first_name ?? "").trim().toLowerCase(),
               (r.partner_first_name ?? "").trim().toLowerCase(),
-            ]);
-            slots.delete("");
+            ];
             for (const s of slots) bump(s);
           }
           const pageIds = new Set(ids);
           for (const n of names ?? []) {
             if (n.helloasso_item_id != null && pageIds.has(n.helloasso_item_id)) continue;
-            for (const part of (n.name ?? "").split("&")) bump(part.trim().split(/\s+/)[0] ?? "");
+            for (const part of (n.name ?? "").split("&")) bump((part.trim().split(/\s+/)[0] ?? "").toLowerCase());
           }
           const dup = new Set([...seen].filter(([, c]) => c > 1).map(([k]) => k));
           for (const r of rows) {

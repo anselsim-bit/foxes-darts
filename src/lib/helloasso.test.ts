@@ -76,6 +76,9 @@ const partnerFields = [
 ];
 
 describe("extractPartner", () => {
+  it("sépare le champ combiné Nom/Prénom du partenaire", () => {
+    expect(extractPartner([{ name: "Nom/Prénom du partenaire", answer: "Romain Tintillier" }])).toEqual({ firstName: "Romain", lastName: "Tintillier" });
+  });
   it("retrouve le coéquipier des questions « Nom / Prénom partenaire »", () => {
     const partner = extractPartner([
       { id: 8749841, name: "Nom partenaire", type: "TextInput", answer: "Ansel" },
@@ -111,6 +114,9 @@ describe("extractTeamName", () => {
 });
 
 describe("teamNameOf", () => {
+  it("distingue aussi les homonymes au sein de la même doublette", () => {
+    expect(teamNameOf({ first_name: "Simon", last_name: "Ansel", partner_first_name: "Simon", partner_last_name: "Durand", item_id: 1 })).toBe("Simon A. & Simon D.");
+  });
   it("préfère le nom déclaré pour une doublette mais pas en solo", () => {
     const row = { first_name: "Simon", last_name: "Ansel", partner_first_name: "Patrice", item_id: 42, custom_fields: [{ name: "Nom d’équipe", answer: "Les Renards" }] };
     expect(teamNameOf(row, new Set(), true)).toBe("Les Renards");

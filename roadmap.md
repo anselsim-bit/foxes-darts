@@ -1,5 +1,10 @@
 # Foxes Darts — Tâches
 
+## Noms des doublettes — 12 novembre 2026
+- [x] Prénoms seuls sans nom d’équipe ; initiales uniquement en cas d’homonyme, y compris dans la même doublette.
+- [x] Séparer le champ HelloAsso combiné Nom/Prénom du partenaire ; corriger l’équipe existante « Gautier & Romain », sans toucher aux noms verrouillés.
+- [x] Vérification publique réelle et 27 tests réussis, contrôles automatiques sans erreur.
+
 ## Synchronisation HelloAsso — 12 novembre 2026
 - [x] Rétablir l’import manuel sur la page de gestion, limité au tournoi affiché.
 - [x] Remplacer l’import horaire par deux imports à 8 h et 20 h, heure de Paris ; réglage quotidien UTC pour les changements d’heure, authentification de la tâche existante préservée.
