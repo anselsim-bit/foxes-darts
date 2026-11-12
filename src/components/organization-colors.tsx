@@ -61,16 +61,30 @@ export function OrganizationColors({ initial }: { initial: { primary?: string | 
   );
 }
 
-/** Pool / consolation choices as checkboxes; the pool count appears only when pools are enabled. */
-export function PoolOptions({ poolCount, consolation }: { poolCount?: number | null | undefined; consolation?: boolean | null | undefined }) {
+/** Pool / consolation choices as checkboxes; each phase's game format is shown only when that phase is enabled. */
+export function PoolOptions({ poolCount, consolation, tournament }: { poolCount?: number | null | undefined; consolation?: boolean | null | undefined; tournament?: Record<string, unknown> | undefined }) {
   const [pools, setPools] = useState((poolCount ?? 4) > 0);
+  const [conso, setConso] = useState(consolation ?? true);
+  const val = (prefix: string, k: string) => tournament?.[`${prefix}${k}`] ?? tournament?.[k];
+  const format = (prefix: string, label: string, shown: boolean) => shown ? (
+    <fieldset key={prefix} className="space-y-2 rounded-md border border-border p-3">
+      <legend className="px-1">Format {label}</legend>
+      <select name={`${prefix}start_score`} defaultValue={String(val(prefix, "start_score") ?? 501)} className="w-full rounded-md border border-input bg-background px-2 py-1.5"><option>501</option><option>301</option></select>
+      <label className="block"><input type="checkbox" name={`${prefix}double_out`} defaultChecked={Boolean(val(prefix, "double_out"))} /> Sortie double</label>
+    </fieldset>
+  ) : <input key={prefix} type="hidden" name={`${prefix}start_score`} value={String(val(prefix, "start_score") ?? 501)} />;
   return (
-    <div className="space-y-2 text-sm sm:col-span-2">
+    <div className="space-y-3 text-sm sm:col-span-2">
       <label className="block"><input type="checkbox" checked={pools} onChange={(e) => setPools(e.target.checked)} /> Phase de poules</label>
       {pools ? (
-        <label className="block pl-6">Nombre de poules<input name="pools" type="number" min={1} defaultValue={(poolCount ?? 0) > 0 ? poolCount! : 4} className="ml-2 w-20 rounded-md border border-input bg-background px-2 py-1" /></label>
-      ) : <input type="hidden" name="pools" value="0" />}
-      <label className="block"><input type="checkbox" name="consolation" defaultChecked={consolation ?? true} /> Phase de consolante</label>
+        <div className="space-y-2 pl-6">
+          <label className="block">Nombre de poules<input name="pools" type="number" min={1} defaultValue={(poolCount ?? 0) > 0 ? poolCount! : 4} className="ml-2 w-20 rounded-md border border-input bg-background px-2 py-1" /></label>
+          {format("", "des poules", true)}
+        </div>
+      ) : <><input type="hidden" name="pools" value="0" />{format("", "", false)}</>}
+      {format("final_", "de la phase finale", true)}
+      <label className="block"><input type="checkbox" name="consolation" checked={conso} onChange={(e) => setConso(e.target.checked)} /> Phase de consolante</label>
+      {conso ? <div className="pl-6">{format("consolation_", "de la consolante", true)}</div> : format("consolation_", "", false)}
     </div>
   );
 }
