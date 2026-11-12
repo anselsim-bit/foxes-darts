@@ -17,6 +17,7 @@ import { phaseRules, validateFinalLegs, validateLegWinners, validateLiveLegs, va
 import { canManageTournament, requireTournamentManager, requireTeamManager, requireCentralManager } from "@/lib/organization-access";
 import { assertResultWritable } from "@/lib/tournament-result-access";
 import { validateManualPlayers, type ManualPlayerInput } from "./manual-player-data";
+import { teamIsPaid } from "./team-payment";
 
 type Ctx = { supabase: SupabaseClient<Database>; userId: string };
 
@@ -226,6 +227,40 @@ export const organizerAddPlayers = createServerFn({ method: "POST" })
       if (error.message.includes("ALREADY_REGISTERED") || error.code === "23505") throw new Error("Ce contact ou ce nom d’équipe est déjà inscrit.");
       throw new Error("Ajout impossible : vérifiez les coordonnées et les places disponibles.");
     }
+    return { ok: true };
+  });
+
+export const getTeamPayments = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { tournamentId: string }) => input)
+  .handler(async ({ data, context }) => {
+    await requireTournamentManager(context, data.tournamentId);
+    const { data: teams, error } = await context.supabase.from("tournament_teams")
+      .select("id, helloasso_item_id, tournament_team_payments(paid)")
+      .eq("tournament_id", data.tournamentId);
+    if (error) throw new Error("Impossible de charger les paiements.");
+    return (teams ?? []).map((team) => ({
+      id: team.id,
+      paid: teamIsPaid(team.helloasso_item_id, team.tournament_team_payments?.paid ?? false),
+      helloasso: team.helloasso_item_id !== null,
+    }));
+  });
+
+export const setTeamPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: string; paid: boolean }) => {
+    if (typeof input.paid !== "boolean") throw new Error("Statut de paiement invalide.");
+    return input;
+  })
+  .handler(async ({ data, context }) => {
+    await requireTeamManager(context, data.id);
+    const { data: team, error: readError } = await context.supabase.from("tournament_teams")
+      .select("helloasso_item_id").eq("id", data.id).single();
+    if (readError || !team) throw new Error("Équipe introuvable.");
+    if (team.helloasso_item_id !== null) throw new Error("Les équipes HelloAsso sont automatiquement payées.");
+    const { error } = await context.supabase.from("tournament_team_payments")
+      .upsert({ team_id: data.id, paid: data.paid });
+    if (error) throw new Error("Impossible d’enregistrer le paiement.");
     return { ok: true };
   });
 

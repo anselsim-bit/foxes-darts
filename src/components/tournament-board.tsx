@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Play, Trash2, Trophy, Plus, Check, Pencil, PencilLine, Mail, KeyRound, ChevronDown, X, Maximize2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { buildPoolBracket, poolStandings, rankedPoolQualifiers } from "@/lib/bracket";
 import {
@@ -19,6 +20,8 @@ import {
   adminSendTournamentLink,
   adminSetTournamentCode,
   getTournamentCodeAdmin,
+  getTeamPayments,
+  setTeamPayment,
 } from "@/lib/tournament.functions";
 
 type Match = {
@@ -71,6 +74,11 @@ export function TournamentBoard({
     queryFn: () => getTournamentBoard({ data: { id: tournamentId } }),
   });
   const [admin, setAdmin] = useState(false);
+  const payments = useQuery({
+    queryKey: ["team-payments", tournamentId],
+    queryFn: () => getTeamPayments({ data: { tournamentId } }),
+    enabled: admin && section === "participants",
+  });
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
   const [showTeams, setShowTeams] = useState(section === "participants");
   const [poolView, setPoolView] = useState<"all" | number>("all");
@@ -114,6 +122,7 @@ export function TournamentBoard({
   }, [qc, tournamentId]);
 
   const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["team-payments", tournamentId] });
     qc.invalidateQueries({ queryKey: ["board", tournamentId] });
     qc.invalidateQueries({ queryKey: ["tournament", tournamentId] });
       qc.invalidateQueries({ queryKey: ["organization-space"] });
@@ -442,7 +451,20 @@ list.map(({ i, ms, rows }) => {
                 </span>
               ) : (
                 <span key={t.id} className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm">
-                  {t.name}
+                  <span className="min-w-0 break-words">{t.name}</span>
+                  {admin && section === "participants" && (() => {
+                    const payment = payments.data?.find((p) => p.id === t.id);
+                    return <label className="inline-flex shrink-0 items-center gap-2 border-l border-border pl-2 text-xs text-muted-foreground" title={payment?.helloasso ? "Payé via HelloAsso" : undefined}>
+                      <Checkbox
+                        aria-label={`Payé — ${t.name}`}
+                        checked={payment?.paid ?? false}
+                        disabled={busy || !payment || payment.helloasso}
+                        onCheckedChange={(checked) => void run(() => setTeamPayment({ data: { id: t.id, paid: checked === true } }), checked === true ? "Paiement enregistré." : "Équipe marquée non payée.")}
+                      />
+                      {payment ? payment.paid ? "Payé" : "Non payé" : "…"}
+                      {payment?.helloasso && <span className="text-primary">HelloAsso</span>}
+                    </label>;
+                  })()}
                   {admin && status === "open" && (
                     <>
                       <button
@@ -460,6 +482,7 @@ list.map(({ i, ms, rows }) => {
               )
             )}
             {teams.length === 0 && <p className="text-sm text-muted-foreground">Aucun inscrit pour le moment.</p>}
+            {admin && section === "participants" && payments.isError && <p role="alert" className="w-full text-sm text-destructive">Impossible de charger les paiements. <Button variant="link" onClick={() => void payments.refetch()}>Réessayer</Button></p>}
           </div>
         )}
         {admin && <GuestRegistrationsList tournamentId={tournamentId} />}
