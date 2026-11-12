@@ -33,6 +33,7 @@ import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.
 import { Route as TournoisIdJouerRouteImport } from './routes/tournois_.$id.jouer'
 import { Route as AuthenticatedDashboardOrganizationsSlugRouteImport } from './routes/_authenticated/dashboard_.organizations.$slug'
 import { Route as ApiPublicHooksHelloassoSyncRouteImport } from './routes/api/public/hooks/helloasso-sync'
+import { Route as ApiPublicHooksTournamentRemindersRouteImport } from './routes/api/public/hooks/tournament-reminders'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -160,6 +161,12 @@ const ApiPublicHooksHelloassoSyncRoute =
     path: '/api/public/hooks/helloasso-sync',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksTournamentRemindersRoute =
+  ApiPublicHooksTournamentRemindersRouteImport.update({
+    id: '/api/public/hooks/tournament-reminders',
+    path: '/api/public/hooks/tournament-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   id: '/lovable/email/auth/preview',
   path: '/lovable/email/auth/preview',
@@ -201,6 +208,7 @@ export interface FileRoutesByFullPath {
   '/tournois/$id/jouer': typeof TournoisIdJouerRoute
   '/dashboard/organizations/$slug': typeof AuthenticatedDashboardOrganizationsSlugRoute
   '/api/public/hooks/helloasso-sync': typeof ApiPublicHooksHelloassoSyncRoute
+  '/api/public/hooks/tournament-reminders': typeof ApiPublicHooksTournamentRemindersRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -229,6 +237,7 @@ export interface FileRoutesByTo {
   '/tournois/$id/jouer': typeof TournoisIdJouerRoute
   '/dashboard/organizations/$slug': typeof AuthenticatedDashboardOrganizationsSlugRoute
   '/api/public/hooks/helloasso-sync': typeof ApiPublicHooksHelloassoSyncRoute
+  '/api/public/hooks/tournament-reminders': typeof ApiPublicHooksTournamentRemindersRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -259,6 +268,7 @@ export interface FileRoutesById {
   '/tournois_/$id/jouer': typeof TournoisIdJouerRoute
   '/_authenticated/dashboard_/organizations/$slug': typeof AuthenticatedDashboardOrganizationsSlugRoute
   '/api/public/hooks/helloasso-sync': typeof ApiPublicHooksHelloassoSyncRoute
+  '/api/public/hooks/tournament-reminders': typeof ApiPublicHooksTournamentRemindersRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -289,6 +299,7 @@ export interface FileRouteTypes {
     | '/tournois/$id/jouer'
     | '/dashboard/organizations/$slug'
     | '/api/public/hooks/helloasso-sync'
+    | '/api/public/hooks/tournament-reminders'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -317,6 +328,7 @@ export interface FileRouteTypes {
     | '/tournois/$id/jouer'
     | '/dashboard/organizations/$slug'
     | '/api/public/hooks/helloasso-sync'
+    | '/api/public/hooks/tournament-reminders'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -346,6 +358,7 @@ export interface FileRouteTypes {
     | '/tournois_/$id/jouer'
     | '/_authenticated/dashboard_/organizations/$slug'
     | '/api/public/hooks/helloasso-sync'
+    | '/api/public/hooks/tournament-reminders'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -370,6 +383,7 @@ export interface RootRouteChildren {
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   TournoisIdJouerRoute: typeof TournoisIdJouerRoute
   ApiPublicHooksHelloassoSyncRoute: typeof ApiPublicHooksHelloassoSyncRoute
+  ApiPublicHooksTournamentRemindersRoute: typeof ApiPublicHooksTournamentRemindersRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -545,6 +559,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksHelloassoSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/tournament-reminders': {
+      id: '/api/public/hooks/tournament-reminders'
+      path: '/api/public/hooks/tournament-reminders'
+      fullPath: '/api/public/hooks/tournament-reminders'
+      preLoaderRoute: typeof ApiPublicHooksTournamentRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/auth/preview': {
       id: '/lovable/email/auth/preview'
       path: '/lovable/email/auth/preview'
@@ -611,6 +632,8 @@ const rootRouteChildren: RootRouteChildren = {
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   TournoisIdJouerRoute: TournoisIdJouerRoute,
   ApiPublicHooksHelloassoSyncRoute: ApiPublicHooksHelloassoSyncRoute,
+  ApiPublicHooksTournamentRemindersRoute:
+    ApiPublicHooksTournamentRemindersRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,

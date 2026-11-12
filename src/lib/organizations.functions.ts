@@ -35,14 +35,14 @@ export const getDashboard = createServerFn({method:"GET"}).middleware([requireSu
     context.supabase.from("games").select("id,winner_name,start_score,created_at").eq("recorded_by",context.userId).order("created_at",{ascending:false}).limit(20),
   ]);
   const organizations = new Map<string,{id:string;name:string;slug:string;status:string;role:string}>();
-  for(const p of players.data??[]) if(p.organizations) organizations.set(p.organization_id,{...p.organizations,role:"PLAYER"});
-  for(const m of members.data??[]) if(m.organizations) organizations.set(m.organization_id,{...m.organizations,role:m.role});
+  for(const p of players.data??[]) if(p.organizations&&p.organizations.status!=="deleted") organizations.set(p.organization_id,{...p.organizations,role:"PLAYER"});
+  for(const m of members.data??[]) if(m.organizations&&m.organizations.status!=="deleted") organizations.set(m.organization_id,{...m.organizations,role:m.role});
   const {data:superAdmin}=await context.supabase.rpc("is_platform_admin");
   return {profile:profile.data,organizations:[...organizations.values()],registrations:registrations.data??[],stats:stats.data,notifications:notifications.data??[],games:games.data??[],superAdmin:!!superAdmin,userId:context.userId};
 });
 export const getOrganizationSpace = createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).inputValidator((input:{slug:string})=>input).handler(async ({data,context})=>{
   const {data:org,error}=await context.supabase.from("organizations").select("id,name,slug,status,description,visibility,tournament_limit").eq("slug",data.slug).single();
-  if(error||!org) throw new Error("Organisation introuvable.");
+  if(error||!org||org.status==="deleted") throw new Error("Organisation introuvable.");
   const {data:membership}=await context.supabase.from("organization_members").select("role").eq("organization_id",org.id).eq("user_id",context.userId).maybeSingle();
   const {data:superAdmin}=await context.supabase.rpc("is_platform_admin");
   if(!membership&&!superAdmin) throw new Error("Accès réservé aux collaborateurs de cette organisation.");
@@ -139,3 +139,5 @@ export const resolveReport=createServerFn({method:"POST"}).middleware([requireSu
 export const setOrganizationOnboarding=createServerFn({method:"POST"}).middleware([requireSupabaseAuth]).inputValidator((input:{enabled:boolean})=>({enabled:input.enabled===true})).handler(async ({data,context})=>{await requirePlatformAdmin(context);const {error}=await context.supabase.rpc("set_organization_onboarding",{_enabled:data.enabled});if(error)throw new Error("Modification refusée.");return {ok:true};});
 export const setOrganizationTournamentLimit=createServerFn({method:"POST"}).middleware([requireSupabaseAuth]).inputValidator((input:{id:string;limit:number|null})=>{const limit=input.limit===null?null:Math.floor(Number(input.limit));if(limit!==null&&(!Number.isFinite(limit)||limit<0||limit>10000))throw new Error("Nombre de tournois invalide.");return {id:String(input.id),limit};}).handler(async ({data,context})=>{await requirePlatformAdmin(context);const {error}=await context.supabase.rpc("set_organization_tournament_limit",{_organization_id:data.id,_limit:data.limit as number});if(error)throw new Error("Modification refusée.");return {ok:true};});
 export const getOnboardingOpen=createServerFn({method:"GET"}).middleware([requireSupabaseAuth]).handler(async ({context})=>{const {data}=await context.supabase.rpc("organization_onboarding_open");return {open:Boolean(data)};});
+
+export const deleteOrganization=createServerFn({method:"POST"}).middleware([requireSupabaseAuth]).inputValidator((input:{id:string;confirmName:string})=>({id:String(input.id),confirmName:String(input.confirmName??"").slice(0,200)})).handler(async ({data,context})=>{const {error}=await context.supabase.rpc("delete_organization",{_organization_id:data.id,_confirm_name:data.confirmName});if(error){if(error.message.includes("Confirmation mismatch"))throw new Error("Le nom saisi ne correspond pas.");if(error.message.includes("protected"))throw new Error("L’organisation centrale ne peut pas être supprimée.");throw new Error("Seul le propriétaire peut supprimer l’organisation.");}return {ok:true};});

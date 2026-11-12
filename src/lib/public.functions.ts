@@ -55,7 +55,7 @@ export const listTournaments = createServerFn({ method: "GET" }).handler(async (
   // Tous les tournois publics, toutes organisations confondues (RLS filtre les organisations privées).
   const { data, error } = await supabase
     .from("tournaments")
-    .select("id, title, event_date, start_time, end_time, format, max_participants, team_size, pool_count, start_score, double_out, final_start_score, final_double_out, consolation_start_score, consolation_double_out, pool_double_limit, consolation_double_limit, consolation, status, location, description, helloasso_url, image_url, organization_id, organizations(name, slug), tournament_teams(count)")
+    .select("id, title, event_date, start_time, end_time, format, max_participants, team_size, price_cents, pool_count, start_score, double_out, final_start_score, final_double_out, consolation_start_score, consolation_double_out, pool_double_limit, consolation_double_limit, consolation, status, location, description, helloasso_url, image_url, organization_id, organizations(name, slug), tournament_teams(count)")
     .order("event_date", { ascending: false });
   if (error) throw new Error(error.message);
   const rows = data ?? [];
@@ -137,7 +137,7 @@ export const getTournament = createServerFn({ method: "GET" })
     const supabase = publicClient();
     const { data: t, error } = await supabase
       .from("tournaments")
-      .select("id, title, event_date, start_time, end_time, format, max_participants, team_size, pool_count, start_score, double_out, final_start_score, final_double_out, consolation_start_score, consolation_double_out, pool_double_limit, consolation_double_limit, consolation, status, location, description, helloasso_url, image_url, organization_id")
+      .select("id, title, event_date, start_time, end_time, format, max_participants, team_size, price_cents, pool_count, start_score, double_out, final_start_score, final_double_out, consolation_start_score, consolation_double_out, pool_double_limit, consolation_double_limit, consolation, status, location, description, helloasso_url, image_url, organization_id")
       .eq("id", data.id)
       .maybeSingle();
     if (error) throw new Error(error.message);

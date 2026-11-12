@@ -146,6 +146,10 @@ function TournamentDetail() {
           {tournament.format === "equipe" ? "Doublette" : "Solo"}
           {tournament.max_participants ? ` · ${tournament.max_participants} ${tournament.format === "equipe" ? "équipes" : "participants"} max` : ""}
         </span>
+        <span className="flex items-center gap-2">
+          <Ticket className="h-4 w-4 text-primary" />
+          {(tournament as { price_cents?: number | null }).price_cents ? `${((tournament as { price_cents: number }).price_cents / 100).toLocaleString("fr-FR", { style: "currency", currency: "EUR" })} par ${tournament.format === "equipe" ? "doublette" : "joueur"}` : "Gratuit"}
+        </span>
         {tournament.location && (
           <span className="flex items-center gap-2">
             <MapPin className="h-4 w-4 text-primary" /> {tournament.location}

@@ -45,6 +45,7 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
       format?: "solo" | "equipe" | undefined;
       max_participants?: number | undefined;
       team_size?: number | undefined;
+      price_cents?: number | null | undefined;
       pool_count?: number | undefined;
       start_score: number;
       double_out: boolean;
@@ -83,6 +84,7 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
       max_participants:
         data.max_participants && data.max_participants > 0 ? Math.floor(data.max_participants) : null,
       team_size: data.format === "equipe" ? 2 : 1,
+      price_cents: typeof data.price_cents === "number" && Number.isFinite(data.price_cents) && data.price_cents >= 0 ? Math.min(100000, Math.round(data.price_cents)) : null,
       pool_count: Math.max(0, Math.floor(data.pool_count ?? 0)),
       start_score: rules.start,
       double_out: rules.doubleOut,
@@ -112,7 +114,8 @@ export const adminDeleteTournament = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { id: string }) => input)
   .handler(async ({ data, context }) => {
-    await requireAdmin(context);
+    const { data: allowed } = await context.supabase.rpc("can_manage_tournament", { _tournament_id: data.id });
+    if (!allowed) throw new Error("Tournoi non autorisé.");
     const { error } = await context.supabase.from("tournaments").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
