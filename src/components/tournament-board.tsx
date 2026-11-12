@@ -722,6 +722,30 @@ function MatchRow({
     <div className={`text-sm ${boxed ? "rounded-lg border border-border bg-card p-3" : "border-t border-border pt-1.5"}`}>
       {side(m.team_a, m.score_a)}
       {side(m.team_b, m.score_b)}
+      {final && !bye && (() => {
+        const detail = legSides(m.winner ? m.leg_winners : m.live_leg_winners);
+        const played = detail.length || (m.winner ? (m.legs_a ?? 0) + (m.legs_b ?? 0) : (m.live_legs_a ?? 0) + (m.live_legs_b ?? 0));
+        if (played === 0) return null;
+        return (
+          <div className="mt-1.5 flex flex-wrap items-center gap-1" aria-label="Détail des manches">
+            {Array.from({ length: played }, (_, i) => {
+              const w = detail[i];
+              const winnerName = w === "a" ? name(m.team_a) : w === "b" ? name(m.team_b) : null;
+              return (
+                <span
+                  key={i}
+                  className={`inline-flex max-w-32 items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] leading-none ${
+                    winnerName ? "border-primary/50 bg-primary/10 font-semibold text-primary" : "border-border text-muted-foreground"
+                  }`}
+                >
+                  <span className="shrink-0">M{i + 1}</span>
+                  {winnerName && <span className="truncate">{winnerName}</span>}
+                </span>
+              );
+            })}
+          </div>
+        );
+      })()}
       {final && !m.winner && ((m.live_legs_a ?? 0) + (m.live_legs_b ?? 0) > 0) && <p role="status" className="mt-2 border-t border-border pt-2 text-xs font-semibold text-primary">En cours · {(m.live_legs_a ?? 0) === 2 || (m.live_legs_b ?? 0) === 2 ? "Résultat à confirmer" : "2 manches gagnantes"}</p>}
       {bye && <p className="mt-1 text-xs text-muted-foreground">Exempt — qualifié au tour suivant</p>}
       {final && m.winner && !bye && <p className="mt-1 text-xs text-muted-foreground">Reste au perdant : {m.winner === m.team_a ? m.score_b : m.score_a}</p>}
