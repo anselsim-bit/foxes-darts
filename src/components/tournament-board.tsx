@@ -37,6 +37,8 @@ type Match = {
   live_legs_b?: number;
   leg_winners?: unknown;
   live_leg_winners?: unknown;
+  leg_rests?: unknown;
+  live_leg_rests?: unknown;
 };
 
 /** Détail ordonné des manches ("a"/"b"), stocké en jsonb. */
@@ -724,6 +726,8 @@ function MatchRow({
       {side(m.team_b, m.score_b)}
       {final && !bye && (() => {
         const detail = legSides(m.winner ? m.leg_winners : m.live_leg_winners);
+        const restsRaw = m.winner ? m.leg_rests : m.live_leg_rests;
+        const rests = Array.isArray(restsRaw) ? (restsRaw as unknown[]).map(Number) : [];
         const played = detail.length || (m.winner ? (m.legs_a ?? 0) + (m.legs_b ?? 0) : (m.live_legs_a ?? 0) + (m.live_legs_b ?? 0));
         if (played === 0) return null;
         return (
@@ -734,12 +738,13 @@ function MatchRow({
               return (
                 <span
                   key={i}
-                  className={`inline-flex max-w-32 items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] leading-none ${
+                  className={`inline-flex max-w-48 items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] leading-none ${
                     winnerName ? "border-primary/50 bg-primary/10 font-semibold text-primary" : "border-border text-muted-foreground"
                   }`}
                 >
                   <span className="shrink-0">M{i + 1}</span>
                   {winnerName && <span className="truncate">{winnerName}</span>}
+                  {Number.isFinite(rests[i]) && <span className="shrink-0 font-normal opacity-80">· reste {rests[i]}</span>}
                 </span>
               );
             })}

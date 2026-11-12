@@ -82,7 +82,7 @@ export function Game({
     const loserRemaining = scores[winner === 0 ? 1 : 0] ?? 0;
     try {
       await reportTournamentMatch({ data: { matchId: match.id, scoreA: aWon ? 0 : loserRemaining, scoreB: aWon ? loserRemaining : 0, code: accessCode,
-        ...(legsToWin === 2 ? { legsA: legWins[players[0]?.name === match.teamA ? 0 : 1] ?? 0, legsB: legWins[players[0]?.name === match.teamB ? 0 : 1] ?? 0, legWinners: legSides } : {}),
+        ...(legsToWin === 2 ? { legsA: legWins[players[0]?.name === match.teamA ? 0 : 1] ?? 0, legsB: legWins[players[0]?.name === match.teamB ? 0 : 1] ?? 0, legWinners: legSides, legRests: [...completedLegs.map(l => l.remaining), loserRemaining] } : {}),
       } });
       setReported(true);
       onReported?.();
@@ -136,17 +136,19 @@ export function Game({
     const sideOf = (i: number) => (players[i]?.name === match.teamA ? "a" : "b") as "a" | "b";
     return [...completedLegs.map(l => sideOf(l.winner)), ...(winner !== null ? [sideOf(winner)] : [])];
   }, [match, completedLegs, winner, players]);
+  // Points restants du perdant de chaque manche jouée, dans le même ordre.
+  const legRests = useMemo(() => [...completedLegs.map(l => l.remaining), ...(winner !== null ? [scores[winner === 0 ? 1 : 0] ?? 0] : [])], [completedLegs, winner, scores]);
   useEffect(() => {
     if (!match || !accessCode || legsToWin !== 2 || reported) return;
     let active = true;
     let retry: ReturnType<typeof setTimeout> | undefined;
     const sync = async () => {
-      try { await updateTournamentLiveLegs({ data: { matchId: match.id, code: accessCode, legsA, legsB, legWinners: legSides } }); }
+      try { await updateTournamentLiveLegs({ data: { matchId: match.id, code: accessCode, legsA, legsB, legWinners: legSides, legRests } }); }
       catch { if (active) retry = setTimeout(sync, 5000); }
     };
     void sync();
     return () => { active = false; if (retry) clearTimeout(retry); };
-  }, [match?.id, accessCode, legsToWin, legsA, legsB, legSides, reported]);
+  }, [match?.id, accessCode, legsToWin, legsA, legsB, legSides, legRests, reported]);
 
   const endTurn = (darts: Dart[], bust: boolean) => {
     const total = darts.reduce((a, d) => a + d.value, 0);
