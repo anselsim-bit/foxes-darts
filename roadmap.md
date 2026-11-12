@@ -1,9 +1,9 @@
 # Foxes Darts — Tâches
 
 ## Connexion et description — 12 novembre 2026
-- [ ] Afficher les erreurs de connexion en rouge et proposer l’envoi d’un lien de réinitialisation par e-mail.
-- [ ] Agrandir la description et proposer une mise en forme avec émojis, conservée sur la page du tournoi.
-- [ ] Vérifier les parcours et l’affichage sur téléphone.
+- [x] Afficher les erreurs de connexion en rouge et proposer l’envoi d’un lien de réinitialisation par e-mail ; envoi réel confirmé dans le journal des e-mails.
+- [x] Agrandir la description et proposer une mise en forme avec émojis, conservée sur la page du tournoi ; tournoi temporaire créé, relu publiquement puis supprimé.
+- [x] Vérifier les parcours et l’affichage sur téléphone ; neuf tests réussis et contrôles automatiques sans erreur. Le changement du mot de passe via le lien reçu n’a pas été exécuté pour préserver le compte existant.
 
 ## Inscriptions exclusivement HelloAsso — 12 novembre 2026
 - [x] Bloquer les inscriptions membres et invités hors HelloAsso lorsqu’un lien existe ; ajout organisateur conservé, 14 tests réussis et refus connecté vérifié sans modifier les inscrits.
