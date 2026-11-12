@@ -35,3 +35,5 @@
 - Guest sign-ups: public server fn + manager-only tournament_guest_registrations; leg_rests store per-leg loser remainders.
 - Reminders: schedule at 07/08 UTC, sends only at 09h Paris, idempotent per recipient.
 - Dedicated tournament management lives under the authenticated organization URL, reuses TournamentSettingsForm and sectioned TournamentBoard, and verifies the tournament belongs to the server-authorized space before loading RLS-protected contacts — preserves organization isolation and shared controls.
+
+- Organizer team-list printing uses the existing authorized board data and scoped print CSS, excluding other page sections and edit controls — avoids extra data access and produces a standalone paper list.

@@ -242,3 +242,28 @@
 .tournament-pool td { padding: 8px 3px; border-bottom: 1px solid var(--border); }
 .tournament-pool td:nth-child(2) { overflow-wrap: anywhere; }
 @media (prefers-reduced-motion: reduce) { .game-keypad button:active { transform: none; } }
+
+/* Only the organizer's team table is included in the printout. */
+@media print {
+  @page { size: A4 portrait; margin: 15mm; }
+  body:has(.team-list-print) {
+    --background: white;
+    --foreground: black;
+    --muted-foreground: black;
+    --border: #aaa;
+    background: var(--background);
+    color: var(--foreground);
+  }
+  body:has(.team-list-print) *:not(:has(.team-list-print)):not(.team-list-print):not(.team-list-print *) { display: none !important; }
+  body:has(.team-list-print) *:has(.team-list-print) { display: block !important; margin: 0 !important; padding: 0 !important; border: 0 !important; width: auto !important; max-width: none !important; }
+  .team-list-print { display: block !important; margin: 0 !important; }
+  .team-list-print-heading { display: block !important; margin-bottom: 8mm; }
+  .team-list-print-heading h1 { font-size: 18pt; }
+  .team-list-print-heading p { margin-top: 3mm; }
+  .team-list-print table { font-size: 11pt; }
+  .team-list-print thead { display: table-header-group; }
+  .team-list-print tr { break-inside: avoid; }
+  .team-list-print th, .team-list-print td { padding-block: 3mm; }
+  .team-list-print .team-list-actions, .team-list-print .team-list-payment-control { display: none !important; }
+  .team-list-print-check { display: inline !important; font-size: 14pt; }
+}
