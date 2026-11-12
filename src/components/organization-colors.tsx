@@ -12,7 +12,7 @@ const PRESETS: { name: string; c: Colors }[] = [
 ];
 
 /** Palette picker: ready-made themes, live preview, and optional fine-tuning; submits the same form fields as before. */
-export function OrganizationColors({ initial }: { initial: { primary?: string | null; secondary?: string | null; theme?: Record<string, string> } }) {
+export function OrganizationColors({ initial }: { initial: { primary?: string | null | undefined; secondary?: string | null | undefined; theme?: Record<string, string> | undefined } }) {
   const [c, setC] = useState<Colors>({ primary: initial.primary ?? "#e85d3a", secondary: initial.secondary ?? "#1a1a1a", theme: { ...base, ...(initial.theme ?? {}) } });
   const same = (p: Colors) => p.primary === c.primary && p.secondary === c.secondary && themeColorFields.every(([k]) => p.theme[k] === c.theme[k]);
   const swatch = (label: string, value: string, onChange: (v: string) => void, name: string) => (
@@ -31,7 +31,7 @@ export function OrganizationColors({ initial }: { initial: { primary?: string | 
         {PRESETS.map((p) => (
           <button type="button" key={p.name} onClick={() => setC({ ...p.c, theme: { ...p.c.theme } })} className={`flex items-center gap-2 rounded-md border px-3 py-2 text-sm ${same(p.c) ? "border-primary ring-2 ring-primary" : "border-border"}`}>
             <span className="flex overflow-hidden rounded-sm border border-border">
-              {[p.c.theme.background, p.c.theme.card, p.c.primary].map((x, i) => <span key={i} className="h-5 w-4" style={{ background: x }} />)}
+              {[p.c.theme["background"], p.c.theme["card"], p.c.primary].map((x, i) => <span key={i} className="h-5 w-4" style={{ background: x }} />)}
             </span>
             {p.name}
           </button>
@@ -62,7 +62,7 @@ export function OrganizationColors({ initial }: { initial: { primary?: string | 
 }
 
 /** Pool / consolation choices as checkboxes; the pool count appears only when pools are enabled. */
-export function PoolOptions({ poolCount, consolation }: { poolCount?: number | null; consolation?: boolean | null }) {
+export function PoolOptions({ poolCount, consolation }: { poolCount?: number | null | undefined; consolation?: boolean | null | undefined }) {
   const [pools, setPools] = useState((poolCount ?? 4) > 0);
   return (
     <div className="space-y-2 text-sm sm:col-span-2">
