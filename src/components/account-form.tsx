@@ -78,7 +78,7 @@ export function AccountForm({ kind, redirectTo }: { kind?: SignupKind; redirectT
       }
     } catch (err) {
       const invalid = err instanceof Error && /invalid login credentials|invalid_credentials/i.test(err.message);
-      setErrorMessage(invalid ? "L’adresse e-mail ou le mot de passe est incorrect." : err instanceof Error && /email not confirmed/i.test(err.message) ? "Confirmez votre adresse e-mail avant de vous connecter." : "La connexion n’a pas abouti. Réessayez dans quelques instants.");
+      setErrorMessage(mode === "signup" ? err instanceof Error ? err.message : "L’inscription n’a pas abouti." : invalid ? "L’adresse e-mail ou le mot de passe est incorrect." : err instanceof Error && /email not confirmed/i.test(err.message) ? "Confirmez votre adresse e-mail avant de vous connecter." : "La connexion n’a pas abouti. Réessayez dans quelques instants.");
     } finally {
       setBusy(false);
     }
