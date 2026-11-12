@@ -533,6 +533,7 @@ export type Database = {
           name: string
           slug: string
           status: string
+          tournament_limit: number | null
           updated_at: string
           visibility: string
         }
@@ -544,6 +545,7 @@ export type Database = {
           name: string
           slug: string
           status?: string
+          tournament_limit?: number | null
           updated_at?: string
           visibility?: string
         }
@@ -555,6 +557,7 @@ export type Database = {
           name?: string
           slug?: string
           status?: string
+          tournament_limit?: number | null
           updated_at?: string
           visibility?: string
         }
@@ -1344,6 +1347,7 @@ export type Database = {
         Args: { _organization_id: string }
         Returns: boolean
       }
+      organization_onboarding_open: { Args: never; Returns: boolean }
       platform_counts: { Args: never; Returns: Json }
       profile_readable_by_manager: {
         Args: { _user_id: string }
@@ -1383,8 +1387,16 @@ export type Database = {
         Args: { _admin: boolean; _user_id: string }
         Returns: undefined
       }
+      set_organization_onboarding: {
+        Args: { _enabled: boolean }
+        Returns: undefined
+      }
       set_organization_status: {
         Args: { _organization_id: string; _status: string }
+        Returns: undefined
+      }
+      set_organization_tournament_limit: {
+        Args: { _limit: number; _organization_id: string }
         Returns: undefined
       }
       tournament_accepts_registration: {
