@@ -344,6 +344,13 @@
       "when": 1794495678916,
       "tag": "0048_tournament_team_payment_tracking",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1794495738342,
+      "tag": "0049_team_payment_explicit_private_grants",
+      "breakpoints": true
     }
   ]
 }

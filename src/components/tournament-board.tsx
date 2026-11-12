@@ -106,6 +106,7 @@ export function TournamentBoard({
   // Mise à jour en direct : dès qu'un match, une équipe ou le tournoi change, le tableau se recharge tout seul.
   useEffect(() => {
     const reload = () => {
+      qc.invalidateQueries({ queryKey: ["team-payments", tournamentId] });
       qc.invalidateQueries({ queryKey: ["board", tournamentId] });
       qc.invalidateQueries({ queryKey: ["tournament", tournamentId] });
       qc.invalidateQueries({ queryKey: ["organization-space"] });
@@ -450,7 +451,7 @@ list.map(({ i, ms, rows }) => {
                   </button>
                 </span>
               ) : (
-                <span key={t.id} className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm">
+                <span key={t.id} className="inline-flex max-w-full flex-wrap items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm">
                   <span className="min-w-0 break-words">{t.name}</span>
                   {admin && section === "participants" && (() => {
                     const payment = payments.data?.find((p) => p.id === t.id);
