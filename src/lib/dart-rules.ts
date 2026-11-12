@@ -59,3 +59,25 @@ export function validateLiveLegs(a: number, b: number) {
   if (![a, b].every(n => Number.isInteger(n) && n >= 0 && n <= 2) || (a === 2 && b === 2)) throw new Error("Manches invalides.");
   return { live_legs_a: a, live_legs_b: b };
 }
+
+export type LegSide = "a" | "b";
+
+/** Ordered winners of each played leg, consistent with the leg totals. */
+export function validateLegWinners(winners: LegSide[] | undefined, legsA: number, legsB: number) {
+  if (winners === undefined) return null;
+  if (!Array.isArray(winners) || winners.some(w => w !== "a" && w !== "b")) throw new Error("Manches invalides.");
+  const a = winners.filter(w => w === "a").length;
+  const b = winners.length - a;
+  if (a !== legsA || b !== legsB || winners.length !== legsA + legsB) throw new Error("Le détail des manches ne correspond pas au score.");
+  if (legsA + legsB > 0 && winners[winners.length - 1] !== (legsA > legsB ? "a" : "b")) throw new Error("La dernière manche doit être celle du vainqueur.");
+  return winners;
+}
+
+/** Provisional ordered leg winners while the match is being played. */
+export function validateLiveLegWinners(winners: LegSide[] | undefined, liveA: number, liveB: number) {
+  if (winners === undefined) return null;
+  if (!Array.isArray(winners) || winners.some(w => w !== "a" && w !== "b")) throw new Error("Manches invalides.");
+  const a = winners.filter(w => w === "a").length;
+  if (a !== liveA || winners.length - a !== liveB) throw new Error("Le détail des manches ne correspond pas au score.");
+  return winners;
+}
