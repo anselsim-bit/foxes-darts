@@ -414,16 +414,17 @@ export function friendly(msg: string) {
 
 /** Provisional scores only: current code required, never advances the bracket. */
 export const updateTournamentLiveLegs = createServerFn({ method: "POST" })
-  .inputValidator((input: { matchId: string; code: string; legsA: number; legsB: number }) => input)
+  .inputValidator((input: { matchId: string; code: string; legsA: number; legsB: number; legWinners?: LegSide[] }) => input)
   .handler(async ({ data }) => {
     const live = validateLiveLegs(data.legsA, data.legsB);
+    const liveWinners = validateLiveLegWinners(data.legWinners, data.legsA, data.legsB);
     const { data: match } = await publicClient().from("tournament_matches")
       .select("id, tournament_id, stage, team_a, team_b, winner").eq("id", data.matchId).maybeSingle();
     if (!match || match.stage === "pool" || !match.team_a || !match.team_b || match.winner) throw new Error("Match indisponible.");
     if (!(await hasValidCode(match.tournament_id, data.code))) throw new Error("Code d'accès invalide ou tournoi inactif.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("tournament_matches")
-      .update(live).eq("id", match.id).is("winner", null);
+      .update({ ...live, live_leg_winners: liveWinners }).eq("id", match.id).is("winner", null);
     if (error) throw new Error("Impossible d'actualiser les manches.");
     return { ok: true };
   });
