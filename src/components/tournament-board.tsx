@@ -426,7 +426,7 @@ list.map(({ i, ms, rows }) => {
               <th scope="col" className="w-10 py-3 pr-2">N°</th>
               <th scope="col" className="py-3 pr-2">{isTeam ? "Équipe" : "Joueur"}</th>
               {admin && status === "open" && <th scope="col" className="team-list-actions w-20 py-3 text-center"><span className="sr-only">Actions</span></th>}
-              {admin && <th scope="col" className="w-28 py-3 text-right">Paiement</th>}
+              {admin && <th scope="col" className="w-16 py-3 text-right">Payé</th>}
             </tr></thead>
             <tbody>{teams.map((t, index) => {
               const payment = payments.data?.find((p) => p.id === t.id);
@@ -445,7 +445,6 @@ list.map(({ i, ms, rows }) => {
                 </div></td>}
                 {admin && <td className="py-3 text-right align-middle">
                   <label className="inline-flex items-center justify-end gap-2" title={payment?.helloasso ? "Payé via HelloAsso" : undefined}>
-                    <span className="text-xs text-muted-foreground">{payment ? payment.paid ? "Payé" : "Non payé" : "…"}</span>
                     <Checkbox className="team-list-payment-control" aria-label={`Payé — ${t.name}`} checked={payment?.paid ?? false} disabled={busy || !payment || payment.helloasso} onCheckedChange={(checked) => void run(() => setTeamPayment({ data: { id: t.id, paid: checked === true } }), checked === true ? "Paiement enregistré." : "Équipe marquée non payée.")} />
                     <span className="team-list-print-check hidden" aria-hidden="true">{payment?.paid ? "☑" : "☐"}</span>
                   </label>
