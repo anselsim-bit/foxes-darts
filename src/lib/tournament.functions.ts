@@ -16,6 +16,7 @@ import { publicClient } from "@/lib/public.functions";
 import { phaseRules, validateFinalLegs, validateLegWinners, validateLiveLegs, validateLiveLegWinners, type LegSide } from "@/lib/dart-rules";
 import { canManageTournament, requireTournamentManager, requireTeamManager, requireCentralManager } from "@/lib/organization-access";
 import { assertResultWritable } from "@/lib/tournament-result-access";
+import { validateManualPlayers, type ManualPlayerInput } from "./manual-player-data";
 
 type Ctx = { supabase: SupabaseClient<Database>; userId: string };
 
@@ -204,6 +205,27 @@ export const adminAddTeam = createServerFn({ method: "POST" })
     if (!name) throw new Error("Nom requis.");
     const { error } = await context.supabase.from("tournament_teams").insert({ tournament_id: data.tournamentId, name });
     if (error) throw new Error(friendly(error.message));
+    return { ok: true };
+  });
+
+export const organizerAddPlayers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: ManualPlayerInput) => input)
+  .handler(async ({ data, context }) => {
+    await requireTournamentManager(context, data.tournamentId);
+    const { data: tournament, error: readError } = await context.supabase.from("tournaments").select("format,status").eq("id", data.tournamentId).single();
+    if (readError || !tournament || tournament.status !== "open") throw new Error("Les inscriptions sont fermées.");
+    const players = validateManualPlayers(data, tournament.format === "equipe");
+    const { error } = await context.supabase.rpc("organizer_add_tournament_players", {
+      _tournament_id: data.tournamentId, _first_name: players.firstName, _last_name: players.lastName,
+      _email: players.email, _phone: players.phone, _partner_first_name: players.partnerFirstName,
+      _partner_last_name: players.partnerLastName, _team_name: players.teamName,
+    });
+    if (error) {
+      if (error.message.includes("TOURNAMENT_FULL")) throw new Error("Le tournoi est complet.");
+      if (error.message.includes("ALREADY_REGISTERED") || error.code === "23505") throw new Error("Ce contact ou ce nom d’équipe est déjà inscrit.");
+      throw new Error("Ajout impossible : vérifiez les coordonnées et les places disponibles.");
+    }
     return { ok: true };
   });
 
