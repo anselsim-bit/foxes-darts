@@ -82,7 +82,7 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
       format: data.format === "equipe" ? "equipe" : "solo",
       max_participants:
         data.max_participants && data.max_participants > 0 ? Math.floor(data.max_participants) : null,
-      team_size: Math.max(1, Math.floor(data.team_size ?? 1)),
+      team_size: data.format === "equipe" ? 2 : 1,
       pool_count: Math.max(0, Math.floor(data.pool_count ?? 0)),
       start_score: rules.start,
       double_out: rules.doubleOut,

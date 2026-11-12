@@ -65,6 +65,8 @@ function TournamentDetail() {
   const [registered, setRegistered] = useState(false);
   const [busy, setBusy] = useState(false);
   const [teamName, setTeamName] = useState("");
+  const [partnerFirst, setPartnerFirst] = useState("");
+  const [partnerLast, setPartnerLast] = useState("");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -97,7 +99,7 @@ function TournamentDetail() {
         setRegistered(false);
         toast.success("Inscription annulée.");
       } else {
-        const res = await registerForTournament({ data: { tournamentId: id, teamName: teamName || undefined } });
+        const res = await registerForTournament({ data: { tournamentId: id, teamName: teamName || undefined, partnerFirstName: partnerFirst, partnerLastName: partnerLast } });
         if (res.ok) {
           setRegistered(true);
           toast.success(res.message);
@@ -141,7 +143,7 @@ function TournamentDetail() {
         </span>
         <span className="flex items-center gap-2">
           <Users className="h-4 w-4 text-primary" />
-          {tournament.format === "equipe" ? "En équipe" : "Solo"}
+          {tournament.format === "equipe" ? "Doublette" : "Solo"}
           {tournament.max_participants ? ` · ${tournament.max_participants} ${tournament.format === "equipe" ? "équipes" : "participants"} max` : ""}
         </span>
         {tournament.location && (
@@ -152,7 +154,7 @@ function TournamentDetail() {
         <span className="flex items-center gap-2">
           <Users className="h-4 w-4 text-primary" /> {tournament.registrations_count}
           {tournament.max_participants ? ` / ${tournament.max_participants}` : ""}{" "}
-          {tournament.format === "equipe" ? `équipe${tournament.registrations_count > 1 ? "s" : ""} de ${tournament.team_size}` : `inscrit${tournament.registrations_count > 1 ? "s" : ""}`}
+          {tournament.format === "equipe" ? `doublette${tournament.registrations_count > 1 ? "s" : ""}` : `inscrit${tournament.registrations_count > 1 ? "s" : ""}`}
         </span>
       </div>
 
@@ -189,18 +191,12 @@ function TournamentDetail() {
           ) : signedIn ? (
             <>
             {tournament.format === "equipe" && !registered && (
-              <input
-                value={teamName}
-                onChange={(e) => setTeamName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    if (!busy) void toggleRegistration();
-                  }
-                }}
-                placeholder="Nom de votre équipe"
-                className="rounded-md border border-input bg-background px-3 py-3 text-sm"
-              />
+              <div className="grid w-full gap-2 sm:grid-cols-3">
+                <input value={partnerFirst} onChange={(e) => setPartnerFirst(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); if (!busy) void toggleRegistration(); } }} maxLength={60} placeholder="Prénom du second joueur" className="rounded-md border border-input bg-background px-3 py-3 text-sm" />
+                <input value={partnerLast} onChange={(e) => setPartnerLast(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); if (!busy) void toggleRegistration(); } }} maxLength={60} placeholder="Nom du second joueur" className="rounded-md border border-input bg-background px-3 py-3 text-sm" />
+                <input value={teamName} onChange={(e) => setTeamName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); if (!busy) void toggleRegistration(); } }} maxLength={60} placeholder="Nom d’équipe (facultatif)" className="rounded-md border border-input bg-background px-3 py-3 text-sm" />
+                <p className="text-xs text-muted-foreground sm:col-span-3">Sans nom d’équipe, elle s’appellera « Prénom N. & Prénom N. ».</p>
+              </div>
             )}
             <button
               onClick={toggleRegistration}
@@ -216,7 +212,7 @@ function TournamentDetail() {
             </>
           ) : (
             <div className="w-full space-y-4">
-              <GuestRegistrationForm tournamentId={tournament.id} />
+              <GuestRegistrationForm tournamentId={tournament.id} doublette={tournament.format === "equipe"} />
               <button
                 onClick={() =>
                   navigate({ to: "/auth", search: { redirect: `/tournois/${tournament.id}` } })

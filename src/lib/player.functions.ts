@@ -1,11 +1,26 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { doubletteName } from "./team-name";
 
 export const registerForTournament = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { tournamentId: string; teamName?: string | undefined }) => input)
+  .inputValidator((input: { tournamentId: string; teamName?: string | undefined; partnerFirstName?: string | undefined; partnerLastName?: string | undefined }) => ({
+    tournamentId: String(input.tournamentId),
+    teamName: String(input.teamName ?? "").trim().slice(0, 60),
+    partnerFirstName: String(input.partnerFirstName ?? "").trim().slice(0, 60),
+    partnerLastName: String(input.partnerLastName ?? "").trim().slice(0, 60),
+  }))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.rpc("register_tournament_player", { _tournament_id: data.tournamentId, _name: data.teamName ?? "" });
+    let name = data.teamName;
+    const { data: t } = await context.supabase.from("tournaments").select("format").eq("id", data.tournamentId).maybeSingle();
+    if (t?.format === "equipe") {
+      if (!data.partnerFirstName || !data.partnerLastName) return { ok: false, message: "Indiquez le prénom et le nom du second joueur." };
+      if (!name) {
+        const { data: me } = await context.supabase.from("profiles").select("first_name, last_name, display_name").eq("id", context.userId).maybeSingle();
+        name = doubletteName(me?.first_name || me?.display_name || "Joueur", me?.last_name ?? "", data.partnerFirstName, data.partnerLastName);
+      }
+    }
+    const { error } = await context.supabase.rpc("register_tournament_player", { _tournament_id: data.tournamentId, _name: name });
     if (error) {
       if (error.message.includes("TOURNAMENT_FULL")) return { ok: false, message: "Le tournoi est complet." };
       if (error.message.includes("SCHEDULE_CONFLICT")) return { ok: false, message: "Vous êtes déjà inscrit à un autre tournoi qui se déroule en même temps." };
@@ -154,7 +169,7 @@ export const setMyAvatar = createServerFn({ method: "POST" })
 const NAME_RE = /^[\p{L}][\p{L}' .-]{0,59}$/u;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 /** Validates a guest registration; exported for tests. */
-export function validateGuest(input: { firstName: string; lastName: string; email: string; phone: string }) {
+export function validateGuest(input: { firstName: string; lastName: string; email: string; phone: string; partnerFirstName?: string | undefined; partnerLastName?: string | undefined; teamName?: string | undefined }) {
   const firstName = String(input.firstName ?? "").trim().replace(/\s+/g, " ");
   const lastName = String(input.lastName ?? "").trim().replace(/\s+/g, " ");
   const email = String(input.email ?? "").trim().toLowerCase();
@@ -162,18 +177,22 @@ export function validateGuest(input: { firstName: string; lastName: string; emai
   if (!NAME_RE.test(firstName) || !NAME_RE.test(lastName)) throw new Error("Prénom et nom requis (lettres uniquement).");
   if (email.length > 255 || !EMAIL_RE.test(email)) throw new Error("Adresse e-mail invalide.");
   if (!/^\+?\d{9,15}$/.test(phone)) throw new Error("Numéro de téléphone invalide.");
-  return { firstName, lastName, email, phone };
+  const partnerFirstName = String(input.partnerFirstName ?? "").trim().replace(/\s+/g, " ");
+  const partnerLastName = String(input.partnerLastName ?? "").trim().replace(/\s+/g, " ");
+  if ((partnerFirstName || partnerLastName) && (!NAME_RE.test(partnerFirstName) || !NAME_RE.test(partnerLastName))) throw new Error("Prénom et nom du second joueur requis (lettres uniquement).");
+  const teamName = String(input.teamName ?? "").trim().replace(/\s+/g, " ").slice(0, 60);
+  return { firstName, lastName, email, phone, partnerFirstName, partnerLastName, teamName };
 }
 
 /** Public sign-up without an account: only first and last name are shown on the tournament; contact details stay organizer-only. */
 export const registerGuestForTournament = createServerFn({ method: "POST" })
-  .inputValidator((input: { tournamentId: string; firstName: string; lastName: string; email: string; phone: string }) => {
+  .inputValidator((input: { tournamentId: string; firstName: string; lastName: string; email: string; phone: string; partnerFirstName?: string | undefined; partnerLastName?: string | undefined; teamName?: string | undefined }) => {
     if (!/^[0-9a-f-]{36}$/i.test(String(input.tournamentId))) throw new Error("Tournoi invalide.");
     return { tournamentId: input.tournamentId, ...validateGuest(input) };
   })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: t } = await supabaseAdmin.from("tournaments").select("status, helloasso_url, event_date").eq("id", data.tournamentId).maybeSingle();
+    const { data: t } = await supabaseAdmin.from("tournaments").select("status, helloasso_url, event_date, format").eq("id", data.tournamentId).maybeSingle();
     if (!t || t.status !== "open" || t.helloasso_url) return { ok: false, message: "Inscriptions fermées pour ce tournoi." };
     const { data: accepts } = await supabaseAdmin.rpc("tournament_accepts_registration", { _tournament_id: data.tournamentId });
     if (accepts === false) return { ok: false, message: "Inscriptions fermées pour ce tournoi." };
@@ -181,17 +200,20 @@ export const registerGuestForTournament = createServerFn({ method: "POST" })
     if (dup) return { ok: false, message: "Cette adresse e-mail est déjà inscrite à ce tournoi." };
     const { data: existing } = await supabaseAdmin.from("tournament_teams").select("name").eq("tournament_id", data.tournamentId);
     const taken = new Set((existing ?? []).map((x) => x.name.toLowerCase()));
-    let name = `${data.firstName} ${data.lastName}`;
-    for (let i = 2; taken.has(name.toLowerCase()); i++) name = `${data.firstName} ${data.lastName} (${i})`;
+    const doublette = t.format === "equipe";
+    if (doublette && (!data.partnerFirstName || !data.partnerLastName)) return { ok: false, message: "Indiquez le prénom et le nom du second joueur." };
+    let name = doublette ? (data.teamName || doubletteName(data.firstName, data.lastName, data.partnerFirstName, data.partnerLastName)) : `${data.firstName} ${data.lastName}`;
+    const base = name;
+    for (let i = 2; taken.has(name.toLowerCase()); i++) name = `${base} (${i})`;
     const { data: team, error } = await supabaseAdmin.from("tournament_teams").insert({ tournament_id: data.tournamentId, name }).select("id").single();
     if (error || !team) {
       if (String(error?.message).includes("TOURNAMENT_FULL")) return { ok: false, message: "Le tournoi est complet." };
       return { ok: false, message: "Inscription impossible pour le moment." };
     }
-    const { error: gErr } = await supabaseAdmin.from("tournament_guest_registrations").insert({ tournament_id: data.tournamentId, team_id: team.id, first_name: data.firstName, last_name: data.lastName, email: data.email, phone: data.phone });
+    const { error: gErr } = await supabaseAdmin.from("tournament_guest_registrations").insert({ tournament_id: data.tournamentId, team_id: team.id, first_name: data.firstName, last_name: data.lastName, email: data.email, phone: data.phone, partner_first_name: doublette ? data.partnerFirstName : null, partner_last_name: doublette ? data.partnerLastName : null });
     if (gErr) {
       await supabaseAdmin.from("tournament_teams").delete().eq("id", team.id);
       return { ok: false, message: gErr.code === "23505" ? "Cette adresse e-mail est déjà inscrite à ce tournoi." : "Inscription impossible pour le moment." };
     }
-    return { ok: true, message: `Inscription confirmée pour ${data.firstName} ${data.lastName} !` };
+    return { ok: true, message: `Inscription confirmée pour ${name} !` };
   });

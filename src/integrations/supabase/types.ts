@@ -906,6 +906,8 @@ export type Database = {
           first_name: string
           id: string
           last_name: string
+          partner_first_name: string | null
+          partner_last_name: string | null
           phone: string
           team_id: string | null
           tournament_id: string
@@ -916,6 +918,8 @@ export type Database = {
           first_name: string
           id?: string
           last_name: string
+          partner_first_name?: string | null
+          partner_last_name?: string | null
           phone: string
           team_id?: string | null
           tournament_id: string
@@ -926,6 +930,8 @@ export type Database = {
           first_name?: string
           id?: string
           last_name?: string
+          partner_first_name?: string | null
+          partner_last_name?: string | null
           phone?: string
           team_id?: string | null
           tournament_id?: string

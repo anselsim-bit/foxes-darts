@@ -7,7 +7,7 @@ import { registerGuestForTournament } from "@/lib/player.functions";
 const input = "rounded-md border border-input bg-background px-3 py-2.5 text-sm";
 
 /** Sign-up form for visitors without an account. */
-export function GuestRegistrationForm({ tournamentId }: { tournamentId: string }) {
+export function GuestRegistrationForm({ tournamentId, doublette = false }: { tournamentId: string; doublette?: boolean }) {
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(null);
@@ -20,7 +20,7 @@ export function GuestRegistrationForm({ tournamentId }: { tournamentId: string }
         const f = new FormData(e.currentTarget);
         setBusy(true);
         try {
-          const r = await registerGuestForTournament({ data: { tournamentId, firstName: String(f.get("firstName")), lastName: String(f.get("lastName")), email: String(f.get("email")), phone: String(f.get("phone")) } });
+          const r = await registerGuestForTournament({ data: { tournamentId, firstName: String(f.get("firstName")), lastName: String(f.get("lastName")), email: String(f.get("email")), phone: String(f.get("phone")), ...(doublette ? { partnerFirstName: String(f.get("partnerFirstName")), partnerLastName: String(f.get("partnerLastName")), teamName: String(f.get("teamName") ?? "") } : {}) } });
           if (r.ok) { setDone(r.message); toast.success(r.message); void qc.invalidateQueries({ queryKey: ["tournament", tournamentId] }); void qc.invalidateQueries({ queryKey: ["board", tournamentId] }); }
           else toast.info(r.message);
         } catch (err) { toast.error(err instanceof Error ? err.message : "Inscription impossible."); }
@@ -32,6 +32,13 @@ export function GuestRegistrationForm({ tournamentId }: { tournamentId: string }
       <input name="lastName" required maxLength={60} placeholder="Nom" autoComplete="family-name" className={input} />
       <input name="email" type="email" required maxLength={255} placeholder="E-mail" autoComplete="email" className={input} />
       <input name="phone" type="tel" required maxLength={30} placeholder="Téléphone" autoComplete="tel" className={input} />
+      {doublette && <>
+        <p className="pt-2 text-sm font-medium sm:col-span-2">Second joueur</p>
+        <input name="partnerFirstName" required maxLength={60} placeholder="Prénom du second joueur" className={input} />
+        <input name="partnerLastName" required maxLength={60} placeholder="Nom du second joueur" className={input} />
+        <input name="teamName" maxLength={60} placeholder="Nom d’équipe (facultatif)" className={`${input} sm:col-span-2`} />
+        <p className="text-xs text-muted-foreground sm:col-span-2">Sans nom d’équipe, elle s’appellera « Prénom N. & Prénom N. ».</p>
+      </>}
       <button type="submit" disabled={busy} className="rounded-md bg-primary px-6 py-3 font-semibold text-primary-foreground hover:bg-primary/90 sm:col-span-2">{busy ? "..." : "Je m’inscris sans compte"}</button>
     </form>
   );
@@ -41,7 +48,7 @@ export function GuestRegistrationForm({ tournamentId }: { tournamentId: string }
 export function GuestRegistrationsList({ tournamentId }: { tournamentId: string }) {
   const { data } = useQuery({
     queryKey: ["guest-registrations", tournamentId],
-    queryFn: async () => (await supabase.from("tournament_guest_registrations").select("id, first_name, last_name, email, phone, created_at").eq("tournament_id", tournamentId).order("created_at")).data ?? [],
+    queryFn: async () => (await supabase.from("tournament_guest_registrations").select("id, first_name, last_name, partner_first_name, partner_last_name, email, phone, created_at").eq("tournament_id", tournamentId).order("created_at")).data ?? [],
   });
   if (!data?.length) return null;
   return (
@@ -49,7 +56,7 @@ export function GuestRegistrationsList({ tournamentId }: { tournamentId: string 
       <p className="mb-2 font-semibold">Inscrits sans compte (visible uniquement par l’organisation)</p>
       {data.map((g) => (
         <p key={g.id} className="flex flex-wrap gap-x-3 border-t border-border py-1.5 first:border-t-0">
-          <span className="font-medium">{g.first_name} {g.last_name}</span>
+          <span className="font-medium">{g.first_name} {g.last_name}{g.partner_first_name ? ` & ${g.partner_first_name} ${g.partner_last_name ?? ""}` : ""}</span>
           <a className="text-primary" href={`mailto:${g.email}`}>{g.email}</a>
           <a className="text-primary" href={`tel:${g.phone}`}>{g.phone}</a>
         </p>
