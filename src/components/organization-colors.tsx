@@ -80,11 +80,12 @@ export function PoolOptions({ poolCount, consolation, tournament }: { poolCount?
         <div className="space-y-2 pl-6">
           <label className="block">Nombre de poules<input name="pools" type="number" min={1} defaultValue={(poolCount ?? 0) > 0 ? poolCount! : 4} className="ml-2 w-20 rounded-md border border-input bg-background px-2 py-1" /></label>
           {format("", "des poules", true)}
+          <label className="block"><input type="checkbox" name="pool_double_limit" defaultChecked={(tournament?.["pool_double_limit"] as boolean | undefined) ?? true} /> Limite de cinq tours de double en poules</label>
         </div>
       ) : <><input type="hidden" name="pools" value="0" />{format("", "", false)}</>}
       {format("final_", "de la phase finale", true)}
       <label className="block"><input type="checkbox" name="consolation" checked={conso} onChange={(e) => setConso(e.target.checked)} /> Phase de consolante</label>
-      {conso ? <div className="pl-6">{format("consolation_", "de la consolante", true)}</div> : format("consolation_", "", false)}
+      {conso ? <div className="pl-6">{format("consolation_", "de la consolante", true)}<label className="mt-2 block"><input type="checkbox" name="consolation_double_limit" defaultChecked={(tournament?.["consolation_double_limit"] as boolean | undefined) ?? true} /> Limite de cinq tours de double en consolante</label></div> : format("consolation_", "", false)}
     </div>
   );
 }
