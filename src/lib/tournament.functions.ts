@@ -31,7 +31,7 @@ export const getTournamentBoard = createServerFn({ method: "GET" })
       sb.from("tournament_teams").select("id, name, captain_id").eq("tournament_id", data.id).order("created_at"),
       sb
         .from("tournament_matches")
-        .select("id, stage, pool_index, round, position, team_a, team_b, score_a, score_b, legs_a, legs_b, live_legs_a, live_legs_b, leg_winners, live_leg_winners, winner")
+        .select("id, stage, pool_index, round, position, team_a, team_b, score_a, score_b, legs_a, legs_b, live_legs_a, live_legs_b, leg_winners, live_leg_winners, leg_rests, live_leg_rests, winner")
         .eq("tournament_id", data.id)
         .order("round")
         .order("position"),
@@ -128,15 +128,15 @@ async function hasValidCode(tournamentId: string, code: string | undefined) {
 /** Enregistre le résultat d'un match. Admin, capitaine d'une des deux équipes, ou code d'accès actif. */
 export const reportMatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { matchId: string; scoreA: number; scoreB: number; legsA?: number; legsB?: number; legWinners?: LegSide[]; code?: string | undefined }) => input)
+  .inputValidator((input: { matchId: string; scoreA: number; scoreB: number; legsA?: number; legsB?: number; legWinners?: LegSide[]; legRests?: number[]; code?: string | undefined }) => input)
   .handler(async ({ data, context }) => reportAuthorizedMatch(data, context));
 
 /** Code-only entry point: does not grant member statistics or admin access. */
 export const reportTournamentMatch = createServerFn({ method: "POST" })
-  .inputValidator((input: { matchId: string; scoreA: number; scoreB: number; legsA?: number; legsB?: number; legWinners?: LegSide[]; code: string }) => input)
+  .inputValidator((input: { matchId: string; scoreA: number; scoreB: number; legsA?: number; legsB?: number; legWinners?: LegSide[]; legRests?: number[]; code: string }) => input)
   .handler(async ({ data }) => reportAuthorizedMatch(data));
 
-async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; scoreB: number; legsA?: number; legsB?: number; legWinners?: LegSide[]; code?: string | undefined }, context?: Ctx) {
+async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; scoreB: number; legsA?: number; legsB?: number; legWinners?: LegSide[]; legRests?: number[]; code?: string | undefined }, context?: Ctx) {
     const { data: m, error } = await publicClient()
       .from("tournament_matches")
       .select("id, tournament_id, stage, round, position, team_a, team_b, winner")
@@ -181,6 +181,10 @@ async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; sc
       const { error } = await supabaseAdmin.rpc("commit_tournament_result", { _actor: (context?.userId ?? null) as unknown as string, _match_id: m.id, _code: normalizeCode(data.code), _score_a: a, _score_b: b, _legs_a: (legs?.legsA ?? null) as unknown as number, _legs_b: (legs?.legsB ?? null) as unknown as number, _finals: finals as unknown as import("@/integrations/supabase/types").Json, _leg_winners: (legWinners ?? null) as unknown as import("@/integrations/supabase/types").Json });
       commitError = error;
       if (!error || !String(error.message).includes("Final drafts required")) break;
+    }
+    if (!commitError && legs) {
+      const rests = cleanLegRests(data.legRests, (legs.legsA ?? 0) + (legs.legsB ?? 0));
+      if (rests) await supabaseAdmin.from("tournament_matches").update({ leg_rests: rests }).eq("id", m.id);
     }
     if (commitError) throw new Error("Résultat non enregistré : le tableau a changé ou une correction touche un match déjà commencé. Réessayez après actualisation.");
     return { ok: true };
@@ -414,7 +418,7 @@ export function friendly(msg: string) {
 
 /** Provisional scores only: current code required, never advances the bracket. */
 export const updateTournamentLiveLegs = createServerFn({ method: "POST" })
-  .inputValidator((input: { matchId: string; code: string; legsA: number; legsB: number; legWinners?: LegSide[] }) => input)
+  .inputValidator((input: { matchId: string; code: string; legsA: number; legsB: number; legWinners?: LegSide[]; legRests?: number[] }) => input)
   .handler(async ({ data }) => {
     const live = validateLiveLegs(data.legsA, data.legsB);
     const liveWinners = validateLiveLegWinners(data.legWinners, data.legsA, data.legsB);
@@ -424,7 +428,14 @@ export const updateTournamentLiveLegs = createServerFn({ method: "POST" })
     if (!(await hasValidCode(match.tournament_id, data.code))) throw new Error("Code d'accès invalide ou tournoi inactif.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("tournament_matches")
-      .update({ ...live, live_leg_winners: liveWinners }).eq("id", match.id).is("winner", null);
+      .update({ ...live, live_leg_winners: liveWinners, live_leg_rests: cleanLegRests(data.legRests, data.legsA + data.legsB) }).eq("id", match.id).is("winner", null);
     if (error) throw new Error("Impossible d'actualiser les manches.");
     return { ok: true };
   });
+
+/** Keeps only plausible per-leg loser remainders (0–1001), one per played leg; anything else is dropped. */
+function cleanLegRests(raw: unknown, played: number): number[] | null {
+  if (!Array.isArray(raw) || raw.length !== played) return null;
+  const out = raw.map((v) => Math.floor(Number(v)));
+  return out.every((v) => Number.isFinite(v) && v >= 0 && v <= 1001) ? out : null;
+}

@@ -32,3 +32,4 @@
 
 - Separate signup routes share AccountForm; organizer signup metadata contains private contact preferences only, never permissions; organization ownership still requires the gated transactional creation flow.
 - Organization creation is gated by the platform_release_flags 'organization_onboarding' switch (platform admin toggle; allowlist and platform admins bypass), and per-organization tournament caps live in organizations.tournament_limit (NULL = unlimited) enforced by a DB trigger — a future subscription will drive these same controls.
+- Guest tournament sign-up (no account) goes through a public server function creating the team plus a tournament_guest_registrations row readable only by tournament managers; per-leg loser remainders are stored in leg_rests/live_leg_rests beside leg_winners — keeps contact details private and leg detail aligned.

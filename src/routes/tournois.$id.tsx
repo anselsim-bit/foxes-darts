@@ -1,3 +1,4 @@
+import { GuestRegistrationForm } from "@/components/guest-registration";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -214,14 +215,17 @@ function TournamentDetail() {
             </button>
             </>
           ) : (
-            <button
-              onClick={() =>
-                navigate({ to: "/auth", search: { redirect: `/tournois/${tournament.id}` } })
-              }
-              className="rounded-md bg-primary px-6 py-3 font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              Connectez-vous pour vous inscrire
-            </button>
+            <div className="w-full space-y-4">
+              <GuestRegistrationForm tournamentId={tournament.id} />
+              <button
+                onClick={() =>
+                  navigate({ to: "/auth", search: { redirect: `/tournois/${tournament.id}` } })
+                }
+                className="text-sm text-muted-foreground underline hover:text-foreground"
+              >
+                Vous avez un compte ? Connectez-vous pour vous inscrire
+              </button>
+            </div>
           )}
         </div>
       )}

@@ -899,6 +899,54 @@ export type Database = {
           },
         ]
       }
+      tournament_guest_registrations: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          phone: string
+          team_id: string | null
+          tournament_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          phone: string
+          team_id?: string | null
+          tournament_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          phone?: string
+          team_id?: string | null
+          tournament_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_guest_registrations_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "tournament_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_guest_registrations_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tournament_manager_assignments: {
         Row: {
           assigned_by: string
@@ -946,9 +994,11 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          leg_rests: Json | null
           leg_winners: Json | null
           legs_a: number | null
           legs_b: number | null
+          live_leg_rests: Json | null
           live_leg_winners: Json | null
           live_legs_a: number
           live_legs_b: number
@@ -966,9 +1016,11 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          leg_rests?: Json | null
           leg_winners?: Json | null
           legs_a?: number | null
           legs_b?: number | null
+          live_leg_rests?: Json | null
           live_leg_winners?: Json | null
           live_legs_a?: number
           live_legs_b?: number
@@ -986,9 +1038,11 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          leg_rests?: Json | null
           leg_winners?: Json | null
           legs_a?: number | null
           legs_b?: number | null
+          live_leg_rests?: Json | null
           live_leg_winners?: Json | null
           live_legs_a?: number
           live_legs_b?: number
