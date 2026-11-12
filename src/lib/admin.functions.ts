@@ -299,7 +299,7 @@ export const adminSyncHelloAsso = createServerFn({ method: "POST" })
     }
     const { syncHelloAsso } = await import("./helloasso.server");
     // L'admin garde la main : le bouton rafraîchit même un tournoi complet.
-    return syncHelloAsso({ force: true, organizationId, tournamentId: data.tournamentId });
+    return syncHelloAsso({ force: true, organizationId, ...(data.tournamentId ? { tournamentId: data.tournamentId } : {}) });
   });
 
 export const adminListPlayerStats = createServerFn({ method: "GET" })

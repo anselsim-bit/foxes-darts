@@ -87,7 +87,7 @@ function TournamentManagement() {
           try {
             const result = await syncHelloAsso({ data: { tournamentId: id } });
             await queryClient.invalidateQueries({ queryKey: ["tournament-management-contacts", id] });
-            await queryClient.invalidateQueries({ queryKey: ["tournament-board", id] });
+            await queryClient.invalidateQueries({ queryKey: ["board", id] });
             await queryClient.invalidateQueries({ queryKey: ["organization-space", slug] });
             await router.invalidate({ sync: true });
             if (result.failures.length) toast.error("Synchronisation partielle : certaines inscriptions n’ont pas pu être récupérées.");
