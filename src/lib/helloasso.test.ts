@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { extractPartner, teamNameOf, syncHelloAsso } from "./helloasso.server";
+import { extractPartner, extractTeamName, teamNameOf, syncHelloAsso } from "./helloasso.server";
 vi.mock("./organization-access", () => ({ centralOrganizationId: async () => "foxes-id" }));
 
 const mocks = vi.hoisted(() => {
@@ -67,6 +67,7 @@ const tournamentRow = {
   id: "t1",
   helloasso_url: "https://www.helloasso.com/associations/association-cardiogoal-saint-leonard/evenements/tournoi",
   status: "open",
+  format: "equipe",
   max_participants: 16,
 };
 const partnerFields = [
@@ -98,7 +99,23 @@ describe("extractPartner", () => {
   });
 });
 
+describe("extractTeamName", () => {
+  it("récupère le nom collectif demandé sur HelloAsso", () => {
+    for (const name of ["Nom d’équipe (facultatif)", "Nom de votre doublette", "Nom du binôme", "Team name"]) {
+      expect(extractTeamName([{ name, answer: " Les   Renards " }])).toBe("Les Renards");
+    }
+  });
+  it("ne confond pas les noms des joueurs avec celui de l’équipe", () => {
+    expect(extractTeamName([{ name: "Nom du coéquipier", answer: "Ansel" }, { name: "Nom du joueur de l’équipe", answer: "Ansel" }, { name: "Nom d’équipe", answer: "  " }])).toBeNull();
+  });
+});
+
 describe("teamNameOf", () => {
+  it("préfère le nom déclaré pour une doublette mais pas en solo", () => {
+    const row = { first_name: "Simon", last_name: "Ansel", partner_first_name: "Patrice", item_id: 42, custom_fields: [{ name: "Nom d’équipe", answer: "Les Renards" }] };
+    expect(teamNameOf(row, new Set(), true)).toBe("Les Renards");
+    expect(teamNameOf(row, new Set(), false)).toBe("Simon & Patrice");
+  });
   it("affiche seulement les prénoms des deux joueurs", () => {
     expect(
       teamNameOf({
@@ -154,6 +171,19 @@ describe("syncHelloAsso capacity", () => {
     }));
   });
   afterEach(() => vi.unstubAllGlobals());
+
+  it("importe le nom d’équipe HelloAsso dans les équipes du tournoi", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string | URL | Request) => String(url).includes("oauth2/token") ? json({ access_token: "tok" }) : json(itemsBody([ticket(1, { customFields: [...partnerFields, { name: "Nom d’équipe", answer: "Les Renards" }] })]))));
+    await syncHelloAsso();
+    expect(mocks.ops.filter((o) => o.op === "insert")).toEqual([{ table: "tournament_teams", op: "insert", payload: { tournament_id: "t1", name: "Les Renards", captain_id: null, helloasso_item_id: 1 } }]);
+  });
+
+  it("préserve le nom verrouillé par l’organisateur lors de l’import", async () => {
+    mocks.state.existingTeams = [{ id: "team-1", name: "Nom choisi par admin", name_locked: true, helloasso_item_id: 1 }];
+    vi.stubGlobal("fetch", vi.fn(async (url: string | URL | Request) => String(url).includes("oauth2/token") ? json({ access_token: "tok" }) : json(itemsBody([ticket(1, { customFields: [{ name: "Nom d’équipe", answer: "Les Renards" }] })]))));
+    await syncHelloAsso();
+    expect(mocks.ops.filter((o) => o.op === "update" || o.op === "insert")).toEqual([]);
+  });
 
   it("laisse un tournoi complet totalement tranquille", async () => {
     mocks.state.teamCount = 16;
