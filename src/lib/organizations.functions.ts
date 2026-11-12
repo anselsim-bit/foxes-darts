@@ -1,3 +1,4 @@
+import { describeAudit, type AuditMatch } from "./audit-labels";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { publicClient, signImageUrls } from "./public.functions";
@@ -52,13 +53,18 @@ export const getOrganizationSpace = createServerFn({method:"GET"}).middleware([r
     manager?Promise.resolve({data:[]}):context.supabase.from("organization_players").select("user_id,category,membership_status,notes,profiles(display_name)").eq("organization_id",org.id).limit(100),
     manager?Promise.resolve({data:[]}):context.supabase.from("organization_members").select("user_id,role,profiles(display_name)").eq("organization_id",org.id),
     manager?Promise.resolve({data:[]}):context.supabase.from("organization_invitations").select("id,email,role,status,expires_at,created_at").eq("organization_id",org.id).order("created_at",{ascending:false}).limit(50),
-    manager?Promise.resolve({data:[]}):context.supabase.from("organization_audit_events").select("id,action,created_at").eq("organization_id",org.id).order("created_at",{ascending:false}).limit(20),
+    manager?Promise.resolve({data:[]}):context.supabase.from("organization_audit_events").select("id,action,details,created_at").eq("organization_id",org.id).order("created_at",{ascending:false}).limit(20),
   ]);
   const allowed=[];
   for(const t of tournaments.data??[]) {const {data:ok}=await context.supabase.rpc("can_manage_tournament",{_tournament_id:t.id});if(ok) allowed.push(t);}
   const ids=allowed.map(t=>t.id);
   const {data:matches}=ids.length?await context.supabase.from("tournament_matches").select("id,tournament_id,winner,score_a,score_b,stage,created_at").in("tournament_id",ids).not("winner","is",null).order("created_at",{ascending:false}).limit(50):{data:[]};
-  return {org,settings:settings.data,tournaments:allowed,players:players.data??[],members:members.data??[],invitations:invitations.data??[],audit:audit.data??[],results:matches??[],role:superAdmin?"SUPER_ADMIN":membership?.role??"PLAYER",userId:context.userId};
+  const auditRows=(audit.data??[]) as {id:string;action:string;details:Record<string,unknown>|null;created_at:string}[];
+  const matchIds=auditRows.map(a=>a.details?.["match_id"]).filter((v):v is string=>typeof v==="string");
+  const auditMatches=new Map<string,AuditMatch>();
+  if(matchIds.length){const {data:ms}=await context.supabase.from("tournament_matches").select("id,stage,team_a,team_b,winner,score_a,score_b,legs_a,legs_b,tournament_id").in("id",matchIds);const teamIds=[...new Set((ms??[]).flatMap(m=>[m.team_a,m.team_b]).filter((v):v is string=>!!v))];const {data:teams}=teamIds.length?await context.supabase.from("tournament_teams").select("id,name").in("id",teamIds):{data:[]};const tn=new Map((teams??[]).map(t=>[t.id,t.name]));const tt=new Map((tournaments.data??[]).map(t=>[t.id,t.title]));for(const m of ms??[])auditMatches.set(m.id,{tournament:tt.get(m.tournament_id)??"Tournoi",stage:m.stage,teamA:tn.get(m.team_a??"")??"Équipe",teamB:tn.get(m.team_b??"")??"Équipe",winner:m.winner?tn.get(m.winner)??null:null,scoreA:m.score_a,scoreB:m.score_b,legsA:m.legs_a,legsB:m.legs_b});}
+  const auditOut=auditRows.map(a=>({id:a.id,action:a.action,created_at:a.created_at,label:describeAudit(a.action,a.details,typeof a.details?.["match_id"]==="string"?auditMatches.get(a.details["match_id"] as string):null)}));
+  return {org,settings:settings.data,tournaments:allowed,players:players.data??[],members:members.data??[],invitations:invitations.data??[],audit:auditOut,results:matches??[],role:superAdmin?"SUPER_ADMIN":membership?.role??"PLAYER",userId:context.userId};
 });
 export const saveOrganization = createServerFn({method:"POST"}).middleware([requireSupabaseAuth]).inputValidator((input:{id:string;name:string;description:string;settings:Record<string,string>})=>input).handler(async ({data,context})=>{
   await manage(context,data.id);
