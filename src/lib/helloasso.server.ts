@@ -71,6 +71,19 @@ export function extractPartner(fields?: CustomField[]) {
   return firstName || lastName ? { firstName, lastName } : null;
 }
 
+/** Nom collectif demandé par la billetterie, sans confondre le nom du coéquipier. */
+export function extractTeamName(fields?: CustomField[]) {
+  for (const field of fields ?? []) {
+    const label = stripAccents(field.name ?? "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const collective = /\b(equipe|doublette|binome|team)\b/.test(label);
+    const named = /\b(nom|name)\b/.test(label);
+    if (!collective || !named || /\b(prenom|coequipier|equipier|partenaire|joueur)\b/.test(label)) continue;
+    const answer = (field.answer ?? "").trim().replace(/\s+/g, " ");
+    if (answer) return answer.slice(0, 60);
+  }
+  return null;
+}
+
 /** Prénom seul, ou prénom + initiale du nom quand un homonyme existe (ex. « Patrice A. »). */
 export function shortName(first: string | null, last: string | null, dup: Set<string> = new Set()) {
   const f = (first ?? "").trim();
@@ -86,8 +99,11 @@ export function teamNameOf(r: {
   last_name: string | null;
   partner_first_name?: string | null;
   partner_last_name?: string | null;
+  custom_fields?: CustomField[] | null;
   item_id: number;
-}, dup: Set<string> = new Set()) {
+}, dup: Set<string> = new Set(), doublette = false) {
+  const declared = doublette ? extractTeamName(r.custom_fields ?? undefined) : null;
+  if (declared) return declared;
   const holder = shortName(r.first_name, r.last_name, dup);
   const partner = shortName(r.partner_first_name ?? null, r.partner_last_name ?? null, dup);
   if (holder && partner) return `${holder} & ${partner}`;
@@ -100,7 +116,7 @@ export async function syncHelloAsso(opts: { force?: boolean; organizationId?: st
   if (opts.organizationId && opts.organizationId !== centralId) throw new Error("La connexion HelloAsso actuelle est réservée à Foxes Darts.");
   const { data: tournaments, error } = await supabaseAdmin
     .from("tournaments")
-    .select("id, helloasso_url, status, max_participants")
+    .select("id, helloasso_url, status, max_participants, format")
     .eq("organization_id", centralId)
     .not("helloasso_url", "is", null);
   if (error) throw new Error(error.message);
@@ -207,7 +223,7 @@ export async function syncHelloAsso(opts: { force?: boolean; organizationId?: st
           const dup = new Set([...seen].filter(([, c]) => c > 1).map(([k]) => k));
           for (const r of rows) {
             if (!ids.includes(r.item_id)) continue;
-            const name = teamNameOf(r, dup);
+            const name = teamNameOf(r, dup, t.format === "equipe");
             const team = known.get(r.item_id);
             if (!team) {
               if (!canAdd) continue;
