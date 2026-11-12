@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { GuestRegistrationsList } from "@/components/guest-registration";
 import { FitToScreen } from "@/components/fit-to-screen";
 import { QrImage } from "@/components/qr-image";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -458,6 +459,7 @@ list.map(({ i, ms, rows }) => {
             {teams.length === 0 && <p className="text-sm text-muted-foreground">Aucun inscrit pour le moment.</p>}
           </div>
         )}
+        {admin && <GuestRegistrationsList tournamentId={tournamentId} />}
         {admin && status === "open" && (
           <div className="mt-4 flex flex-wrap gap-2">
             {!full || !maxParticipants ? (
