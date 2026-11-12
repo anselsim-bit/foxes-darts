@@ -1141,6 +1141,29 @@ export type Database = {
           },
         ]
       }
+      tournament_team_payments: {
+        Row: {
+          paid: boolean
+          team_id: string
+        }
+        Insert: {
+          paid?: boolean
+          team_id: string
+        }
+        Update: {
+          paid?: boolean
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_team_payments_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: true
+            referencedRelation: "tournament_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tournament_teams: {
         Row: {
           captain_id: string | null
