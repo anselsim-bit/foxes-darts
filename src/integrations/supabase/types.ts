@@ -1393,6 +1393,10 @@ export type Database = {
         Args: { _confirm_name: string; _organization_id: string }
         Returns: undefined
       }
+      foxes_self_registration_allowed: {
+        Args: { _tournament_id: string }
+        Returns: boolean
+      }
       get_public_organization_settings: {
         Args: { _organization_id: string }
         Returns: Json
