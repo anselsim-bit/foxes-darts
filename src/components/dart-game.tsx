@@ -82,7 +82,7 @@ export function Game({
     const loserRemaining = scores[winner === 0 ? 1 : 0] ?? 0;
     try {
       await reportTournamentMatch({ data: { matchId: match.id, scoreA: aWon ? 0 : loserRemaining, scoreB: aWon ? loserRemaining : 0, code: accessCode,
-        ...(legsToWin === 2 ? { legsA: legWins[players[0]?.name === match.teamA ? 0 : 1] ?? 0, legsB: legWins[players[0]?.name === match.teamB ? 0 : 1] ?? 0 } : {}),
+        ...(legsToWin === 2 ? { legsA: legWins[players[0]?.name === match.teamA ? 0 : 1] ?? 0, legsB: legWins[players[0]?.name === match.teamB ? 0 : 1] ?? 0, legWinners: legSides } : {}),
       } });
       setReported(true);
       onReported?.();
@@ -130,17 +130,23 @@ export function Game({
 
   const legsA = legWins[players[0]?.name === match?.teamA ? 0 : 1] ?? 0;
   const legsB = legWins[players[0]?.name === match?.teamB ? 0 : 1] ?? 0;
+  // Vainqueur de chaque manche jouée, dans l'ordre, ramené au côté A/B du tableau.
+  const legSides = useMemo(() => {
+    if (!match) return [] as ("a" | "b")[];
+    const sideOf = (i: number) => (players[i]?.name === match.teamA ? "a" : "b") as "a" | "b";
+    return [...completedLegs.map(l => sideOf(l.winner)), ...(winner !== null ? [sideOf(winner)] : [])];
+  }, [match, completedLegs, winner, players]);
   useEffect(() => {
     if (!match || !accessCode || legsToWin !== 2 || reported) return;
     let active = true;
     let retry: ReturnType<typeof setTimeout> | undefined;
     const sync = async () => {
-      try { await updateTournamentLiveLegs({ data: { matchId: match.id, code: accessCode, legsA, legsB } }); }
+      try { await updateTournamentLiveLegs({ data: { matchId: match.id, code: accessCode, legsA, legsB, legWinners: legSides } }); }
       catch { if (active) retry = setTimeout(sync, 5000); }
     };
     void sync();
     return () => { active = false; if (retry) clearTimeout(retry); };
-  }, [match?.id, accessCode, legsToWin, legsA, legsB, reported]);
+  }, [match?.id, accessCode, legsToWin, legsA, legsB, legSides, reported]);
 
   const endTurn = (darts: Dart[], bust: boolean) => {
     const total = darts.reduce((a, d) => a + d.value, 0);
