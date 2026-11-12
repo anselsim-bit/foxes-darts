@@ -240,7 +240,7 @@ function TournamentsTab() {
           end_time: form.end_time || undefined,
           format: form.format,
           max_participants: form.max_participants ? Math.max(1, parseInt(form.max_participants, 10)) : undefined,
-          team_size: form.format === "equipe" ? Math.max(2, parseInt(form.team_size, 10) || 2) : 1,
+          team_size: form.format === "equipe" ? 2 : 1,
           pool_count: form.with_pools ? Math.max(1, parseInt(form.pool_count, 10) || 1) : 0,
           start_score: form.start_score,
           double_out: form.double_out,
@@ -338,7 +338,7 @@ function TournamentsTab() {
               onChange={(e) => setForm({ ...form, format: e.target.value as "solo" | "equipe" })}
             >
               <option value="solo">Solo</option>
-              <option value="equipe">En équipe</option>
+              <option value="equipe">Doublette</option>
             </select>
           </div>
           <div>
@@ -376,18 +376,6 @@ function TournamentsTab() {
           {form.with_pools && form.consolation && form.consolation_double_out && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.consolation_double_limit} onChange={e => setForm({ ...form, consolation_double_limit: e.target.checked })} /> Limite de 5 tours d'essais de double en consolante</label>}
         </fieldset>
         <div className="grid grid-cols-2 gap-3">
-          {form.format === "equipe" && (
-            <div>
-              <label className="mb-1 block text-sm font-medium">Joueurs par équipe</label>
-              <input
-                type="number"
-                min={2}
-                className={inputCls}
-                value={form.team_size}
-                onChange={(e) => setForm({ ...form, team_size: e.target.value })}
-              />
-            </div>
-          )}
           <div>
             <label className="mb-1 flex items-center gap-2 text-sm font-medium">
               <input
