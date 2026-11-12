@@ -1,4 +1,5 @@
 import { PlatformAdmin } from "@/components/platform-admin";
+import { DescriptionEditor } from "@/components/description-editor";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -440,15 +441,7 @@ function TournamentsTab() {
             />
           </div>
         </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium">Description</label>
-          <textarea
-            className={inputCls}
-            rows={3}
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-          />
-        </div>
+        <DescriptionEditor value={form.description} onChange={description => setForm({ ...form, description })} />
         <div>
           <label className="mb-1 block text-sm font-medium">Lien billetterie HelloAsso</label>
           <input

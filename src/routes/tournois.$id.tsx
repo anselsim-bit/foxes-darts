@@ -16,6 +16,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { TournamentBoard } from "@/components/tournament-board";
 import { ReportButton } from "@/components/report-button";
 import { TournamentPlayButton } from "@/components/tournament-play";
+import { TournamentDescription } from "@/components/tournament-description";
+import { descriptionText } from "@/lib/tournament-description";
 
 const tournamentQuery = (id: string) =>
   queryOptions({
@@ -31,12 +33,12 @@ export const Route = createFileRoute("/tournois/$id")({
       { title: `${loaderData?.title ?? "Tournoi"} — Foxes Darts` },
       {
         name: "description",
-        content: loaderData?.description ?? "Tournoi de fléchettes Foxes Darts.",
+        content: loaderData?.description ? descriptionText(loaderData.description) : "Tournoi de fléchettes Foxes Darts.",
       },
       { property: "og:title", content: `${loaderData?.title ?? "Tournoi"} — Foxes Darts` },
       {
         property: "og:description",
-        content: loaderData?.description ?? "Tournoi de fléchettes Foxes Darts.",
+        content: loaderData?.description ? descriptionText(loaderData.description) : "Tournoi de fléchettes Foxes Darts.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -163,7 +165,7 @@ function TournamentDetail() {
       </div>
 
       {tournament.description && (
-        <p className="mt-6 whitespace-pre-line text-muted-foreground">{tournament.description}</p>
+        <TournamentDescription value={tournament.description} />
       )}
 
       {!isPast && (
