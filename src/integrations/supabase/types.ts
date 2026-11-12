@@ -1202,6 +1202,7 @@ export type Database = {
           organization_id: string | null
           pool_count: number
           pool_double_limit: boolean
+          price_cents: number | null
           revision: number
           start_score: number
           start_time: string | null
@@ -1231,6 +1232,7 @@ export type Database = {
           organization_id?: string | null
           pool_count?: number
           pool_double_limit?: boolean
+          price_cents?: number | null
           revision?: number
           start_score?: number
           start_time?: string | null
@@ -1260,6 +1262,7 @@ export type Database = {
           organization_id?: string | null
           pool_count?: number
           pool_double_limit?: boolean
+          price_cents?: number | null
           revision?: number
           start_score?: number
           start_time?: string | null
@@ -1385,6 +1388,10 @@ export type Database = {
           _slug: string
         }
         Returns: string
+      }
+      delete_organization: {
+        Args: { _confirm_name: string; _organization_id: string }
+        Returns: undefined
       }
       get_public_organization_settings: {
         Args: { _organization_id: string }
