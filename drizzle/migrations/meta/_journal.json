@@ -288,6 +288,13 @@
       "when": 1794416315971,
       "tag": "0040_organization_theme_colors",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1794472260927,
+      "tag": "0041_leg_winners_per_match",
+      "breakpoints": true
     }
   ]
 }

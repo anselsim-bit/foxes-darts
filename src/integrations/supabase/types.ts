@@ -943,8 +943,10 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          leg_winners: Json | null
           legs_a: number | null
           legs_b: number | null
+          live_leg_winners: Json | null
           live_legs_a: number
           live_legs_b: number
           pool_index: number | null
@@ -961,8 +963,10 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          leg_winners?: Json | null
           legs_a?: number | null
           legs_b?: number | null
+          live_leg_winners?: Json | null
           live_legs_a?: number
           live_legs_b?: number
           pool_index?: number | null
@@ -979,8 +983,10 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          leg_winners?: Json | null
           legs_a?: number | null
           legs_b?: number | null
+          live_leg_winners?: Json | null
           live_legs_a?: number
           live_legs_b?: number
           pool_index?: number | null
@@ -1260,19 +1266,34 @@ export type Database = {
         Returns: undefined
       }
       clean_theme_colors: { Args: { _raw: Json }; Returns: Json }
-      commit_tournament_result: {
-        Args: {
-          _actor: string
-          _code: string
-          _finals: Json
-          _legs_a: number
-          _legs_b: number
-          _match_id: string
-          _score_a: number
-          _score_b: number
-        }
-        Returns: undefined
-      }
+      commit_tournament_result:
+        | {
+            Args: {
+              _actor: string
+              _code: string
+              _finals: Json
+              _legs_a: number
+              _legs_b: number
+              _match_id: string
+              _score_a: number
+              _score_b: number
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              _actor: string
+              _code: string
+              _finals: Json
+              _leg_winners: Json
+              _legs_a: number
+              _legs_b: number
+              _match_id: string
+              _score_a: number
+              _score_b: number
+            }
+            Returns: undefined
+          }
       commit_tournament_start: {
         Args: {
           _actor: string

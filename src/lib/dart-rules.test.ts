@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isBust, replayTurns, requiresDouble, tournamentRules, validateFinalLegs, phaseRules, visitStats, validateLiveLegs, type ScoredTurn } from "./dart-rules";
+import { isBust, replayTurns, requiresDouble, tournamentRules, validateFinalLegs, phaseRules, visitStats, validateLiveLegs, validateLegWinners, validateLiveLegWinners, type ScoredTurn } from "./dart-rules";
 
 const misses = (player: number): ScoredTurn => ({ player, darts: Array.from({ length: 3 }, () => ({ value: 0, isDouble: false })), bust: false, total: 0 });
 
@@ -22,6 +22,22 @@ describe("tournament rules", () => {
   it("accepts provisional leg scores but never two winners or invalid leg totals", () => {
     expect(validateLiveLegs(1, 1)).toEqual({ live_legs_a: 1, live_legs_b: 1 });
     expect(validateLiveLegs(2, 1)).toEqual({ live_legs_a: 2, live_legs_b: 1 });
+  });
+  it("validates the ordered leg winners against the leg totals", () => {
+    expect(validateLegWinners(["a", "b", "a"], 2, 1)).toEqual(["a", "b", "a"]);
+    expect(validateLegWinners(["b", "b"], 0, 2)).toEqual(["b", "b"]);
+    expect(validateLegWinners(undefined, 2, 0)).toBeNull();
+    expect(() => validateLegWinners(["a", "a"], 1, 1)).toThrow();
+    expect(() => validateLegWinners(["a", "b"], 2, 0)).toThrow();
+    expect(() => validateLegWinners(["b", "a"], 2, 0)).toThrow();
+    expect(() => validateLegWinners(["x" as "a"], 1, 0)).toThrow();
+  });
+  it("validates provisional leg winners against the live totals", () => {
+    expect(validateLiveLegWinners(["a"], 1, 0)).toEqual(["a"]);
+    expect(validateLiveLegWinners(["b", "a"], 1, 1)).toEqual(["b", "a"]);
+    expect(validateLiveLegWinners(undefined, 0, 0)).toBeNull();
+    expect(() => validateLiveLegWinners(["a", "a"], 1, 1)).toThrow();
+    expect(() => validateLiveLegWinners([], 1, 0)).toThrow();
     for (const [a, b] of [[2, 2], [-1, 0], [3, 0], [0.5, 1]] as [number, number][]) expect(() => validateLiveLegs(a, b)).toThrow();
   });
   it("requires two winning legs in all knockout rounds (bracket, consolation, small final) but only one in pools", () => {
