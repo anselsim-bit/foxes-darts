@@ -1,9 +1,9 @@
 # Foxes Darts — Tâches
 
 ## Ajout manuel organisateur — 12 novembre 2026
-- [ ] Bouton Ajouter ouvrant les champs adaptés au solo ou à la doublette, avec contact obligatoire et nom d’équipe facultatif.
-- [ ] Enregistrement atomique des joueurs et coordonnées privées, réservé au gestionnaire même avec HelloAsso.
-- [ ] Tester la validation, l’ajout réel et la lecture des contacts ; retirer les données temporaires.
+- [x] Bouton Ajouter ouvrant les champs adaptés au solo ou à la doublette, avec contact obligatoire et nom d’équipe facultatif.
+- [x] Enregistrement atomique des joueurs et coordonnées privées, réservé au gestionnaire même avec HelloAsso.
+- [x] Quinze tests réussis ; doublette ajoutée réellement depuis le formulaire avec Entrée, contact relu, affichage téléphone sans débordement ; données temporaires supprimées et refus anonyme confirmé. Solo validé par les tests, aucun tournoi solo ouvert disponible pour l’essai réel.
 
 ## Noms des doublettes — 12 novembre 2026
 - [x] Prénoms seuls sans nom d’équipe ; initiales uniquement en cas d’homonyme, y compris dans la même doublette.
