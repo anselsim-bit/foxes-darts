@@ -1,9 +1,9 @@
 # Foxes Darts — Tâches
 
 ## Synchronisation HelloAsso — 12 novembre 2026
-- [ ] Rétablir l’import manuel sur la page de gestion, limité au tournoi affiché.
-- [ ] Remplacer l’import horaire par deux imports à 8 h et 20 h, heure de Paris, y compris lors du changement d’heure.
-- [ ] Vérifier l’import connecté, les tests et les horaires enregistrés, sans modifier les résultats historiques.
+- [x] Rétablir l’import manuel sur la page de gestion, limité au tournoi affiché.
+- [x] Remplacer l’import horaire par deux imports à 8 h et 20 h, heure de Paris ; réglage quotidien UTC pour les changements d’heure, authentification de la tâche existante préservée.
+- [x] Import réel connecté réussi (une inscription), affichage téléphone sans débordement, 27 tests réussis ; horaires actifs confirmés, aucun résultat historique modifié.
 
 ## Connexion et description — 12 novembre 2026
 - [x] Afficher les erreurs de connexion en rouge et proposer l’envoi d’un lien de réinitialisation par e-mail ; envoi réel confirmé dans le journal des e-mails.
@@ -115,7 +115,7 @@
 - [x] Retiré pendant les matchs de tournoi, conservé dans les parties libres du Compteur.
 
 ## Synchro HelloAsso et tournois complets
-- [x] La mise à jour automatique toutes les heures ignore totalement un tournoi complet (aucun appel, aucune inscription rafraîchie).
+- [x] La mise à jour automatique à 8 h et 20 h (heure de Paris) ignore totalement un tournoi complet (aucun appel, aucune inscription rafraîchie).
 - [x] Le bouton « Importer maintenant » rafraîchit quand même un tournoi complet, à la demande de l'admin.
 - [x] Corriger l'initiale ajoutée à tort à tous les prénoms : une équipe compte une seule fois dans la détection d'homonymes.
 - [x] Tester les deux cas et vérifier les noms sur les tournois réels.
