@@ -35,7 +35,13 @@ type Match = {
   legs_b?: number | null;
   live_legs_a?: number;
   live_legs_b?: number;
+  leg_winners?: unknown;
+  live_leg_winners?: unknown;
 };
+
+/** Détail ordonné des manches ("a"/"b"), stocké en jsonb. */
+const legSides = (v: unknown): ("a" | "b")[] =>
+  Array.isArray(v) ? v.filter((w): w is "a" | "b" => w === "a" || w === "b") : [];
 
 const poolName = (i: number) => `Poule ${String.fromCharCode(65 + i)}`;
 
