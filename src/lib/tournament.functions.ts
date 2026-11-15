@@ -13,6 +13,7 @@ import {
   type MatchDraft,
 } from "@/lib/bracket";
 import { publicClient } from "@/lib/public.functions";
+import { roundLabels } from "@/lib/round-settings";
 import { phaseRules, validateFinalLegs, validateLegWinners, validateLiveLegs, validateLiveLegWinners, type LegSide } from "@/lib/dart-rules";
 import { canManageTournament, requireTournamentManager, requireTeamManager, requireCentralManager } from "@/lib/organization-access";
 import { assertResultWritable } from "@/lib/tournament-result-access";
@@ -323,7 +324,7 @@ export const listPlayableMatches = createServerFn({ method: "POST" })
     for (const m of allMatches ?? []) maxRound.set(m.stage, Math.max(maxRound.get(m.stage) ?? 0, m.round));
     const roundName = (stage: string, round: number) => {
       const left = (maxRound.get(stage) ?? round) - round;
-      return left === 0 ? "Finale" : left === 1 ? "Demi-finales" : left === 2 ? "Quarts de finale" : left === 3 ? "Huitièmes de finale" : `Tour ${round}`;
+      return roundLabels[left] ?? `Tour ${round}`;
     };
     return (matches ?? []).flatMap((m) => {
       if (!m.team_a || !m.team_b) return [];
