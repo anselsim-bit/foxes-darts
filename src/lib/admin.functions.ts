@@ -74,7 +74,7 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
       const { data: allowed } = await context.supabase.rpc("can_manage_organization", { _organization_id: organizationId });
       if (!allowed && membership?.role !== "TOURNAMENT_MANAGER") throw new Error("Organisation non autorisée.");
     }
-    const rules = tournamentRules(data.start_score, data.double_out, "bracket", data.pool_double_limit ?? true);
+    const rules = phaseRules(data, "pool");
     const finalRules = phaseRules(data, "bracket");
     const consolationRules = phaseRules(data, "consolation");
     const row = {

@@ -20,7 +20,7 @@ export async function sendTournamentReminders(now = new Date()) {
   if (hour !== 9) return { skipped: true, sent: 0 };
   const tomorrow = nextDay(date);
   const { data: tournaments } = await supabaseAdmin.from("tournaments")
-    .select("id,title,event_date,start_time,end_time,location,format,pool_count,consolation,start_score,double_out,pool_double_limit,final_start_score,final_double_out,consolation_start_score,consolation_double_out,consolation_double_limit,status,organization_id,organizations(name,status)")
+    .select("id,title,event_date,start_time,end_time,location,format,pool_count,consolation,start_score,double_out,pool_double_limit,final_start_score,final_double_out,consolation_start_score,consolation_double_out,consolation_double_limit,game_settings,status,organization_id,organizations(name,status)")
     .eq("event_date", tomorrow).in("status", ["open", "started"]);
   let sent = 0;
   for (const t of tournaments ?? []) {

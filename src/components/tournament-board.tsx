@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { phaseRules } from "@/lib/dart-rules";
 import { GuestRegistrationsList } from "@/components/guest-registration";
 import { ManualPlayerForm } from "@/components/manual-player-form";
 import { FitToScreen } from "@/components/fit-to-screen";
@@ -146,6 +147,7 @@ export function TournamentBoard({
   if (!data) return null;
   const teams = data.teams;
   const matches = data.matches as Match[];
+  const matchRules = (m: Match) => data.settings ? phaseRules(data.settings, m.stage, Math.max(m.round, ...matches.filter(x => x.stage === m.stage).map(x => x.round)) - m.round) : { start: 501, doubleOut: false, legsToWin: m.stage === "pool" ? 1 : 2 };
   const name = (id: string | null) => (id ? (teams.find((t) => t.id === id)?.name ?? "?") : "—");
   const full = maxParticipants ? teams.length >= maxParticipants : teams.length >= 2;
   const label = isTeam ? "Équipes" : "Participants";
@@ -235,7 +237,8 @@ list.map(({ i, ms, rows }) => {
                   </table>
                   <div className="mt-3 space-y-1.5">
                     {ms.map((m) => (
-                      <MatchRow key={m.id} m={m} name={name} admin={admin} onSave={(a, b) => run(() => reportMatch({ data: { matchId: m.id, scoreA: a, scoreB: b } }), "Résultat enregistré.")} />
+                      <MatchRow key={m.id} m={m}
+                      rules={matchRules(m)} name={name} admin={admin} onSave={(a, b) => run(() => reportMatch({ data: { matchId: m.id, scoreA: a, scoreB: b } }), "Résultat enregistré.")} />
                     ))}
                   </div>
                 </div>
@@ -246,7 +249,7 @@ list.map(({ i, ms, rows }) => {
     bracket.length > 0 ? (
       <div>
         <h2 className="text-2xl">Tableau final</h2>
-        <p className="mt-1 text-sm text-muted-foreground">2 manches gagnantes</p>
+        
         {finalMatch?.winner && (
           <p className="mt-2 flex items-center gap-2 text-lg">
             <Trophy className="h-5 w-5 text-primary" /> Vainqueur :{" "}
@@ -264,6 +267,7 @@ list.map(({ i, ms, rows }) => {
                     <MatchRow
                       key={m.id}
                       m={m}
+                      rules={matchRules(m)}
                       name={name}
                       admin={admin}
                       boxed
@@ -282,6 +286,7 @@ list.map(({ i, ms, rows }) => {
             <div className="mt-2">
               <MatchRow
                 m={smallFinal}
+                rules={matchRules(smallFinal)}
                 name={name}
                 admin={admin}
                 boxed
@@ -358,6 +363,7 @@ list.map(({ i, ms, rows }) => {
                     <MatchRow
                       key={m.id}
                       m={m}
+                      rules={matchRules(m)}
                       name={name}
                       admin={admin}
                       boxed
@@ -683,12 +689,14 @@ list.map(({ i, ms, rows }) => {
 
 function MatchRow({
   m,
+  rules,
   name,
   admin,
   boxed,
   onSave,
 }: {
   m: Match;
+  rules: { start: number; doubleOut: boolean; legsToWin: number };
   name: (id: string | null) => string;
   admin: boolean;
   boxed?: boolean;
@@ -698,9 +706,9 @@ function MatchRow({
   const [picked, setPicked] = useState<string | null>(m.winner);
   const loserScore = picked === m.team_a ? m.score_b : m.score_a;
   const [remaining, setRemaining] = useState(loserScore && loserScore > 0 ? loserScore.toString() : "");
-  const final = m.stage !== "pool";
+  const final = m.stage !== "pool" || rules.legsToWin > 1;
   const bye = !!m.winner && (!m.team_a || !m.team_b);
-  const [loserLegs, setLoserLegs] = useState((m.winner === m.team_a ? m.legs_b : m.legs_a) === 1 ? 1 : 0);
+  const [loserLegs, setLoserLegs] = useState(m.winner === m.team_a ? m.legs_b ?? 0 : m.legs_a ?? 0);
 
   const side = (id: string | null, score: number | null) => {
     const isWinner = !!id && (m.winner ? m.winner === id : picked === id);
@@ -753,12 +761,13 @@ function MatchRow({
       return;
     }
     onSave(picked === m.team_a ? 0 : rest, picked === m.team_b ? 0 : rest,
-      final ? (picked === m.team_a ? 2 : loserLegs) : undefined,
-      final ? (picked === m.team_b ? 2 : loserLegs) : undefined);
+      final ? (picked === m.team_a ? rules.legsToWin : loserLegs) : undefined,
+      final ? (picked === m.team_b ? rules.legsToWin : loserLegs) : undefined);
   };
 
   return (
     <div className={`text-sm ${boxed ? "rounded-lg border border-border bg-card p-3" : "border-t border-border pt-1.5"}`}>
+      <p className="mb-2 text-xs text-muted-foreground">{rules.start} · sortie {rules.doubleOut ? "double" : "simple"} · {rules.legsToWin} manche{rules.legsToWin > 1 ? "s" : ""} gagnante{rules.legsToWin > 1 ? "s" : ""}</p>
       {side(m.team_a, m.score_a)}
       {side(m.team_b, m.score_b)}
       {final && !bye && (() => {
@@ -788,7 +797,7 @@ function MatchRow({
           </div>
         );
       })()}
-      {final && !m.winner && ((m.live_legs_a ?? 0) + (m.live_legs_b ?? 0) > 0) && <p role="status" className="mt-2 border-t border-border pt-2 text-xs font-semibold text-primary">En cours · {(m.live_legs_a ?? 0) === 2 || (m.live_legs_b ?? 0) === 2 ? "Résultat à confirmer" : "2 manches gagnantes"}</p>}
+      {final && !m.winner && ((m.live_legs_a ?? 0) + (m.live_legs_b ?? 0) > 0) && <p role="status" className="mt-2 border-t border-border pt-2 text-xs font-semibold text-primary">En cours · {(m.live_legs_a ?? 0) === rules.legsToWin || (m.live_legs_b ?? 0) === rules.legsToWin ? "Résultat à confirmer" : `${rules.legsToWin} manches gagnantes`}</p>}
       {bye && <p className="mt-1 text-xs text-muted-foreground">Exempt — qualifié au tour suivant</p>}
       {final && m.winner && !bye && <p className="mt-1 text-xs text-muted-foreground">Reste au perdant : {m.winner === m.team_a ? m.score_b : m.score_a}</p>}
       {editable && (
@@ -801,7 +810,7 @@ function MatchRow({
         >
           {final && <div className="flex items-center gap-2 text-xs">
             <span>Manches du perdant</span>
-            {[0, 1].map(n => <Button key={n} type="button" size="sm" variant={loserLegs === n ? "default" : "outline"} aria-pressed={loserLegs === n} onClick={() => setLoserLegs(n)}>{n}</Button>)}
+            <select aria-label="Manches du perdant" value={loserLegs} onChange={e => setLoserLegs(Number(e.target.value))} className="rounded-md border border-input bg-background px-2 py-1">{Array.from({length: rules.legsToWin}, (_, n) => <option key={n} value={n}>{n}</option>)}</select>
           </div>}
           <label className="flex items-center gap-2 text-xs text-foreground/70">
             <span className="leading-none">Reste au perdant</span>
