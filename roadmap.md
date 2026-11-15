@@ -1,8 +1,8 @@
 # Foxes Darts — Tâches
 
 ## Ajout manuel facultatif — 15 novembre 2026
-- [ ] Autoriser tous les champs vides en solo et doublette, générer des noms de test si nécessaire sans faux contacts ; conserver permissions et capacité.
-- [ ] Tester l’ajout connecté et la relecture, puis retirer les participants de test.
+- [x] Autoriser tous les champs vides en solo et doublette, générer des noms de test si nécessaire sans faux contacts ; conserver permissions et capacité.
+- [x] Dix-sept tests réussis ; deux ajouts solo vides connectés relus après rechargement, puis supprimés. Doublette vide validée par les tests ; contrôles automatiques sans erreur.
 
 ## Liste imprimable — 12 novembre 2026
 - [x] Tableau des équipes en gestion avec paiement tout à droite et bouton Imprimer la liste.
