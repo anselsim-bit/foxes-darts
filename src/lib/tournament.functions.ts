@@ -37,7 +37,7 @@ export const getTournamentBoard = createServerFn({ method: "GET" })
         .eq("tournament_id", data.id)
         .order("round")
         .order("position"),
-      sb.from("tournaments").select("*").eq("id", data.id).single(),
+      sb.from("tournaments").select("start_score,double_out,pool_double_limit,final_start_score,final_double_out,consolation_start_score,consolation_double_out,consolation_double_limit,game_settings").eq("id", data.id).single(),
     ]);
     return { teams: teams ?? [], matches: matches ?? [], settings };
   });
@@ -131,7 +131,7 @@ async function hasValidCode(tournamentId: string, code: string | undefined) {
 async function rulesForMatch(m: { tournament_id: string; stage: string; round: number }) {
   const sb = publicClient();
   const [{data: t, error}, {data: rounds}] = await Promise.all([
-    sb.from("tournaments").select("*").eq("id", m.tournament_id).single(),
+    sb.from("tournaments").select("start_score,double_out,pool_double_limit,final_start_score,final_double_out,consolation_start_score,consolation_double_out,consolation_double_limit,game_settings").eq("id", m.tournament_id).single(),
     sb.from("tournament_matches").select("round").eq("tournament_id", m.tournament_id).eq("stage", m.stage),
   ]);
   if (error || !t) throw new Error("Réglages du tournoi introuvables.");
