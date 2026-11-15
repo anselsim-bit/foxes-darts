@@ -1,3 +1,4 @@
+import { roundKey, validateRoundSettings } from "./round-settings";
 export type ScoredDart = { value: number; isDouble: boolean };
 export type ScoredTurn = { player: number; darts: ScoredDart[]; bust: boolean; total: number };
 
@@ -7,9 +8,9 @@ export function tournamentRules(startScore: number, doubleOut: boolean, stage: s
   return { start: startScore, doubleOut, poolDoubleLimit: (stage === "pool" || stage === "consolation") && doubleOut && limitDoubles, legsToWin: stage === "pool" ? 1 : 2 };
 }
 
-export function validateFinalLegs(a: number | undefined, b: number | undefined) {
-  if (!Number.isInteger(a) || !Number.isInteger(b) || !((a === 2 && (b === 0 || b === 1)) || (b === 2 && (a === 0 || a === 1)))) {
-    throw new Error("La phase finale se joue en deux manches gagnantes : 2–0 ou 2–1.");
+export function validateFinalLegs(a: number | undefined, b: number | undefined, target = 2) {
+  if (a === undefined || b === undefined || !Number.isInteger(a) || !Number.isInteger(b) || !((a === target && b >= 0 && b < target) || (b === target && a >= 0 && a < target))) {
+    throw new Error(`Ce match se joue en ${target} manches gagnantes.`);
   }
   return { legsA: a as number, legsB: b as number };
 }
@@ -40,23 +41,29 @@ export function requiresDouble(doubleOut: boolean, poolDoubleLimit: boolean, att
 export function isBust(left: number, dart: ScoredDart, doubleOut: boolean) {
   return left < 0 || (doubleOut && left === 1) || (left === 0 && doubleOut && !dart.isDouble);
 }
-export type PhaseSettings = { start_score: number; double_out: boolean; pool_double_limit?: boolean | null | undefined; final_start_score?: number | null | undefined; final_double_out?: boolean | null | undefined; consolation_start_score?: number | null | undefined; consolation_double_out?: boolean | null | undefined; consolation_double_limit?: boolean | null | undefined };
-export function phaseRules(settings: PhaseSettings, stage: string) {
+export type PhaseSettings = { game_settings?: unknown; start_score: number; double_out: boolean; pool_double_limit?: boolean | null | undefined; final_start_score?: number | null | undefined; final_double_out?: boolean | null | undefined; consolation_start_score?: number | null | undefined; consolation_double_out?: boolean | null | undefined; consolation_double_limit?: boolean | null | undefined };
+export function phaseRules(settings: PhaseSettings, stage: string, distance?: number) {
   const consolation = stage === "consolation";
   const final = stage !== "pool";
-  return tournamentRules(
+  const legacy = tournamentRules(
     (final ? (consolation ? settings.consolation_start_score : settings.final_start_score) : null) ?? settings.start_score,
     (final ? (consolation ? settings.consolation_double_out : settings.final_double_out) : null) ?? settings.double_out,
     stage, (consolation ? settings.consolation_double_limit : null) ?? settings.pool_double_limit ?? true,
   );
+  const config = validateRoundSettings(settings.game_settings);
+  const phase = stage === "small_final" ? "bracket" : stage;
+  const base = phase === "pool" || phase === "bracket" || phase === "consolation" ? config?.phases[phase] : undefined;
+  const override = stage === "small_final" || distance !== undefined ? config?.rounds[roundKey(stage, distance)] : undefined;
+  const resolved = { ...legacy, ...base, ...override };
+  return { ...resolved, poolDoubleLimit: legacy.poolDoubleLimit && resolved.doubleOut };
 }
 export function visitStats(turns: ScoredTurn[], player: number) {
   const visits = turns.filter(t => t.player === player);
   const totals = visits.map(t => t.bust ? 0 : t.total);
   return { average: totals.length ? totals.reduce((a, b) => a + b, 0) / totals.length : 0, best: Math.max(0, ...totals) };
 }
-export function validateLiveLegs(a: number, b: number) {
-  if (![a, b].every(n => Number.isInteger(n) && n >= 0 && n <= 2) || (a === 2 && b === 2)) throw new Error("Manches invalides.");
+export function validateLiveLegs(a: number, b: number, target = 2) {
+  if (![a, b].every(n => Number.isInteger(n) && n >= 0 && n <= target) || (a === target && b === target)) throw new Error("Manches invalides.");
   return { live_legs_a: a, live_legs_b: b };
 }
 

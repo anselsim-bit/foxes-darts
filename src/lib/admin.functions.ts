@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
 import { tournamentRules, phaseRules } from "@/lib/dart-rules";
+import { validateRoundSettings } from "./round-settings";
 import { requireCentralManager, requireOrganizationPlayer, requirePlatformAdmin } from "@/lib/organization-access";
 
 type AdminContext = {
@@ -48,6 +49,7 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
       price_cents?: number | null | undefined;
       pool_count?: number | undefined;
       start_score: number;
+      game_settings?: unknown;
       double_out: boolean;
       final_start_score?: number;
       final_double_out?: boolean;
@@ -76,6 +78,7 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
     const finalRules = phaseRules(data, "bracket");
     const consolationRules = phaseRules(data, "consolation");
     const row = {
+      ...(data.game_settings !== undefined ? { game_settings: validateRoundSettings(data.game_settings) } : {}),
       title: data.title,
       event_date: data.event_date,
       start_time: data.start_time || null,
