@@ -1,5 +1,3 @@
-import { validateGuest } from "./player.functions";
-
 export type ManualPlayerInput = {
   tournamentId: string;
   firstName: string;
@@ -12,7 +10,16 @@ export type ManualPlayerInput = {
 };
 
 export function validateManualPlayers(input: ManualPlayerInput, doublette: boolean) {
-  const contact = validateGuest({ ...input, ...(!doublette ? { partnerFirstName: "", partnerLastName: "", teamName: "" } : {}) });
-  if (doublette && (!contact.partnerFirstName || !contact.partnerLastName)) throw new Error("Indiquez le prénom et le nom du second joueur.");
-  return contact;
+  const text = (value?: string) => String(value ?? "").trim().replace(/\s+/g, " ");
+  const firstName = text(input.firstName);
+  const lastName = text(input.lastName);
+  const partnerFirstName = doublette ? text(input.partnerFirstName) : "";
+  const partnerLastName = doublette ? text(input.partnerLastName) : "";
+  const teamName = doublette ? text(input.teamName) : "";
+  const email = text(input.email).toLowerCase();
+  const phone = text(input.phone).replace(/[\s().-]/g, "");
+  if ([firstName, lastName, partnerFirstName, partnerLastName, teamName].some(value => value.length > 60)) throw new Error("Les noms sont limités à 60 caractères.");
+  if (email && (email.length > 255 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) throw new Error("Adresse e-mail invalide.");
+  if (phone && !/^\+?\d{9,15}$/.test(phone)) throw new Error("Numéro de téléphone invalide.");
+  return { firstName, lastName, email, phone, partnerFirstName, partnerLastName, teamName };
 }
