@@ -13,6 +13,7 @@ import {
   type MatchDraft,
 } from "@/lib/bracket";
 import { publicClient } from "@/lib/public.functions";
+import { roundLabels } from "@/lib/round-settings";
 import { phaseRules, validateFinalLegs, validateLegWinners, validateLiveLegs, validateLiveLegWinners, type LegSide } from "@/lib/dart-rules";
 import { canManageTournament, requireTournamentManager, requireTeamManager, requireCentralManager } from "@/lib/organization-access";
 import { assertResultWritable } from "@/lib/tournament-result-access";

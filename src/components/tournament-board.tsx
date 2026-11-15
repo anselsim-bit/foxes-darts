@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { phaseRules } from "@/lib/dart-rules";
+import { roundLabels } from "@/lib/round-settings";
 import { GuestRegistrationsList } from "@/components/guest-registration";
 import { ManualPlayerForm } from "@/components/manual-player-form";
 import { FitToScreen } from "@/components/fit-to-screen";
