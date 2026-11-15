@@ -35,7 +35,7 @@ export async function sendTournamentReminders(now = new Date()) {
       if (u.user?.email) recipients.set(u.user.email.toLowerCase(), team.name);
     }
     const { data: guests } = await supabaseAdmin.from("tournament_guest_registrations").select("email,first_name").eq("tournament_id", t.id);
-    for (const g of guests ?? []) recipients.set(g.email.toLowerCase(), g.first_name);
+    for (const g of guests ?? []) if (g.email) recipients.set(g.email.toLowerCase(), g.first_name);
     const { data: ha } = await supabaseAdmin.from("helloasso_registrations").select("email,first_name").eq("tournament_id", t.id);
     for (const r of ha ?? []) if (r.email) recipients.set(r.email.toLowerCase(), r.first_name);
     const templateData = {

@@ -6,7 +6,7 @@ export function validateRoundSettings(raw: unknown): RoundSettings | null {
   if (raw == null) return null;
   if (typeof raw !== "object" || Array.isArray(raw)) throw new Error("Réglages de jeu invalides.");
   const r = raw as Record<string, unknown>;
-  if (r.version !== 1 || !r.phases || !r.rounds || typeof r.phases !== "object" || typeof r.rounds !== "object" || Array.isArray(r.phases) || Array.isArray(r.rounds)) throw new Error("Réglages de jeu invalides.");
+  if (r["version"] !== 1 || !r["phases"] || !r["rounds"] || typeof r["phases"] !== "object" || typeof r["rounds"] !== "object" || Array.isArray(r["phases"]) || Array.isArray(r["rounds"])) throw new Error("Réglages de jeu invalides.");
   const rule = (v: unknown): GameRule => {
     if (!v || typeof v !== "object") throw new Error("Réglages de jeu invalides.");
     const x = v as GameRule;
@@ -14,12 +14,12 @@ export function validateRoundSettings(raw: unknown): RoundSettings | null {
     return { start: x.start, doubleOut: x.doubleOut, legsToWin: x.legsToWin };
   };
   const phases: RoundSettings["phases"] = {};
-  for (const [k,v] of Object.entries(r.phases)) {
+  for (const [k,v] of Object.entries(r["phases"])) {
     if (k !== "pool" && k !== "bracket" && k !== "consolation") throw new Error("Phase invalide.");
     phases[k] = rule(v);
   }
   const rounds: RoundSettings["rounds"] = {};
-  for (const [k,v] of Object.entries(r.rounds)) {
+  for (const [k,v] of Object.entries(r["rounds"])) {
     if (!/^(small_final|(bracket|consolation):[0-6])$/.test(k)) throw new Error("Étape invalide.");
     rounds[k] = rule(v);
   }

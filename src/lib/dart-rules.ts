@@ -55,7 +55,7 @@ export function phaseRules(settings: PhaseSettings, stage: string, distance?: nu
   const base = phase === "pool" || phase === "bracket" || phase === "consolation" ? config?.phases[phase] : undefined;
   const override = stage === "small_final" || distance !== undefined ? config?.rounds[roundKey(stage, distance)] : undefined;
   const resolved = { ...legacy, ...base, ...override };
-  return { ...resolved, poolDoubleLimit: legacy.poolDoubleLimit && resolved.doubleOut };
+  return { ...resolved, poolDoubleLimit: (stage === "pool" || stage === "consolation") && resolved.doubleOut && ((stage === "consolation" ? settings.consolation_double_limit : null) ?? settings.pool_double_limit ?? true) };
 }
 export function visitStats(turns: ScoredTurn[], player: number) {
   const visits = turns.filter(t => t.player === player);

@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
-import { tournamentRules, phaseRules } from "@/lib/dart-rules";
+import { phaseRules } from "@/lib/dart-rules";
 import { validateRoundSettings } from "./round-settings";
 import { requireCentralManager, requireOrganizationPlayer, requirePlatformAdmin } from "@/lib/organization-access";
 
