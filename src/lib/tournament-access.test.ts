@@ -22,6 +22,7 @@ function query(rows: unknown[]) {
   const chain = {
     select: () => chain,
     eq: () => chain,
+    then: (resolve: (v: unknown) => unknown) => Promise.resolve({ data: [{ round: 1 }], error: null }).then(resolve),
     single: async () => ({ data: rows.shift(), error: null }),
     maybeSingle: async () => ({ data: rows.shift(), error: null }),
   };
@@ -51,16 +52,18 @@ describe("Tournament guest access", () => {
   it("writes provisional legs without declaring a winner or advancing teams", async () => {
     mocks.publicRows.push({ id: "match", tournament_id: "test", stage: "bracket", team_a: "a", team_b: "b", winner: null }, { status: "started", organizations: { status: "active" } });
     mocks.adminRows.push({ code: "FOX123" });
+    mocks.publicRows.push({ start_score: 501, double_out: true });
     const update = vi.fn(() => ({ eq: () => ({ is: async () => ({ error: null }) }) }));
     mocks.adminFrom.mockImplementation((table: string) => table === "tournament_matches" ? { update } : query(mocks.adminRows));
     await updateTournamentLiveLegs({ data: { matchId: "match", code: "FOX123", legsA: 1, legsB: 1 } });
-    expect(update).toHaveBeenCalledWith({ live_legs_a: 1, live_legs_b: 1 });
+    expect(update).toHaveBeenCalledWith({ live_legs_a: 1, live_legs_b: 1, live_leg_winners: null, live_leg_rests: null });
     expect(mocks.adminFrom.mock.calls.map(([table]) => table)).toEqual(["tournament_settings_codes", "tournament_matches"]);
   });
   it("does not write or advance a final with only one winning leg", async () => {
     mocks.publicRows.push({ id: "match", tournament_id: "test", stage: "bracket", team_a: "a", team_b: "b" }, { status: "started", organizations: { status: "active" } });
     mocks.adminRows.push({ code: "FOX123" });
-    await expect(reportTournamentMatch({ data: { matchId: "match", scoreA: 0, scoreB: 42, legsA: 1, legsB: 0, code: "FOX123" } })).rejects.toThrow("deux manches gagnantes");
+    mocks.publicRows.push({ start_score: 501, double_out: true });
+    await expect(reportTournamentMatch({ data: { matchId: "match", scoreA: 0, scoreB: 42, legsA: 1, legsB: 0, code: "FOX123" } })).rejects.toThrow("2 manches gagnantes");
     expect(mocks.adminFrom.mock.calls.map(([table]) => table)).toEqual(["tournament_settings_codes"]);
   });
   it("rejects a valid code for a suspended organization", async () => {
