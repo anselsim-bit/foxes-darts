@@ -35,6 +35,6 @@ export function ManualPlayerForm({ tournamentId, doublette }: { tournamentId: st
   </form>;
 }
 
-function Field({ name, label, type = "text", required = true, maxLength = 60 }: { name: string; label: string; type?: string; required?: boolean; maxLength?: number }) {
+function Field({ name, label, type = "text", required = false, maxLength = 60 }: { name: string; label: string; type?: string; required?: boolean; maxLength?: number }) {
   return <label className="grid min-w-0 gap-1 text-sm">{label}<input name={name} type={type} required={required} maxLength={maxLength} className="w-full min-w-0 rounded-md border border-input bg-background px-3 py-2.5 text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring" /></label>;
 }

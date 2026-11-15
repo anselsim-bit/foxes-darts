@@ -1,5 +1,9 @@
 # Foxes Darts — Tâches
 
+## Ajout manuel facultatif — 15 novembre 2026
+- [ ] Autoriser tous les champs vides en solo et doublette, générer des noms de test si nécessaire sans faux contacts ; conserver permissions et capacité.
+- [ ] Tester l’ajout connecté et la relecture, puis retirer les participants de test.
+
 ## Liste imprimable — 12 novembre 2026
 - [x] Tableau des équipes en gestion avec paiement tout à droite et bouton Imprimer la liste.
 - [x] Tableau réel connecté vérifié, bouton d’impression déclenché et PDF produit avec uniquement la liste ; paiement à droite, téléphone sans débordement, trois tests de paiement réussis.
