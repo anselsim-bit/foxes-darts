@@ -66,6 +66,12 @@ describe("Tournament guest access", () => {
     await expect(reportTournamentMatch({ data: { matchId: "match", scoreA: 0, scoreB: 42, legsA: 1, legsB: 0, code: "FOX123" } })).rejects.toThrow("2 manches gagnantes");
     expect(mocks.adminFrom.mock.calls.map(([table]) => table)).toEqual(["tournament_settings_codes"]);
   });
+  it("refuses two wins when the final requires three", async () => {
+    mocks.publicRows.push({ id: "match", tournament_id: "test", stage: "bracket", round: 1, team_a: "a", team_b: "b" }, { status: "started", organizations: { status: "active" } }, { start_score: 501, double_out: false, game_settings: { version: 1, phases: {}, rounds: { "bracket:0": { start: 301, doubleOut: false, legsToWin: 3 } } } });
+    mocks.adminRows.push({ code: "FOX123" });
+    await expect(reportTournamentMatch({ data: { matchId: "match", scoreA: 0, scoreB: 42, legsA: 2, legsB: 0, code: "FOX123" } })).rejects.toThrow("3 manches gagnantes");
+    expect(mocks.adminFrom.mock.calls.map(([table]) => table)).toEqual(["tournament_settings_codes"]);
+  });
   it("rejects a valid code for a suspended organization", async () => {
     mocks.publicRows.push({ status: "started", organizations: { status: "suspended" } });
     await expect(validateTournamentCode({ data: { tournamentId: "test", code: "FOX123" } })).resolves.toMatchObject({ valid: false });
