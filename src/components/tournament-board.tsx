@@ -182,12 +182,12 @@ export function TournamentBoard({
   };
   const previewName = (r: number) => {
     const left = previewRounds.length - r;
-    return left === 0 ? "Finale" : left === 1 ? "Demi-finales" : left === 2 ? "Quarts de finale" : `Tour ${r}`;
+    return roundLabels[left] ?? `Tour ${r}`;
   };
 
   const roundName = (r: number) => {
     const left = rounds.length - r;
-    return left === 0 ? "Finale" : left === 1 ? "Demi-finales" : left === 2 ? "Quarts de finale" : `Tour ${r}`;
+    return roundLabels[left] ?? `Tour ${r}`;
   };
 
   const showPools = poolCount > 0 && poolMatches.length > 0;
@@ -203,7 +203,7 @@ export function TournamentBoard({
 
   const consolationRoundName = (r: number) => {
     const left = consolationRounds.length - r;
-    return left === 0 ? "Finale" : left === 1 ? "Demi-finales" : left === 2 ? "Quarts de finale" : `Tour ${r}`;
+    return roundLabels[left] ?? `Tour ${r}`;
   };
 
   const renderPools = (list: typeof poolData, admin: boolean) =>
