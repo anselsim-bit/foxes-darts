@@ -107,7 +107,7 @@ describe("Tournament device recovery", () => {
     vi.mocked(reportTournamentMatch).mockResolvedValue({ ok: true } as Awaited<ReturnType<typeof reportTournamentMatch>>);
     fireEvent.click(report);
     await waitFor(() => expect(localStorage.getItem(deviceDraftKey("test"))).toBeNull(), { timeout: 5000 });
-    expect(reportTournamentMatch).toHaveBeenCalledWith({ data: { matchId: "match-1", scoreA: 0, scoreB: 301, code: "FOXES" } });
+    expect(reportTournamentMatch).toHaveBeenCalledWith({ data: { matchId: "match-1", scoreA: 0, scoreB: 301, code: "FOXES", legsA: 1, legsB: 0, legWinners: ["a"], legRests: [301] } });
   });
 });
 

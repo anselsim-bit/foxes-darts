@@ -1,3 +1,5 @@
+import { RoundSettingsEditor } from "@/components/round-settings-editor";
+import { validateRoundSettings, type RoundSettings } from "@/lib/round-settings";
 import { PlatformAdmin } from "@/components/platform-admin";
 import { DescriptionEditor } from "@/components/description-editor";
 import { createFileRoute } from "@tanstack/react-router";
@@ -139,6 +141,7 @@ function TournamentsTab() {
     queryFn: () => listTournaments(),
   });
   const emptyForm = {
+    game_settings: null as RoundSettings | null,
     title: "",
     event_date: "",
     start_time: "",
@@ -182,6 +185,7 @@ function TournamentsTab() {
     const last = parts.length >= 3 ? parts.slice(2).join(", ") : "";
     const m = last.match(/^(\d{4,5})\s+(.*)$/);
     setForm({
+      game_settings: validateRoundSettings(t.game_settings),
       title: t.title,
       event_date: t.event_date,
       start_time: t.start_time?.slice(0, 5) ?? "",
@@ -235,6 +239,7 @@ function TournamentsTab() {
       await adminUpsertTournament({
         data: {
           id: editId ?? undefined,
+          game_settings: JSON.parse(String(new FormData(e.currentTarget as HTMLFormElement).get("game_settings"))),
           title: form.title,
           event_date: form.event_date,
           start_time: form.start_time || undefined,
@@ -358,21 +363,7 @@ function TournamentsTab() {
         </div>
         <fieldset className="space-y-3 border-y border-border py-4">
           <legend className="text-sm font-medium">Parties du tournoi</legend>
-          {([
-            ...(form.with_pools ? [{ label: "Poules", score: "start_score" as const, double: "double_out" as const }] : []),
-            { label: "Phase finale · petite finale", score: "final_start_score" as const, double: "final_double_out" as const },
-            ...(form.with_pools && form.consolation ? [{ label: "Consolante", score: "consolation_start_score" as const, double: "consolation_double_out" as const }] : []),
-          ]).map(phase => (
-            <div key={phase.score} className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-sm font-medium">{phase.label}</span>
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex gap-1" role="group" aria-label={`Score de départ — ${phase.label}`}>
-                  {[301, 501].map(score => <Button key={score} type="button" size="sm" variant={form[phase.score] === score ? "default" : "outline"} aria-pressed={form[phase.score] === score} onClick={() => setForm({ ...form, [phase.score]: score })}>{score}</Button>)}
-                </div>
-                <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form[phase.double]} onChange={e => setForm({ ...form, [phase.double]: e.target.checked })} /> Sortie double</label>
-              </div>
-            </div>
-          ))}
+          <RoundSettingsEditor key={editId ?? "new"} initial={form.game_settings} pools={form.with_pools} consolation={form.consolation} defaults={{pool:{start:form.start_score,doubleOut:form.double_out,legsToWin:1},bracket:{start:form.final_start_score,doubleOut:form.final_double_out,legsToWin:2},consolation:{start:form.consolation_start_score,doubleOut:form.consolation_double_out,legsToWin:2}}} />
           {form.with_pools && form.double_out && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.pool_double_limit} onChange={e => setForm({ ...form, pool_double_limit: e.target.checked })} /> Limite de 5 tours d'essais de double en poules</label>}
           {form.with_pools && form.consolation && form.consolation_double_out && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.consolation_double_limit} onChange={e => setForm({ ...form, consolation_double_limit: e.target.checked })} /> Limite de 5 tours d'essais de double en consolante</label>}
         </fieldset>

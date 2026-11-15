@@ -229,7 +229,7 @@ export function TournamentPlay({ tournamentId, signedIn, qrCode }: { tournamentI
           )}
           {match && (
             <>
-              <p className="text-sm font-medium">{match.start} · {match.doubleOut ? "Sortie double" : "Sortie simple"} · {(match.legsToWin ?? 1) === 2 ? "2 manches gagnantes" : "1 manche"}</p>
+              <p className="text-sm font-medium">{match.start} · {match.doubleOut ? "Sortie double" : "Sortie simple"} · {match.legsToWin ?? 1} manche{(match.legsToWin ?? 1) > 1 ? "s" : ""} gagnante{(match.legsToWin ?? 1) > 1 ? "s" : ""}</p>
               <div>
                 <p className="mb-2 text-sm font-medium">Qui commence ?</p>
                 <div className="flex flex-wrap gap-2">

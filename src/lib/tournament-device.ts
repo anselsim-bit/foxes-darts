@@ -6,13 +6,13 @@ export const gameProgressSchema = z.object({
   current: z.array(dartSchema).max(3),
   pendingBust: z.boolean().nullable(),
   mult: z.union([z.literal(1), z.literal(2), z.literal(3)]),
-  completedLegs: z.array(z.object({ winner: z.number().int().min(0).max(1), remaining: z.number().int().min(1), turns: z.array(z.object({ player: z.number().int().min(0).max(1), darts: z.array(dartSchema).max(3), bust: z.boolean(), total: z.number().int().min(0).max(180) })).optional() })).max(2).optional(),
+  completedLegs: z.array(z.object({ winner: z.number().int().min(0).max(1), remaining: z.number().int().min(1), turns: z.array(z.object({ player: z.number().int().min(0).max(1), darts: z.array(dartSchema).max(3), bust: z.boolean(), total: z.number().int().min(0).max(180) })).optional() })).max(38).optional(),
 });
 export type GameProgress = z.infer<typeof gameProgressSchema>;
 const draftSchema = z.object({
   version: z.literal(1), matchId: z.string(), teamAId: z.string(), teamBId: z.string(),
   start: z.number(), doubleOut: z.boolean(), poolDoubleLimit: z.boolean(),
-  legsToWin: z.number().int().min(1).max(2).optional(),
+  legsToWin: z.number().int().min(1).max(20).optional(),
   players: z.array(z.object({ name: z.string(), userId: z.null() })).length(2),
   progress: gameProgressSchema,
 });

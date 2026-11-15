@@ -20,7 +20,7 @@ export async function sendTournamentReminders(now = new Date()) {
   if (hour !== 9) return { skipped: true, sent: 0 };
   const tomorrow = nextDay(date);
   const { data: tournaments } = await supabaseAdmin.from("tournaments")
-    .select("id,title,event_date,start_time,end_time,location,format,pool_count,consolation,start_score,double_out,pool_double_limit,final_start_score,final_double_out,consolation_start_score,consolation_double_out,consolation_double_limit,status,organization_id,organizations(name,status)")
+    .select("id,title,event_date,start_time,end_time,location,format,pool_count,consolation,start_score,double_out,pool_double_limit,final_start_score,final_double_out,consolation_start_score,consolation_double_out,consolation_double_limit,game_settings,status,organization_id,organizations(name,status)")
     .eq("event_date", tomorrow).in("status", ["open", "started"]);
   let sent = 0;
   for (const t of tournaments ?? []) {
@@ -35,7 +35,7 @@ export async function sendTournamentReminders(now = new Date()) {
       if (u.user?.email) recipients.set(u.user.email.toLowerCase(), team.name);
     }
     const { data: guests } = await supabaseAdmin.from("tournament_guest_registrations").select("email,first_name").eq("tournament_id", t.id);
-    for (const g of guests ?? []) recipients.set(g.email.toLowerCase(), g.first_name);
+    for (const g of guests ?? []) if (g.email) recipients.set(g.email.toLowerCase(), g.first_name);
     const { data: ha } = await supabaseAdmin.from("helloasso_registrations").select("email,first_name").eq("tournament_id", t.id);
     for (const r of ha ?? []) if (r.email) recipients.set(r.email.toLowerCase(), r.first_name);
     const templateData = {

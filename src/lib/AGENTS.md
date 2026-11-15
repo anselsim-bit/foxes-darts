@@ -1,4 +1,5 @@
 - Organization management permissions use the shared matrix and SQL checks fed by authenticated memberships, never browser storage, to prevent local-role escalation.
+- Tournament game settings are versioned phase defaults plus final-relative round overrides; phaseRules resolves them for play, reporting and displays, while SQL validates the same winning-leg target and locks rules after launch to preserve historical matches.
 - Manual organizer player additions use an authenticated tournament-scoped transactional RPC that writes teams and private guest contacts together, serializing capacity checks even for HelloAsso tournaments; empty fields are allowed, missing identities get unique test labels, and absent contacts remain empty to prevent unintended emails.
 - Multi-organization onboarding remains database-gated until legacy privileged server, storage and public-list paths are scoped; foundation tables permit client reads only and preserve global player identities/statistics.
 - Photo-to-tournament embeds name the historical foreign key explicitly because the additional organization-integrity relationship makes unqualified embeds ambiguous.

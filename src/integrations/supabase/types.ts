@@ -1217,6 +1217,7 @@ export type Database = {
           final_double_out: boolean | null
           final_start_score: number | null
           format: string
+          game_settings: Json | null
           helloasso_url: string | null
           id: string
           image_url: string | null
@@ -1247,6 +1248,7 @@ export type Database = {
           final_double_out?: boolean | null
           final_start_score?: number | null
           format?: string
+          game_settings?: Json | null
           helloasso_url?: string | null
           id?: string
           image_url?: string | null
@@ -1277,6 +1279,7 @@ export type Database = {
           final_double_out?: boolean | null
           final_start_score?: number | null
           format?: string
+          game_settings?: Json | null
           helloasso_url?: string | null
           id?: string
           image_url?: string | null
@@ -1436,6 +1439,10 @@ export type Database = {
         Returns: boolean
       }
       is_platform_admin: { Args: never; Returns: boolean }
+      match_winning_legs: {
+        Args: { _round: number; _stage: string; _tournament: string }
+        Returns: number
+      }
       media_organization_id: { Args: { _path: string }; Returns: string }
       organization_is_public: {
         Args: { _organization_id: string }

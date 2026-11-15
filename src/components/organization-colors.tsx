@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { RoundSettingsEditor } from "./round-settings-editor";
 import { themeColorFields, organizationThemeStyle } from "@/lib/organization-theme";
 
 type Colors = { primary: string; secondary: string; theme: Record<string, string> };
@@ -66,26 +67,20 @@ export function PoolOptions({ poolCount, consolation, tournament }: { poolCount?
   const [pools, setPools] = useState((poolCount ?? 4) > 0);
   const [conso, setConso] = useState(consolation ?? true);
   const val = (prefix: string, k: string) => tournament?.[`${prefix}${k}`] ?? tournament?.[k];
-  const format = (prefix: string, label: string, shown: boolean) => shown ? (
-    <fieldset key={prefix} className="space-y-2 rounded-md border border-border p-3">
-      <legend className="px-1">Format {label}</legend>
-      <select name={`${prefix}start_score`} defaultValue={String(val(prefix, "start_score") ?? 501)} className="w-full rounded-md border border-input bg-background px-2 py-1.5"><option>501</option><option>301</option></select>
-      <label className="block"><input type="checkbox" name={`${prefix}double_out`} defaultChecked={Boolean(val(prefix, "double_out"))} /> Sortie double</label>
-    </fieldset>
-  ) : <input key={prefix} type="hidden" name={`${prefix}start_score`} value={String(val(prefix, "start_score") ?? 501)} />;
   return (
     <div className="space-y-3 text-sm sm:col-span-2">
       <label className="block"><input type="checkbox" checked={pools} onChange={(e) => setPools(e.target.checked)} /> Phase de poules</label>
       {pools ? (
         <div className="space-y-2 pl-6">
           <label className="block">Nombre de poules<input name="pools" type="number" min={1} defaultValue={(poolCount ?? 0) > 0 ? poolCount! : 4} className="ml-2 w-20 rounded-md border border-input bg-background px-2 py-1" /></label>
-          {format("", "des poules", true)}
+          
           <label className="block"><input type="checkbox" name="pool_double_limit" defaultChecked={(tournament?.["pool_double_limit"] as boolean | undefined) ?? true} /> Limite de cinq tours de double en poules</label>
         </div>
-      ) : <><input type="hidden" name="pools" value="0" />{format("", "", false)}</>}
-      {format("final_", "de la phase finale", true)}
+      ) : <><input type="hidden" name="pools" value="0" /></>}
+      
       <label className="block"><input type="checkbox" name="consolation" checked={conso} onChange={(e) => setConso(e.target.checked)} /> Phase de consolante</label>
-      {conso ? <div className="pl-6">{format("consolation_", "de la consolante", true)}<label className="mt-2 block"><input type="checkbox" name="consolation_double_limit" defaultChecked={(tournament?.["consolation_double_limit"] as boolean | undefined) ?? true} /> Limite de cinq tours de double en consolante</label></div> : format("consolation_", "", false)}
+      {pools && conso ? <div className="pl-6"><label className="mt-2 block"><input type="checkbox" name="consolation_double_limit" defaultChecked={(tournament?.["consolation_double_limit"] as boolean | undefined) ?? true} /> Limite de cinq tours de double en consolante</label></div> : null}
+      <RoundSettingsEditor initial={tournament?.["game_settings"]} pools={pools} consolation={conso} defaults={{ pool: {start: Number(val("", "start_score") ?? 501), doubleOut: Boolean(val("", "double_out")), legsToWin: 1}, bracket: {start: Number(val("final_", "start_score") ?? 501), doubleOut: Boolean(val("final_", "double_out")), legsToWin: 2}, consolation: {start: Number(val("consolation_", "start_score") ?? 501), doubleOut: Boolean(val("consolation_", "double_out")), legsToWin: 2} }} />
     </div>
   );
 }

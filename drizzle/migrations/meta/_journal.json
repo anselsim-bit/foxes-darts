@@ -358,6 +358,13 @@
       "when": 1794755802761,
       "tag": "0050_optional_organizer_player_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1794756537254,
+      "tag": "0051_tournament_per_round_game_settings",
+      "breakpoints": true
     }
   ]
 }

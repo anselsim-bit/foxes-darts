@@ -82,7 +82,7 @@ export function Game({
     const loserRemaining = scores[winner === 0 ? 1 : 0] ?? 0;
     try {
       await reportTournamentMatch({ data: { matchId: match.id, scoreA: aWon ? 0 : loserRemaining, scoreB: aWon ? loserRemaining : 0, code: accessCode,
-        ...(legsToWin === 2 ? { legsA: legWins[players[0]?.name === match.teamA ? 0 : 1] ?? 0, legsB: legWins[players[0]?.name === match.teamB ? 0 : 1] ?? 0, legWinners: legSides, legRests: [...completedLegs.map(l => l.remaining), loserRemaining] } : {}),
+        ...(match ? { legsA: legWins[players[0]?.name === match.teamA ? 0 : 1] ?? 0, legsB: legWins[players[0]?.name === match.teamB ? 0 : 1] ?? 0, legWinners: legSides, legRests: [...completedLegs.map(l => l.remaining), loserRemaining] } : {}),
       } });
       setReported(true);
       onReported?.();
@@ -139,7 +139,7 @@ export function Game({
   // Points restants du perdant de chaque manche jouée, dans le même ordre.
   const legRests = useMemo(() => [...completedLegs.map(l => l.remaining), ...(winner !== null ? [scores[winner === 0 ? 1 : 0] ?? 0] : [])], [completedLegs, winner, scores]);
   useEffect(() => {
-    if (!match || !accessCode || legsToWin !== 2 || reported) return;
+    if (!match || !accessCode || legsToWin <= 1 || reported) return;
     let active = true;
     let retry: ReturnType<typeof setTimeout> | undefined;
     const sync = async () => {
@@ -245,7 +245,7 @@ export function Game({
               <p className="game-stats mt-1 text-xs text-muted-foreground">
                 Moy. {stats.average.toFixed(1)} · Meilleure volée {stats.best}
               </p>
-              {legsToWin === 2 && <p className="game-legs mt-1 text-sm font-semibold text-primary" aria-live="polite">Manches : {legWins[i]} / 2</p>}
+              {legsToWin > 1 && <p className="game-legs mt-1 text-sm font-semibold text-primary" aria-live="polite">Manches : {legWins[i]} / {legsToWin}</p>}
               {poolDoubleLimit && doubleOut && (
                 <p className="game-attempts mt-1 text-xs text-muted-foreground">
                   {requiresDouble(doubleOut, poolDoubleLimit, doubleAttempts[i] ?? 0) ? `Essais double : ${Math.min(doubleAttempts[i] ?? 0, 5)}/5 tours` : "Sortie simple"}
