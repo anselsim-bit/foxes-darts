@@ -1,5 +1,10 @@
 # Foxes Darts — Tâches
 
+## Règles par étape — 15 novembre 2026
+- [ ] Choix des manches, score et sortie par phase et étape dans les deux formulaires.
+- [ ] Compteur, reprise, résultats, stockage, tableaux et rappels cohérents ; historique préservé.
+- [ ] Tests et parcours réel avec tournoi temporaire, contrôle téléphone puis nettoyage.
+
 ## Ajout manuel facultatif — 15 novembre 2026
 - [x] Autoriser tous les champs vides en solo et doublette, générer des noms de test si nécessaire sans faux contacts ; conserver permissions et capacité.
 - [x] Dix-sept tests réussis ; deux ajouts solo vides connectés relus après rechargement, puis supprimés. Doublette vide validée par les tests ; contrôles automatiques sans erreur.
