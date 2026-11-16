@@ -9,7 +9,7 @@ import { EmailChangeEmail } from '@/lib/email-templates/email-change'
 import { ReauthenticationEmail } from '@/lib/email-templates/reauthentication'
 
 // Configuration
-const SITE_NAME = "Foxes Darts"
+const SITE_NAME = "Foxes Darts — ALFDSL"
 const SENDER_DOMAIN = "notify.foxesdarts.com"
 const ROOT_DOMAIN = "foxesdarts.com"
 const FROM_DOMAIN = "foxesdarts.com"
@@ -25,6 +25,7 @@ export const Route = createFileRoute("/lovable/email/auth/webhook")({
           apiKey: process.env['LOVABLE_API_KEY']!,
           from: { name: SITE_NAME, address: `noreply@${FROM_DOMAIN}` },
           senderDomain: SENDER_DOMAIN,
+          replyTo: 'simon.ansel@outlook.com',
           sendUrl: process.env['LOVABLE_SEND_URL'],
           emails: {
             signup: {

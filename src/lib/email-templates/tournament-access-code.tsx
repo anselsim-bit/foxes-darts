@@ -1,4 +1,5 @@
 import React from 'react'
+import { SenderFooter } from './sender-footer'
 import { Body, Button, Container, Head, Heading, Html, Preview, Section, Text } from '@react-email/components'
 import type { TemplateEntry } from './registry'
 
@@ -34,6 +35,7 @@ const Email = ({ participantName, tournamentTitle, tournamentDate, playUrl }: Pr
           Si vous n'êtes pas à l'origine de cette
           inscription, ignorez simplement cet email.
         </Text>
+        <SenderFooter />
       </Container>
     </Body>
   </Html>

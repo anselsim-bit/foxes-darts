@@ -1513,6 +1513,7 @@ export type Database = {
         Args: { _limit: number; _organization_id: string }
         Returns: undefined
       }
+      signup_age_allowed: { Args: { _metadata: Json }; Returns: boolean }
       tournament_accepts_registration: {
         Args: { _tournament_id: string }
         Returns: boolean

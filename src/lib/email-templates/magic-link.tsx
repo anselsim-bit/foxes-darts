@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { SenderFooter } from './sender-footer'
 
 import {
   Body,
@@ -38,6 +39,7 @@ export const MagicLinkEmail = ({
         <Text style={footer}>
           Si vous n'avez pas demandé ce lien, vous pouvez ignorer cet e-mail.
         </Text>
+        <SenderFooter />
       </Container>
     </Body>
   </Html>

@@ -1,5 +1,5 @@
 export const INVITATION_DAYS = 7;
-export const RESERVED_SLUGS = ["admin","api","auth","compteur","classements","create-organization","dashboard","galerie","inscription","invitation","mcp","mon-espace","o","reset-password","tournois","lovable"];
+export const RESERVED_SLUGS = ["admin","api","auth","compteur","classements","create-organization","dashboard","galerie","inscription","invitation","mcp","mon-espace","o","reset-password","tournois","lovable","mentions-legales","confidentialite"];
 export function organizationSlug(value: string) {
   const slug = value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 64);
   return RESERVED_SLUGS.includes(slug) ? `${slug}-club` : slug;
