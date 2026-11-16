@@ -15,8 +15,10 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ClassementsRouteImport } from './routes/classements'
 import { Route as CompteurRouteImport } from './routes/compteur'
+import { Route as ConfidentialiteRouteImport } from './routes/confidentialite'
 import { Route as GalerieRouteImport } from './routes/galerie'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -68,6 +70,11 @@ const CompteurRoute = CompteurRouteImport.update({
   path: '/compteur',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConfidentialiteRoute = ConfidentialiteRouteImport.update({
+  id: '/confidentialite',
+  path: '/confidentialite',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GalerieRoute = GalerieRouteImport.update({
   id: '/galerie',
   path: '/galerie',
@@ -76,6 +83,11 @@ const GalerieRoute = GalerieRouteImport.update({
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
+  id: '/mentions-legales',
+  path: '/mentions-legales',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -197,8 +209,10 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/classements': typeof ClassementsRoute
   '/compteur': typeof CompteurRoute
+  '/confidentialite': typeof ConfidentialiteRoute
   '/galerie': typeof GalerieRoute
   '/mcp': typeof McpRoute
+  '/mentions-legales': typeof MentionsLegalesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -227,8 +241,10 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/classements': typeof ClassementsRoute
   '/compteur': typeof CompteurRoute
+  '/confidentialite': typeof ConfidentialiteRoute
   '/galerie': typeof GalerieRoute
   '/mcp': typeof McpRoute
+  '/mentions-legales': typeof MentionsLegalesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -259,8 +275,10 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/classements': typeof ClassementsRoute
   '/compteur': typeof CompteurRoute
+  '/confidentialite': typeof ConfidentialiteRoute
   '/galerie': typeof GalerieRoute
   '/mcp': typeof McpRoute
+  '/mentions-legales': typeof MentionsLegalesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
@@ -291,8 +309,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/classements'
     | '/compteur'
+    | '/confidentialite'
     | '/galerie'
     | '/mcp'
+    | '/mentions-legales'
     | '/reset-password'
     | '/.well-known/oauth-protected-resource'
     | '/admin'
@@ -321,8 +341,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/classements'
     | '/compteur'
+    | '/confidentialite'
     | '/galerie'
     | '/mcp'
+    | '/mentions-legales'
     | '/reset-password'
     | '/.well-known/oauth-protected-resource'
     | '/admin'
@@ -352,8 +374,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/classements'
     | '/compteur'
+    | '/confidentialite'
     | '/galerie'
     | '/mcp'
+    | '/mentions-legales'
     | '/reset-password'
     | '/.well-known/oauth-protected-resource'
     | '/_authenticated/admin'
@@ -384,8 +408,10 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ClassementsRoute: typeof ClassementsRoute
   CompteurRoute: typeof CompteurRoute
+  ConfidentialiteRoute: typeof ConfidentialiteRoute
   GalerieRoute: typeof GalerieRoute
   McpRoute: typeof McpRoute
+  MentionsLegalesRoute: typeof MentionsLegalesRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   InscriptionJoueurRoute: typeof InscriptionJoueurRoute
@@ -446,6 +472,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompteurRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/confidentialite': {
+      id: '/confidentialite'
+      path: '/confidentialite'
+      fullPath: '/confidentialite'
+      preLoaderRoute: typeof ConfidentialiteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/galerie': {
       id: '/galerie'
       path: '/galerie'
@@ -458,6 +491,13 @@ declare module '@tanstack/react-router' {
       path: '/mcp'
       fullPath: '/mcp'
       preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mentions-legales': {
+      id: '/mentions-legales'
+      path: '/mentions-legales'
+      fullPath: '/mentions-legales'
+      preLoaderRoute: typeof MentionsLegalesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -642,8 +682,10 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ClassementsRoute: ClassementsRoute,
   CompteurRoute: CompteurRoute,
+  ConfidentialiteRoute: ConfidentialiteRoute,
   GalerieRoute: GalerieRoute,
   McpRoute: McpRoute,
+  MentionsLegalesRoute: MentionsLegalesRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
