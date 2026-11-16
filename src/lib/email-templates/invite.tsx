@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { SenderFooter } from './sender-footer'
 
 import {
   Body,
@@ -46,6 +47,7 @@ export const InviteEmail = ({
           Si vous n'attendiez pas cette invitation, vous pouvez ignorer cet
           e-mail.
         </Text>
+        <SenderFooter />
       </Container>
     </Body>
   </Html>

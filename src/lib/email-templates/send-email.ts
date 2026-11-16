@@ -58,10 +58,8 @@ export async function sendTemplateEmail(
 
   const templateData = options.templateData ?? {}
   const element = React.createElement(template.component, templateData)
-  const identifiedElement = React.createElement(React.Fragment, null, element,
-    React.createElement('p', null, 'Expéditeur : Association LES FOXES de Saint Léonard (ALFDSL) — 21 Avenue Belle Isle, 62260 SAINT LEONARD — simon.ansel@outlook.com'))
-  const html = await render(identifiedElement)
-  const text = await render(identifiedElement, { plainText: true })
+  const html = await render(element)
+  const text = await render(element, { plainText: true })
   const subject =
     typeof template.subject === 'function'
       ? template.subject(templateData)

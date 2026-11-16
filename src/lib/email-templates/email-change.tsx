@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { SenderFooter } from './sender-footer'
 
 import {
   Body,
@@ -59,6 +60,7 @@ export const EmailChangeEmail = ({
           Si vous n'avez pas demandé ce changement, sécurisez immédiatement
           votre compte.
         </Text>
+        <SenderFooter />
       </Container>
     </Body>
   </Html>

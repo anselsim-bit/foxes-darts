@@ -1,4 +1,5 @@
 import React from 'react'
+import { SenderFooter } from './sender-footer'
 import { Body, Button, Container, Head, Heading, Hr, Html, Preview, Section, Text } from '@react-email/components'
 import type { TemplateEntry } from './registry'
 
@@ -42,6 +43,7 @@ const Email = ({ participantName, tournamentTitle, organizationName, tournamentD
           <Section style={buttonWrap}><Button style={button} href={tournamentUrl}>Voir le tournoi</Button></Section>
         ) : null}
         <Text style={muted}>Bonne chance et à demain !</Text>
+        <SenderFooter />
       </Container>
     </Body>
   </Html>

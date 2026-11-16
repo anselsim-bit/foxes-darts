@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { SenderFooter } from './sender-footer'
 
 import {
   Body,
@@ -40,6 +41,7 @@ export const RecoveryEmail = ({
           Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer
           cet e-mail : votre mot de passe ne sera pas modifié.
         </Text>
+        <SenderFooter />
       </Container>
     </Body>
   </Html>

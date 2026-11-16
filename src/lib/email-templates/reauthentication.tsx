@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { SenderFooter } from './sender-footer'
 
 import {
   Body,
@@ -29,6 +30,7 @@ export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => 
           Ce code expire rapidement. Si vous n'êtes pas à l'origine de cette
           demande, vous pouvez ignorer cet e-mail.
         </Text>
+        <SenderFooter />
       </Container>
     </Body>
   </Html>
