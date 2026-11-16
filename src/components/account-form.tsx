@@ -194,12 +194,12 @@ export function AccountForm({ kind, redirectTo }: { kind?: SignupKind; redirectT
         )}
         {mode === "signup" && <fieldset className="space-y-3">
           <label htmlFor="ageBand" className="block text-sm font-medium">Votre tranche d’âge</label>
-          <Select value={ageBand} onValueChange={value => { setAgeBand(value); setParentalAgreement(false); }}>
+          <Select value={ageBand} onValueChange={value => { setAgeBand(value); setParentalAgreement(false); setErrorMessage(""); }}>
             <SelectTrigger id="ageBand"><SelectValue placeholder="Choisir votre tranche d’âge" /></SelectTrigger>
             <SelectContent><SelectItem value="under13">Moins de 13 ans</SelectItem><SelectItem value="13-14">13 ou 14 ans</SelectItem><SelectItem value="15plus">15 ans ou plus</SelectItem></SelectContent>
           </Select>
           {ageBand === "under13" && <p role="alert" className="text-sm text-destructive">L’inscription est réservée aux personnes de 13 ans et plus.</p>}
-          {ageBand === "13-14" && <label className="flex items-start gap-3 text-sm"><Checkbox checked={parentalAgreement} onCheckedChange={value => setParentalAgreement(value === true)} /><span>Je déclare avoir l’accord de mon parent ou représentant légal pour créer ce compte et utiliser ce service.</span></label>}
+          {ageBand === "13-14" && <label className="flex items-start gap-3 text-sm"><Checkbox checked={parentalAgreement} onCheckedChange={value => { setParentalAgreement(value === true); setErrorMessage(""); }} /><span>Je déclare avoir l’accord de mon parent ou représentant légal pour créer ce compte et utiliser ce service.</span></label>}
           <p className="text-xs text-muted-foreground">Les informations de votre compte sont utilisées pour gérer votre participation et vos statistiques. <Link to="/confidentialite" className="underline">Confidentialité</Link> · <Link to="/mentions-legales" className="underline">Mentions légales</Link></p>
         </fieldset>}
         {errorMessage && <p role="alert" className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">{errorMessage}</p>}

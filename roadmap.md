@@ -1,9 +1,10 @@
 # Foxes Darts — Tâches
 
 ## Vie privée et mentions légales — 16 novembre 2026
-- [ ] Contrôle déclaratif d’âge à 13 ans et accord parental avant 15 ans, protégé côté serveur.
-- [ ] Vérifier l’absence de replay, identifier l’expéditeur et la désinscription gérée des emails.
-- [ ] Mentions légales et confidentialité accessibles, tests et vérification des pages.
+- [x] Contrôle déclaratif d’âge à 13 ans et accord parental avant 15 ans, protégé côté serveur ; refus public direct vérifié, comptes existants et invitations conservés.
+- [x] Aucun outil de replay ou audio trouvé dans le site et son script publié ; expéditeur identifié dans les neuf emails, réponses au contact légal et désinscription gérée par Lovable conservée (pas de désinscription réelle exécutée).
+- [x] Mentions légales et confidentialité accessibles, pages vérifiées sur navigateur, affichage téléphone sans débordement et tests réussis.
+- [ ] Finaliser les coordonnées contractuelles de l’hébergeur et la politique de conservation des comptes/contacts/historiques : informations non disponibles ; validation juridique du contrôle parental déclaratif à prévoir.
 
 ## Règles par étape — 15 novembre 2026
 - [x] Choix des manches, score et sortie par phase et étape dans les deux formulaires.
