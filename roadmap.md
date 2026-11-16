@@ -1,5 +1,10 @@
 # Foxes Darts — Tâches
 
+## Vie privée et mentions légales — 16 novembre 2026
+- [ ] Contrôle déclaratif d’âge à 13 ans et accord parental avant 15 ans, protégé côté serveur.
+- [ ] Vérifier l’absence de replay, identifier l’expéditeur et la désinscription gérée des emails.
+- [ ] Mentions légales et confidentialité accessibles, tests et vérification des pages.
+
 ## Règles par étape — 15 novembre 2026
 - [x] Choix des manches, score et sortie par phase et étape dans les deux formulaires.
 - [x] Compteur, reprise, résultats, stockage, tableaux et rappels cohérents ; historique préservé.
