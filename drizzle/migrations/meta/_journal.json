@@ -365,6 +365,13 @@
       "when": 1794756537254,
       "tag": "0051_tournament_per_round_game_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1794824541519,
+      "tag": "0052_signup_age_declaration",
+      "breakpoints": true
     }
   ]
 }

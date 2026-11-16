@@ -1,0 +1,6 @@
+CREATE FUNCTION public.signup_age_allowed(_metadata jsonb) RETURNS boolean LANGUAGE sql IMMUTABLE SET search_path=public AS $$ SELECT coalesce((_metadata->>'age_policy_version')='1' AND ((_metadata->>'age_band')='15plus' OR ((_metadata->>'age_band')='13-14' AND _metadata->'parental_agreement'='true'::jsonb)),false) $$;
+REVOKE ALL ON FUNCTION public.signup_age_allowed(jsonb) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.signup_age_allowed(jsonb) TO service_role;
+CREATE FUNCTION public.enforce_signup_age() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN IF NEW.invited_at IS NULL AND coalesce(NEW.raw_app_meta_data->>'provider','email')='email' AND NOT public.signup_age_allowed(NEW.raw_user_meta_data) THEN RAISE EXCEPTION 'Inscription : 13 ans minimum ; accord parental requis avant 15 ans.'; END IF; RETURN NEW; END $$;
+REVOKE ALL ON FUNCTION public.enforce_signup_age() FROM PUBLIC;
+CREATE TRIGGER enforce_signup_age BEFORE INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.enforce_signup_age();

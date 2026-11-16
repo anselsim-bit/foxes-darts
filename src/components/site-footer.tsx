@@ -15,6 +15,8 @@ export function SiteFooter() {
           <span className="font-display text-sm uppercase">Foxes Darts</span>
         </div>
         <nav className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
+          <Link to="/mentions-legales" className="hover:text-foreground">Mentions légales</Link>
+          <Link to="/confidentialite" className="hover:text-foreground">Confidentialité</Link>
           <Link to="/tournois" className="hover:text-foreground">
             Tournois
           </Link>
