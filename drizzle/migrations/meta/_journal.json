@@ -372,6 +372,13 @@
       "when": 1794824541519,
       "tag": "0052_signup_age_declaration",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1794905097288,
+      "tag": "0053_restrict_has_role_to_self",
+      "breakpoints": true
     }
   ]
 }
