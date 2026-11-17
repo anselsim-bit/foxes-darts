@@ -3,6 +3,13 @@ import { signupDestination, signupMetadata } from "./signup-data";
 
 const contact = { organization_name: "Club test", responsible_name: "Camille", phone: "0600000000", address: "1 rue Test", postal_code: "62200", city: "Saint-Léonard" };
 describe("Inscriptions joueur et organisateur", () => {
+  it.each(["player", "organizer"] as const)("autorise l’inscription %s sans déclaration d’âge ou accord parental", (kind) => {
+    const result = signupMetadata(kind, "Test âge", contact, { firstName: "Camille", lastName: "Test" });
+    expect(result.signup_kind).toBe(kind);
+    expect(result).not.toHaveProperty("age_band");
+    expect(result).not.toHaveProperty("parental_agreement");
+    expect(result).not.toHaveProperty("age_policy_version");
+  });
   it("conserve un nom de joueur pour les organisateurs qui jouent aussi", () => {
     expect(signupMetadata("organizer", "Camille Darts", contact).display_name).toBe("Camille Darts");
   });

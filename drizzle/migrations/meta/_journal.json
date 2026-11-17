@@ -386,6 +386,13 @@
       "when": 1794907773482,
       "tag": "0054_tournament_special_visits",
       "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1794910955073,
+      "tag": "0055_disable_signup_age_restriction",
+      "breakpoints": true
     }
   ]
 }
