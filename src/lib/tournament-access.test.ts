@@ -34,7 +34,7 @@ vi.mock("@/integrations/supabase/client.server", () => ({
   supabaseAdmin: { from: mocks.adminFrom },
 }));
 
-import { listPlayableMatches, reportTournamentMatch, validateTournamentCode, updateTournamentLiveLegs } from "./tournament.functions";
+import { listPlayableMatches, reportTournamentMatch, validateTournamentCode, updateTournamentLiveLegs, updateTournamentSpecialVisits } from "./tournament.functions";
 
 beforeEach(() => {
   mocks.publicRows.length = 0;
@@ -43,6 +43,12 @@ beforeEach(() => {
 });
 
 describe("Tournament guest access", () => {
+  it("refuses special visit writes with an obsolete code", async () => {
+    mocks.publicRows.push({id:"match",tournament_id:"test",team_a:"a",team_b:"b",winner:null},{status:"started",organizations:{status:"active"}});
+    mocks.adminRows.push({code:"NEWCODE"});
+    await expect(updateTournamentSpecialVisits({data:{matchId:"match",code:"OLD",visits:[],counts:{a:{"180":0,"26":0},b:{"180":0,"26":0}}} as never})).rejects.toThrow("Code d'accès invalide");
+    expect(mocks.adminFrom.mock.calls.map(([table])=>table)).toEqual(["tournament_settings_codes"]);
+  });
   it("refuses provisional leg writes with an obsolete code", async () => {
     mocks.publicRows.push({ id: "match", tournament_id: "test", stage: "consolation", team_a: "a", team_b: "b", winner: null }, { status: "started", organizations: { status: "active" } });
     mocks.adminRows.push({ code: "NEWCODE" });
