@@ -30,7 +30,7 @@
 - Boards subscribe to tournament table changes with effect cleanup. Code-validated live_legs updates remain provisional; only final reporting advances teams — shows live legs without prematurely changing brackets.
 - Pool standings add only the loser's remaining points (winner takes none); fewer points ranks higher. The main bracket, small_final (semi-final losers, 3rd place) and consolation bracket (non-qualifiers, when the flag is on) are generated automatically by generateFinalsIfPoolsDone when the last pool result is saved — no admin button; every knockout stage is two winning legs, only pools are single-leg.
 
-- Signup shares AccountForm and an auth age trigger; metadata grants no roles. Email opt-out is managed by Lovable.
+- Signup shares AccountForm; metadata grants no roles to prevent escalation. Email opt-out is managed by Lovable.
 - Org creation gated by platform_release_flags 'organization_onboarding' (admin toggle; allowlist bypass); organizations.tournament_limit (NULL=unlimited) enforced by trigger; orgs soft-delete via name-confirmed RPC.
 - Guest sign-ups: public server fn + manager-only tournament_guest_registrations; leg_rests store per-leg loser remainders.
 - Reminders: schedule at 07/08 UTC, sends only at 09h Paris, idempotent per recipient.
