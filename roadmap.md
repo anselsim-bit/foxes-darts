@@ -1,5 +1,13 @@
 # Foxes Darts — Tâches
 
+## Audit cybersécurité — 17 novembre 2026
+- [x] Lire le cahier des charges ; lancer le contrôle rapide, l’analyse approfondie et l’examen des accès existants sans modifier les données.
+- [x] Vérifier que RLS est activée sur les 29 tables publiques ; relever les alertes du linter sur les privilèges des fonctions SQL.
+- [ ] Établir la cartographie et qualifier les alertes avec les résultats de l’analyse approfondie en cours ; produire le rapport avec preuves et statuts demandés.
+- [x] Rapport initial dans docs/audit-cybersecurite.md : privilèges RPC trop larges observés, énumération de comptes, codes sans limiteur applicatif, avis de dépendances et MIME stockage ; 39 tests réussis, six lectures privées anonymes sans données, refus dashboard vérifié ordinateur/téléphone. Rapport final attend l’analyse approfondie.
+- [ ] Présenter les corrections proposées avant toute correction structurelle ; tests uniquement non destructifs, sans modification des données de production.
+- [ ] Vérifier les corrections approuvées et documenter les limites ; aucune nouvelle mise en production avec risque critique/élevé connu non traité ou sans dérogation documentée.
+
 ## Vie privée et mentions légales — 16 novembre 2026
 - [x] Contrôle déclaratif d’âge à 13 ans et accord parental avant 15 ans, protégé côté serveur ; refus public direct vérifié, comptes existants et invitations conservés.
 - [x] Aucun outil de replay ou audio trouvé dans le site et son script publié ; expéditeur identifié dans les neuf emails, réponses au contact légal et désinscription gérée par Lovable conservée (pas de désinscription réelle exécutée).
