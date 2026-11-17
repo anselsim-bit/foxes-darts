@@ -50,6 +50,7 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
       pool_count?: number | undefined;
       start_score: number;
       game_settings?: unknown;
+      track_special_visits?: boolean;
       double_out: boolean;
       final_start_score?: number;
       final_double_out?: boolean;
@@ -78,6 +79,7 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
     const finalRules = phaseRules(data, "bracket");
     const consolationRules = phaseRules(data, "consolation");
     const row = {
+      ...(data.track_special_visits !== undefined ? { track_special_visits: data.track_special_visits === true } : {}),
       ...(data.game_settings !== undefined ? { game_settings: validateRoundSettings(data.game_settings) } : {}),
       title: data.title,
       event_date: data.event_date,
