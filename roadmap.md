@@ -4,6 +4,7 @@
 - [x] Lire le cahier des charges ; lancer le contrôle rapide, l’analyse approfondie et l’examen des accès existants sans modifier les données.
 - [x] Vérifier que RLS est activée sur les 29 tables publiques ; relever les alertes du linter sur les privilèges des fonctions SQL.
 - [ ] Établir la cartographie et qualifier les alertes avec les résultats de l’analyse approfondie en cours ; produire le rapport avec preuves et statuts demandés.
+- [x] Rapport initial dans docs/audit-cybersecurite.md : privilèges RPC trop larges observés, énumération de comptes, codes sans limiteur applicatif, avis de dépendances et MIME stockage ; 39 tests réussis, six lectures privées anonymes sans données, refus dashboard vérifié ordinateur/téléphone. Rapport final attend l’analyse approfondie.
 - [ ] Présenter les corrections proposées avant toute correction structurelle ; tests uniquement non destructifs, sans modification des données de production.
 - [ ] Vérifier les corrections approuvées et documenter les limites ; aucune nouvelle mise en production avec risque critique/élevé connu non traité ou sans dérogation documentée.
 
