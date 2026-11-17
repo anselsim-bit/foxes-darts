@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { phaseRules } from "@/lib/dart-rules";
 import { roundLabels } from "@/lib/round-settings";
+import { specialLeaders } from "@/lib/special-visits";
 import { GuestRegistrationsList } from "@/components/guest-registration";
 import { ManualPlayerForm } from "@/components/manual-player-form";
 import { FitToScreen } from "@/components/fit-to-screen";
@@ -45,6 +46,7 @@ type Match = {
   live_leg_winners?: unknown;
   leg_rests?: unknown;
   live_leg_rests?: unknown;
+  special_visits?: unknown;
 };
 
 /** Détail ordonné des manches ("a"/"b"), stocké en jsonb. */
@@ -411,6 +413,14 @@ list.map(({ i, ms, rows }) => {
     setScreenOpen(false);
     if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
   };
+  const specialSummary = data.settings?.track_special_visits ? (
+    <div className="mt-6 grid gap-4 border-t border-border pt-4 sm:grid-cols-2" aria-label="Leaders des volées spéciales" aria-live="polite">
+      {(["180", "26"] as const).map(category => {
+        const leader = specialLeaders(teams, matches, category);
+        return <div key={category} className="min-w-0"><h3 className="flex items-center gap-2 text-sm text-primary"><Trophy className="h-4 w-4"/>Le plus de {category}{category === "26" ? " · 20 + 5 + 1" : ""}</h3><p className="mt-1 break-words font-semibold">{leader.names.length ? `${leader.names.join(" / ")} — ${leader.total}` : "Aucune volée pour le moment"}</p></div>;
+      })}
+    </div>
+  ) : null;
   return (
     <section className="mt-10 space-y-8 border-t border-border pt-8">
       {(section === "all" || section === "participants") && <div>
@@ -632,7 +642,7 @@ list.map(({ i, ms, rows }) => {
           selected={screenViews}
           onToggle={(v) => setScreenViews((cur) => (cur.includes(v) ? (cur.length > 1 ? cur.filter((x) => x !== v) : cur) : [...cur, v]))}
           onClose={closeScreen}
-          render={(v) => (v === "pools" ? <div><h2 className="text-2xl">Poules</h2><div className={`mt-4 grid gap-4 ${poolData.length > 1 ? (screenViews.length === 1 ? "grid-cols-2 xl:grid-cols-4" : "grid-cols-2") : ""}`}>{renderPools(poolData, false)}</div></div> : v === "final" ? renderFinal(false) : renderConsolation(false))}
+          render={(v) => <>{v === "pools" ? <div><h2 className="text-2xl">Poules</h2><div className={`mt-4 grid gap-4 ${poolData.length > 1 ? (screenViews.length === 1 ? "grid-cols-2 xl:grid-cols-4" : "grid-cols-2") : ""}`}>{renderPools(poolData, false)}</div></div> : v === "final" ? renderFinal(false) : renderConsolation(false)}{specialSummary}</>}
         />
       )}
 
@@ -683,6 +693,7 @@ list.map(({ i, ms, rows }) => {
       {showFinalView && renderFinal(admin)}
 
       {showConsolationView && renderConsolation(admin)}
+      {specialSummary}
       </>}
     </section>
   );
