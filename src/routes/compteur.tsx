@@ -214,7 +214,7 @@ function CompteurPage() {
                     setPassword("");
                   }}
                   onKeyDown={(e) => e.key === "Enter" && (found ? addMember() : lookupMember())}
-                  placeholder="Nom de joueur ou email du membre"
+                  placeholder="Nom de joueur du membre"
                   className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary"
                 />
                 {!found && (

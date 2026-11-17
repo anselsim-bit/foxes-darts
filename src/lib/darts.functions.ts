@@ -36,7 +36,7 @@ export const findMemberForGame = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { query: string }) => {
     const q = typeof input?.query === "string" ? input.query.trim().slice(0, 200) : "";
-    if (!q) throw new Error("Entrez un nom de joueur ou un email");
+    if (!q) throw new Error("Entrez un nom de joueur");
     return { query: q };
   })
   .handler(async ({ data }) => {
@@ -44,12 +44,7 @@ export const findMemberForGame = createServerFn({ method: "POST" })
     const q = data.query.toLowerCase();
     let id: string | null = null;
     if (q.includes("@")) {
-      for (let page = 1; page <= 20 && !id; page++) {
-        const { data: list, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
-        if (error) throw new Error(error.message);
-        id = list.users.find((u) => u.email?.toLowerCase() === q)?.id ?? null;
-        if (list.users.length < 1000) break;
-      }
+      throw new Error("Recherchez le membre par son nom de joueur");
     } else {
       const escaped = data.query.replace(/[\\%_]/g, (c) => `\\${c}`);
       const { data: rows, error } = await supabaseAdmin
@@ -58,7 +53,7 @@ export const findMemberForGame = createServerFn({ method: "POST" })
         .ilike("display_name", escaped)
         .limit(2);
       if (error) throw new Error(error.message);
-      if ((rows?.length ?? 0) > 1) throw new Error("Plusieurs joueurs portent ce nom : utilisez son email");
+      if ((rows?.length ?? 0) > 1) throw new Error("Plusieurs joueurs portent ce nom : précisez le nom exact");
       id = rows?.[0]?.id ?? null;
     }
     if (!id) throw new Error("Ce joueur n'existe pas");
@@ -130,7 +125,8 @@ export const saveGameResult = createServerFn({ method: "POST" })
       players,
       startScore,
       doubleOut: Boolean(input.doubleOut),
-      tournamentId: typeof input.tournamentId === "string" && input.tournamentId ? input.tournamentId : null,
+      // Free games are never linked to a tournament: tournament results go through code-validated reporting.
+      tournamentId: null,
     };
   })
   .handler(async ({ data, context }) => {
@@ -149,7 +145,7 @@ export const saveGameResult = createServerFn({ method: "POST" })
     const { data: saved, error } = await supabaseAdmin.rpc("record_free_game", {
       _recorded_by: context.userId,
       _client_key: data.clientKey,
-      _tournament_id: data.tournamentId as string,
+      _tournament_id: null as unknown as string,
       _start_score: data.startScore,
       _double_out: data.doubleOut,
       _winner_name: winner.name,
