@@ -160,6 +160,7 @@ function TournamentsTab() {
     pool_double_limit: true,
     consolation_double_limit: true,
     consolation: true,
+    track_special_visits: false,
     venue: DEFAULT_VENUE.venue,
     street: DEFAULT_VENUE.street,
     postal_code: DEFAULT_VENUE.postal_code,
@@ -204,6 +205,7 @@ function TournamentsTab() {
       pool_double_limit: t.pool_double_limit ?? true,
       consolation_double_limit: t.consolation_double_limit ?? t.pool_double_limit ?? true,
       consolation: t.consolation ?? true,
+      track_special_visits: t.track_special_visits ?? false,
       venue: parts[0] ?? "",
       street: parts[1] ?? "",
       postal_code: m ? m[1]! : "",
@@ -257,6 +259,7 @@ function TournamentsTab() {
           pool_double_limit: form.pool_double_limit,
           consolation_double_limit: form.consolation_double_limit,
           consolation: form.consolation,
+          track_special_visits: form.track_special_visits,
           location: location || undefined,
           description: form.description,
           helloasso_url: form.helloasso_url,
@@ -363,6 +366,7 @@ function TournamentsTab() {
         </div>
         <fieldset className="space-y-3 border-y border-border py-4">
           <legend className="text-sm font-medium">Parties du tournoi</legend>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.track_special_visits} onChange={e => setForm({...form, track_special_visits:e.target.checked})}/> Comptabiliser les 180 et les 26 (20 + 5 + 1)</label>
           <RoundSettingsEditor key={editId ?? "new"} initial={form.game_settings} pools={form.with_pools} consolation={form.consolation} defaults={{pool:{start:form.start_score,doubleOut:form.double_out,legsToWin:1},bracket:{start:form.final_start_score,doubleOut:form.final_double_out,legsToWin:2},consolation:{start:form.consolation_start_score,doubleOut:form.consolation_double_out,legsToWin:2}}} />
           {form.with_pools && form.double_out && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.pool_double_limit} onChange={e => setForm({ ...form, pool_double_limit: e.target.checked })} /> Limite de 5 tours d'essais de double en poules</label>}
           {form.with_pools && form.consolation && form.consolation_double_out && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.consolation_double_limit} onChange={e => setForm({ ...form, consolation_double_limit: e.target.checked })} /> Limite de 5 tours d'essais de double en consolante</label>}
