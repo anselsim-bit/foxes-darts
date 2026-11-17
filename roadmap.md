@@ -3,7 +3,7 @@
 ## Volées spéciales — 17 novembre 2026
 - [x] Option désactivée par défaut dans les deux formulaires ; compter les 180 et les simples 20 + 5 + 1 dans tous les ordres, par équipe et sur toutes les manches.
 - [x] Totaux remplaçables avec contrôle du code et affichage des leaders sous les tableaux, y compris plein écran et ex æquo.
-- [ ] Vérifier les tests et le parcours réel sans modifier les tournois existants.
+- [x] 32 tests réussis ; tournoi fictif créé depuis le formulaire, 180 et 26 joués, leaders relus en direct et après résultat, affichage téléphone vérifié ; tournoi fictif supprimé, tournois existants inchangés.
 
 ## Audit cybersécurité — 17 novembre 2026
 - [x] Lire le cahier des charges ; lancer le contrôle rapide, l’analyse approfondie et l’examen des accès existants sans modifier les données.
