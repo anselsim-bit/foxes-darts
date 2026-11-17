@@ -1,0 +1,6 @@
+ALTER TABLE public.tournaments ADD COLUMN track_special_visits boolean NOT NULL DEFAULT false;
+ALTER TABLE public.tournament_matches ADD COLUMN special_visits jsonb NOT NULL DEFAULT '{"a":{"180":0,"26":0},"b":{"180":0,"26":0}}'::jsonb;
+COMMENT ON COLUMN public.tournament_matches.special_visits IS 'Match-wide replaceable totals derived server-side from dart labels through code-validated scoring; not additive, so undo and retries do not duplicate counts.';
+CREATE FUNCTION public.guard_special_visits_write() RETURNS trigger LANGUAGE plpgsql SET search_path=public AS $$ BEGIN IF NEW.special_visits IS DISTINCT FROM OLD.special_visits AND coalesce(auth.role(),'') <> 'service_role' THEN RAISE EXCEPTION 'Special visits require verified scoring access'; END IF; RETURN NEW; END $$;
+REVOKE ALL ON FUNCTION public.guard_special_visits_write() FROM PUBLIC, anon, authenticated;
+CREATE TRIGGER guard_special_visits_write BEFORE UPDATE ON public.tournament_matches FOR EACH ROW EXECUTE FUNCTION public.guard_special_visits_write();

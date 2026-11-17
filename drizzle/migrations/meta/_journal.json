@@ -379,6 +379,13 @@
       "when": 1794905097288,
       "tag": "0053_restrict_has_role_to_self",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1794907773482,
+      "tag": "0054_tournament_special_visits",
+      "breakpoints": true
     }
   ]
 }
