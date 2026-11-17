@@ -1013,6 +1013,7 @@ export type Database = {
           round: number
           score_a: number | null
           score_b: number | null
+          special_visits: Json
           stage: string
           team_a: string | null
           team_b: string | null
@@ -1035,6 +1036,7 @@ export type Database = {
           round?: number
           score_a?: number | null
           score_b?: number | null
+          special_visits?: Json
           stage: string
           team_a?: string | null
           team_b?: string | null
@@ -1057,6 +1059,7 @@ export type Database = {
           round?: number
           score_a?: number | null
           score_b?: number | null
+          special_visits?: Json
           stage?: string
           team_a?: string | null
           team_b?: string | null
@@ -1233,6 +1236,7 @@ export type Database = {
           status: string
           team_size: number
           title: string
+          track_special_visits: boolean
         }
         Insert: {
           consolation?: boolean
@@ -1264,6 +1268,7 @@ export type Database = {
           status?: string
           team_size?: number
           title: string
+          track_special_visits?: boolean
         }
         Update: {
           consolation?: boolean
@@ -1295,6 +1300,7 @@ export type Database = {
           status?: string
           team_size?: number
           title?: string
+          track_special_visits?: boolean
         }
         Relationships: [
           {

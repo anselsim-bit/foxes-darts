@@ -19,6 +19,7 @@ import { canManageTournament, requireTournamentManager, requireTeamManager, requ
 import { assertResultWritable } from "@/lib/tournament-result-access";
 import { validateManualPlayers, type ManualPlayerInput } from "./manual-player-data";
 import { teamIsPaid } from "./team-payment";
+import { countSpecialVisits, type SpecialVisit } from "./special-visits";
 
 type Ctx = { supabase: SupabaseClient<Database>; userId: string };
 
@@ -34,11 +35,11 @@ export const getTournamentBoard = createServerFn({ method: "GET" })
       sb.from("tournament_teams").select("id, name, captain_id").eq("tournament_id", data.id).order("created_at"),
       sb
         .from("tournament_matches")
-        .select("id, stage, pool_index, round, position, team_a, team_b, score_a, score_b, legs_a, legs_b, live_legs_a, live_legs_b, leg_winners, live_leg_winners, leg_rests, live_leg_rests, winner")
+        .select("id, stage, pool_index, round, position, team_a, team_b, score_a, score_b, legs_a, legs_b, live_legs_a, live_legs_b, leg_winners, live_leg_winners, leg_rests, live_leg_rests, winner, special_visits")
         .eq("tournament_id", data.id)
         .order("round")
         .order("position"),
-      sb.from("tournaments").select("start_score,double_out,pool_double_limit,final_start_score,final_double_out,consolation_start_score,consolation_double_out,consolation_double_limit,game_settings").eq("id", data.id).single(),
+      sb.from("tournaments").select("start_score,double_out,pool_double_limit,final_start_score,final_double_out,consolation_start_score,consolation_double_out,consolation_double_limit,game_settings,track_special_visits").eq("id", data.id).single(),
     ]);
     return { teams: teams ?? [], matches: matches ?? [], settings };
   });
@@ -147,10 +148,10 @@ export const reportMatch = createServerFn({ method: "POST" })
 
 /** Code-only entry point: does not grant member statistics or admin access. */
 export const reportTournamentMatch = createServerFn({ method: "POST" })
-  .inputValidator((input: { matchId: string; scoreA: number; scoreB: number; legsA?: number; legsB?: number; legWinners?: LegSide[]; legRests?: number[]; code: string }) => input)
+  .inputValidator((input: { matchId: string; scoreA: number; scoreB: number; legsA?: number; legsB?: number; legWinners?: LegSide[]; legRests?: number[]; specialVisits?: SpecialVisit[]; code: string }) => input)
   .handler(async ({ data }) => reportAuthorizedMatch(data));
 
-async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; scoreB: number; legsA?: number; legsB?: number; legWinners?: LegSide[]; legRests?: number[]; code?: string | undefined }, context?: Ctx) {
+async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; scoreB: number; legsA?: number; legsB?: number; legWinners?: LegSide[]; legRests?: number[]; specialVisits?: SpecialVisit[]; code?: string | undefined }, context?: Ctx) {
     const { data: m, error } = await publicClient()
       .from("tournament_matches")
       .select("id, tournament_id, stage, round, position, team_a, team_b, winner")
@@ -169,6 +170,7 @@ async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; sc
         throw new Error("Seul un administrateur, un joueur du match ou un code d'accès actif permet de saisir le résultat.");
     }
     if (!Number.isFinite(data.scoreA) || !Number.isFinite(data.scoreB)) throw new Error("Scores invalides.");
+    const special = data.specialVisits === undefined ? null : countSpecialVisits(data.specialVisits);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const a = Math.max(0, Math.floor(data.scoreA));
     const b = Math.max(0, Math.floor(data.scoreB));
@@ -202,6 +204,13 @@ async function reportAuthorizedMatch(data: { matchId: string; scoreA: number; sc
       if (rests) await supabaseAdmin.from("tournament_matches").update({ leg_rests: rests }).eq("id", m.id);
     }
     if (commitError) throw new Error("Résultat non enregistré : le tableau a changé ou une correction touche un match déjà commencé. Réessayez après actualisation.");
+    if (special) {
+      const { data: settings } = await supabaseAdmin.from("tournaments").select("track_special_visits").eq("id", m.tournament_id).single();
+      if (settings?.track_special_visits) {
+        const { error: specialError } = await supabaseAdmin.from("tournament_matches").update({ special_visits: special }).eq("id", m.id).eq("winner", winner);
+        if (specialError) throw new Error("Résultat enregistré, mais les volées spéciales n’ont pas pu être mises à jour.");
+      }
+    }
     return { ok: true };
 }
 
@@ -306,7 +315,7 @@ export const listPlayableMatches = createServerFn({ method: "POST" })
     if (!(await hasValidCode(data.tournamentId, data.code))) throw new Error("Code d'accès invalide ou tournoi inactif.");
     const sb = publicClient();
     const [{ data: tournament, error: tournamentError }, { data: teams }, { data: matches }, { data: allMatches }] = await Promise.all([
-      sb.from("tournaments").select("start_score, double_out, final_start_score, final_double_out, consolation_start_score, consolation_double_out, pool_double_limit, consolation_double_limit, game_settings").eq("id", data.tournamentId).single(),
+      sb.from("tournaments").select("start_score, double_out, final_start_score, final_double_out, consolation_start_score, consolation_double_out, pool_double_limit, consolation_double_limit, game_settings, track_special_visits").eq("id", data.tournamentId).single(),
       sb.from("tournament_teams").select("id, name").eq("tournament_id", data.tournamentId),
       sb
         .from("tournament_matches")
@@ -338,6 +347,7 @@ export const listPlayableMatches = createServerFn({ method: "POST" })
               : roundName(m.stage, m.round);
       return [{
       id: m.id,
+      trackSpecialVisits: tournament.track_special_visits,
       ...phaseRules(tournament, m.stage, (maxRound.get(m.stage) ?? m.round) - m.round),
       label: `${stageLabel} — ${name.get(m.team_a)} vs ${name.get(m.team_b)}`,
       teamA: name.get(m.team_a) ?? "Équipe A",
@@ -501,6 +511,20 @@ export const updateTournamentLiveLegs = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.from("tournament_matches")
       .update({ ...live, live_leg_winners: liveWinners, live_leg_rests: cleanLegRests(data.legRests, data.legsA + data.legsB) }).eq("id", match.id).is("winner", null);
     if (error) throw new Error("Impossible d'actualiser les manches.");
+    return { ok: true };
+  });
+
+export const updateTournamentSpecialVisits = createServerFn({ method: "POST" })
+  .inputValidator((input: { matchId: string; code: string; visits: SpecialVisit[] }) => ({ ...input, counts: countSpecialVisits(input.visits) }))
+  .handler(async ({ data }) => {
+    const { data: match } = await publicClient().from("tournament_matches").select("id,tournament_id,team_a,team_b,winner").eq("id", data.matchId).maybeSingle();
+    if (!match || !match.team_a || !match.team_b || match.winner) throw new Error("Match indisponible.");
+    if (!(await hasValidCode(match.tournament_id, data.code))) throw new Error("Code d'accès invalide ou tournoi inactif.");
+    const { data: settings } = await publicClient().from("tournaments").select("track_special_visits").eq("id", match.tournament_id).single();
+    if (!settings?.track_special_visits) throw new Error("Le comptage des volées spéciales est désactivé.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("tournament_matches").update({ special_visits: data.counts }).eq("id", match.id).is("winner", null);
+    if (error) throw new Error("Impossible d’actualiser les volées spéciales.");
     return { ok: true };
   });
 

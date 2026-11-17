@@ -167,6 +167,7 @@ export function TournamentPlay({ tournamentId, signedIn, qrCode }: { tournamentI
           doubleOut={match.doubleOut}
           poolDoubleLimit={match.poolDoubleLimit}
           legsToWin={match.legsToWin ?? 1}
+          trackSpecialVisits={match.trackSpecialVisits ?? false}
           canSave
           tournamentId={tournamentId}
           match={match}

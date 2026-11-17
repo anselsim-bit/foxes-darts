@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { suggestNextDarts } from "@/lib/checkout";
 import { saveGameResult } from "@/lib/darts.functions";
-import { reportTournamentMatch, updateTournamentLiveLegs } from "@/lib/tournament.functions";
+import { reportTournamentMatch, updateTournamentLiveLegs, updateTournamentSpecialVisits } from "@/lib/tournament.functions";
+import { countSpecialVisits, type SpecialVisit } from "@/lib/special-visits";
 import { isBust, replayTurns, requiresDouble, visitStats } from "@/lib/dart-rules";
 import type { GameProgress } from "@/lib/tournament-device";
 
@@ -22,6 +23,7 @@ export type PlayableMatch = {
   doubleOut: boolean;
   poolDoubleLimit: boolean;
   legsToWin?: number;
+  trackSpecialVisits?: boolean;
 };
 type Dart = { label: string; value: number; isDouble: boolean };
 type Turn = { player: number; darts: Dart[]; bust: boolean; total: number };
@@ -44,6 +46,7 @@ export function Game({
   initialProgress,
   onProgress,
   onReported,
+  trackSpecialVisits = false,
 }: {
   match: { id: string; teamA: string; teamB: string } | null;
   accessCode: string | null;
@@ -59,6 +62,7 @@ export function Game({
   initialProgress?: GameProgress | undefined;
   onProgress?: (progress: GameProgress) => void;
   onReported?: () => void;
+  trackSpecialVisits?: boolean;
 }) {
   const [turns, setTurns] = useState<Turn[]>(initialProgress?.turns ?? []);
   const [current, setCurrent] = useState<Dart[]>(initialProgress?.current ?? []);
@@ -82,6 +86,7 @@ export function Game({
     const loserRemaining = scores[winner === 0 ? 1 : 0] ?? 0;
     try {
       await reportTournamentMatch({ data: { matchId: match.id, scoreA: aWon ? 0 : loserRemaining, scoreB: aWon ? loserRemaining : 0, code: accessCode,
+        ...(trackSpecialVisits ? { specialVisits } : {}),
         ...(match ? { legsA: legWins[players[0]?.name === match.teamA ? 0 : 1] ?? 0, legsB: legWins[players[0]?.name === match.teamB ? 0 : 1] ?? 0, legWinners: legSides, legRests: [...completedLegs.map(l => l.remaining), loserRemaining] } : {}),
       } });
       setReported(true);
@@ -127,6 +132,16 @@ export function Game({
     ...(pendingBust !== null ? [{ player: playerIdx, darts: current, bust: pendingBust, total: current.reduce((a, d) => a + d.value, 0) }] : [])
   ], [completedLegs, turns, current, pendingBust, playerIdx]);
   const bestVisit = (i: number) => visitStats(allVisits, i).best;
+  const specialVisits = useMemo<SpecialVisit[]>(() => allVisits.map(v => ({ side: players[v.player]?.name === match?.teamA ? "a" : "b", darts: v.darts.map(d => d.label) })), [allVisits, players, match?.teamA]);
+  const specialKey = JSON.stringify(specialVisits);
+  const specialQueue = useRef<Promise<unknown>>(Promise.resolve());
+  useEffect(() => {
+    if (!trackSpecialVisits || !match || !accessCode || reported) return;
+    const timer = setTimeout(() => {
+      specialQueue.current = specialQueue.current.catch(() => {}).then(() => updateTournamentSpecialVisits({ data: { matchId: match.id, code: accessCode, visits: specialVisits } })).catch(() => {});
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [trackSpecialVisits, match?.id, accessCode, specialKey, reported]);
 
   const legsA = legWins[players[0]?.name === match?.teamA ? 0 : 1] ?? 0;
   const legsB = legWins[players[0]?.name === match?.teamB ? 0 : 1] ?? 0;
@@ -244,6 +259,7 @@ export function Game({
               <p className="game-score font-display text-4xl text-primary">{active ? remaining : scores[i]}</p>
               <p className="game-stats mt-1 text-xs text-muted-foreground">
                 Moy. {stats.average.toFixed(1)} · Meilleure volée {stats.best}
+                {trackSpecialVisits && (() => { const counts = countSpecialVisits(specialVisits)[p.name === match?.teamA ? "a" : "b"]; return <span> · 180 : {counts["180"]} · 26 : {counts["26"]}</span>; })()}
               </p>
               {legsToWin > 1 && <p className="game-legs mt-1 text-sm font-semibold text-primary" aria-live="polite">Manches : {legWins[i]} / {legsToWin}</p>}
               {poolDoubleLimit && doubleOut && (

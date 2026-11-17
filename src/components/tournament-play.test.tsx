@@ -16,7 +16,7 @@ vi.mock("@/lib/tournament.functions", () => ({
 }));
 vi.mock("@/lib/darts.functions", () => ({ saveGameResult: vi.fn() }));
 vi.mock("sonner", () => ({ toast: { info: vi.fn(), success: vi.fn(), error: vi.fn() } }));
-const match = { id: "match-1", label: "A contre B", teamA: "A", teamB: "B", teamAId: "a", teamBId: "b", canNameA: false, canNameB: false, start: 501, doubleOut: true, poolDoubleLimit: true, legsToWin: 1 };
+const match = { id: "match-1", label: "A contre B", teamA: "A", teamB: "B", teamAId: "a", teamBId: "b", canNameA: false, canNameB: false, start: 501, doubleOut: true, poolDoubleLimit: true, legsToWin: 1, trackSpecialVisits: false };
 function open() { return render(<QueryClientProvider client={new QueryClient()}><TournamentPlay tournamentId="test" signedIn={false} /></QueryClientProvider>); }
 async function begin() {
   open();

@@ -1,9 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Game } from "./dart-game";
+import { updateTournamentSpecialVisits } from "@/lib/tournament.functions";
 
 vi.mock("@/lib/darts.functions", () => ({ saveGameResult: vi.fn() }));
-vi.mock("@/lib/tournament.functions", () => ({ reportTournamentMatch: vi.fn(), updateTournamentLiveLegs: vi.fn().mockResolvedValue({ ok: true }) }));
+vi.mock("@/lib/tournament.functions", () => ({ reportTournamentMatch: vi.fn(), updateTournamentLiveLegs: vi.fn().mockResolvedValue({ ok: true }), updateTournamentSpecialVisits: vi.fn().mockResolvedValue({ ok: true }) }));
 vi.mock("sonner", () => ({ toast: { info: vi.fn(), success: vi.fn(), error: vi.fn() } }));
 afterEach(cleanup);
 
@@ -14,6 +15,14 @@ const shoot = (score: number) => fireEvent.click(screen.getByRole("button", { na
 const next = () => fireEvent.click(screen.getByRole("button", { name: "Suivant" }));
 
 describe("Manual scoreboard handover", () => {
+  it("sends a complete special visit and replaces it after undo", async () => {
+    vi.mocked(updateTournamentSpecialVisits).mockClear();
+    render(<Game players={[{name:"A",userId:null},{name:"B",userId:null}]} start={501} doubleOut={false} canSave tournamentId="test" match={{id:"match",teamA:"A",teamB:"B"}} accessCode="FOXES" trackSpecialVisits onExit={vi.fn()}/>);
+    shoot(20); shoot(5); shoot(1);
+    await waitFor(() => expect(updateTournamentSpecialVisits).toHaveBeenLastCalledWith({data:{matchId:"match",code:"FOXES",visits:[{side:"a",darts:["S20","S5","S1"]}]}}));
+    fireEvent.click(screen.getByRole("button", {name:"Annuler"}));
+    await waitFor(() => expect(updateTournamentSpecialVisits).toHaveBeenLastCalledWith({data:{matchId:"match",code:"FOXES",visits:[]}}));
+  });
   it("passes after zero, one or two darts without inventing extra throws", () => {
     startGame(); next();
     expect(screen.getByText("Au tour de", { exact: false })).toHaveTextContent("Équipe B");
