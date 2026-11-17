@@ -13,6 +13,13 @@ const choice = (on: boolean) =>
     ? "rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground"
     : "rounded-md border border-border px-3 py-2 text-sm text-muted-foreground";
 
+// Group the display labels already returned by the code-validated match list.
+function matchGroup(match: PlayableMatch) {
+  const phase = match.label.split(" — ")[0] ?? "";
+  if (phase.startsWith("Poule ")) return phase;
+  return phase === "Consolante" ? "Consolante" : "Phase finale";
+}
+
 export function TournamentPlayButton({ tournamentId }: { tournamentId: string }) {
   return (
     <div className="mt-8">
@@ -35,6 +42,7 @@ export function TournamentPlay({ tournamentId, signedIn, qrCode }: { tournamentI
   const [codeMsg, setCodeMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [matches, setMatches] = useState<PlayableMatch[]>([]);
+  const [selectedGroup, setSelectedGroup] = useState("Tous les matchs");
   const [match, setMatch] = useState<PlayableMatch | null>(null);
   const [starter, setStarter] = useState<number | null>(null);
   const [players, setPlayers] = useState<Player[] | null>(null);
@@ -143,6 +151,13 @@ export function TournamentPlay({ tournamentId, signedIn, qrCode }: { tournamentI
     queryClient.invalidateQueries({ queryKey: ["board", tournamentId] });
   };
 
+  const groups = [...new Set(matches.map(matchGroup))].sort((a, b) => {
+    const rank = (group: string) => group.startsWith("Poule ") ? 0 : group === "Phase finale" ? 1 : 2;
+    return rank(a) - rank(b) || a.localeCompare(b, "fr", { numeric: true });
+  });
+  const activeGroup = groups.includes(selectedGroup) ? selectedGroup : "Tous les matchs";
+  const visibleMatches = activeGroup === "Tous les matchs" ? matches : matches.filter(m => matchGroup(m) === activeGroup);
+
   if (players && match && code) {
     return (
       <div className="mt-8">
@@ -210,22 +225,41 @@ export function TournamentPlay({ tournamentId, signedIn, qrCode }: { tournamentI
           {matches.length === 0 ? (
             <p className="text-sm text-muted-foreground">Aucun match à jouer pour le moment.</p>
           ) : (
+            <>
+            <div role="group" aria-label="Filtrer les matchs" className="flex flex-wrap gap-2">
+              {["Tous les matchs", ...groups].map(group => (
+                <Button
+                  key={group}
+                  variant={activeGroup === group ? "default" : "outline"}
+                  size="sm"
+                  aria-pressed={activeGroup === group}
+                  onClick={() => {
+                    setSelectedGroup(group);
+                    setMatch(null);
+                    setStarter(null);
+                  }}
+                >
+                  {group}
+                </Button>
+              ))}
+            </div>
             <select
               value={match?.id ?? ""}
               onChange={(e) => {
-                setMatch(matches.find((x) => x.id === e.target.value) ?? null);
+                setMatch(visibleMatches.find((x) => x.id === e.target.value) ?? null);
                 setStarter(null);
               }}
               aria-label="Match du tournoi"
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             >
               <option value="">Choisir le match</option>
-              {matches.map((m) => (
+              {visibleMatches.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.label}
                 </option>
               ))}
             </select>
+            </>
           )}
           {match && (
             <>

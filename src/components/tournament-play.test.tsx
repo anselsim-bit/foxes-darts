@@ -121,3 +121,45 @@ describe("Keyboard shortcuts", () => {
     expect(await screen.findByText("Code d'accès validé ✓")).toBeInTheDocument();
   });
 });
+
+describe("Match filters", () => {
+  const available = [
+    { ...match, id: "pool-a", label: "Poule A — A vs B" },
+    { ...match, id: "pool-b", label: "Poule B — C vs D" },
+    { ...match, id: "final", label: "Demi-finale — E vs F" },
+    { ...match, id: "small-final", label: "Petite finale — G vs H" },
+    { ...match, id: "consolation", label: "Consolante — Finale — I vs J" },
+  ];
+  async function showMatches(rows = available) {
+    localStorage.setItem(deviceCodeKey("test"), "FOXES");
+    vi.mocked(listPlayableMatches).mockResolvedValue(rows);
+    open();
+    await screen.findByRole("combobox", { name: "Match du tournoi" });
+  }
+  function ids() {
+    return Array.from((screen.getByRole("combobox", { name: "Match du tournoi" }) as HTMLSelectElement).options).map(option => option.value).filter(Boolean);
+  }
+  it("shows only the chosen pool and clears a match selected in another pool", async () => {
+    await showMatches();
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "pool-a" } });
+    fireEvent.click(screen.getByRole("button", { name: "Poule B" }));
+    expect(ids()).toEqual(["pool-b"]);
+    expect(screen.queryByRole("button", { name: "Commencer le match" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Poule A" }));
+    expect(ids()).toEqual(["pool-a"]);
+  });
+  it("separates consolation from the main bracket including the small final", async () => {
+    await showMatches();
+    fireEvent.click(screen.getByRole("button", { name: "Phase finale" }));
+    expect(ids()).toEqual(["final", "small-final"]);
+    fireEvent.click(screen.getByRole("button", { name: "Consolante" }));
+    expect(ids()).toEqual(["consolation"]);
+    fireEvent.click(screen.getByRole("button", { name: "Tous les matchs" }));
+    expect(ids()).toHaveLength(5);
+  });
+  it("does not offer consolation when no consolation match is available", async () => {
+    await showMatches(available.filter(row => row.id !== "consolation"));
+    expect(screen.queryByRole("button", { name: "Consolante" })).not.toBeInTheDocument();
+    expect(ids()).toEqual(["pool-a", "pool-b", "final", "small-final"]);
+  });
+});
