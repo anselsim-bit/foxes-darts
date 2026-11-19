@@ -393,6 +393,13 @@
       "when": 1794910955073,
       "tag": "0055_disable_signup_age_restriction",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1795093440922,
+      "tag": "0056_tournament_advertisements",
+      "breakpoints": true
     }
   ]
 }

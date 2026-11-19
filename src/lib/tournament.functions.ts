@@ -19,6 +19,7 @@ import { canManageTournament, requireTournamentManager, requireTeamManager, requ
 import { assertResultWritable } from "@/lib/tournament-result-access";
 import { validateManualPlayers, type ManualPlayerInput } from "./manual-player-data";
 import { teamIsPaid } from "./team-payment";
+import { validateAdvertisements } from "./tournament-advertisements";
 import { countSpecialVisits, type SpecialVisit } from "./special-visits";
 
 type Ctx = { supabase: SupabaseClient<Database>; userId: string };
@@ -39,9 +40,21 @@ export const getTournamentBoard = createServerFn({ method: "GET" })
         .eq("tournament_id", data.id)
         .order("round")
         .order("position"),
-      sb.from("tournaments").select("start_score,double_out,pool_double_limit,final_start_score,final_double_out,consolation_start_score,consolation_double_out,consolation_double_limit,game_settings,track_special_visits").eq("id", data.id).single(),
+      sb.from("tournaments").select("start_score,double_out,pool_double_limit,final_start_score,final_double_out,consolation_start_score,consolation_double_out,consolation_double_limit,game_settings,track_special_visits,organization_id,advertisements_enabled,advertisements").eq("id", data.id).single(),
     ]);
-    return { teams: teams ?? [], matches: matches ?? [], settings };
+    let advertisements: { name: string; logo_path: string; logo_url: string | null }[] = [];
+    if (settings?.organization_id && settings.advertisements_enabled) {
+      let items: ReturnType<typeof validateAdvertisements> = [];
+      try { items = validateAdvertisements(settings.advertisements, settings.organization_id); } catch { /* Never sign arbitrary paths from malformed data. */ }
+      if (items.length) {
+        // Settings were read through public RLS; sign only the logos referenced by this visible tournament.
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: signed } = await supabaseAdmin.storage.from("tournament-advertisements").createSignedUrls(items.map(i => i.logo_path), 3600);
+        const urls = new Map((signed ?? []).map(i => [i.path, i.signedUrl]));
+        advertisements = items.map(i => ({ ...i, logo_url: urls.get(i.logo_path) ?? null }));
+      }
+    }
+    return { teams: teams ?? [], matches: matches ?? [], settings, advertisements };
   });
 
 const toRow = (tournamentId: string) => (m: MatchDraft) => ({ ...m, tournament_id: tournamentId });

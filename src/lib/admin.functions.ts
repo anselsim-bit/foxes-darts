@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
 import { phaseRules } from "@/lib/dart-rules";
+import { validateAdvertisements } from "./tournament-advertisements";
 import { validateRoundSettings } from "./round-settings";
 import { requireCentralManager, requireOrganizationPlayer, requirePlatformAdmin } from "@/lib/organization-access";
 
@@ -51,6 +52,8 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
       start_score: number;
       game_settings?: unknown;
       track_special_visits?: boolean;
+      advertisements_enabled?: boolean;
+      advertisements?: unknown;
       double_out: boolean;
       final_start_score?: number;
       final_double_out?: boolean;
@@ -67,9 +70,13 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const organizationId = data.organizationId ?? await requireAdmin(context);
+    let advertisementOrganizationId = organizationId;
     if (data.id) {
       const { data: allowed } = await context.supabase.rpc("can_manage_tournament", { _tournament_id: data.id });
       if (!allowed) throw new Error("Tournoi non autorisé.");
+      const { data: existing } = await context.supabase.from("tournaments").select("organization_id").eq("id", data.id).single();
+      if (!existing?.organization_id) throw new Error("Tournoi introuvable.");
+      advertisementOrganizationId = existing.organization_id;
     } else {
       const { data: membership } = await context.supabase.from("organization_members").select("role").eq("organization_id", organizationId).eq("user_id", context.userId).maybeSingle();
       const { data: allowed } = await context.supabase.rpc("can_manage_organization", { _organization_id: organizationId });
@@ -79,6 +86,8 @@ export const adminUpsertTournament = createServerFn({ method: "POST" })
     const finalRules = phaseRules(data, "bracket");
     const consolationRules = phaseRules(data, "consolation");
     const row = {
+      ...(data.advertisements_enabled !== undefined ? { advertisements_enabled: data.advertisements_enabled === true } : {}),
+      ...(data.advertisements !== undefined ? { advertisements: validateAdvertisements(data.advertisements, advertisementOrganizationId) } : {}),
       ...(data.track_special_visits !== undefined ? { track_special_visits: data.track_special_visits === true } : {}),
       ...(data.game_settings !== undefined ? { game_settings: validateRoundSettings(data.game_settings) } : {}),
       title: data.title,

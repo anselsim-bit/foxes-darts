@@ -1,3 +1,4 @@
+import { AdvertisementEditor } from "@/components/tournament-advertisements";
 import { RoundSettingsEditor } from "@/components/round-settings-editor";
 import { validateRoundSettings, type RoundSettings } from "@/lib/round-settings";
 import { PlatformAdmin } from "@/components/platform-admin";
@@ -161,6 +162,8 @@ function TournamentsTab() {
     consolation_double_limit: true,
     consolation: true,
     track_special_visits: false,
+    advertisements_enabled: false,
+    advertisements: [] as unknown,
     venue: DEFAULT_VENUE.venue,
     street: DEFAULT_VENUE.street,
     postal_code: DEFAULT_VENUE.postal_code,
@@ -206,6 +209,8 @@ function TournamentsTab() {
       consolation_double_limit: t.consolation_double_limit ?? t.pool_double_limit ?? true,
       consolation: t.consolation ?? true,
       track_special_visits: t.track_special_visits ?? false,
+      advertisements_enabled: t.advertisements_enabled ?? false,
+      advertisements: t.advertisements ?? [],
       venue: parts[0] ?? "",
       street: parts[1] ?? "",
       postal_code: m ? m[1]! : "",
@@ -238,6 +243,8 @@ function TournamentsTab() {
     try {
       const cityLine = [form.postal_code, form.city].map((v) => v.trim()).filter(Boolean).join(" ");
       const location = [form.venue, form.street, cityLine].map((v) => v.trim()).filter(Boolean).join(", ");
+      const advertisementForm = new FormData(e.currentTarget as HTMLFormElement);
+      if (advertisementForm.get("advertisements_uploading") === "true") throw new Error("Attendez la fin de l’envoi des logos.");
       await adminUpsertTournament({
         data: {
           id: editId ?? undefined,
@@ -260,6 +267,8 @@ function TournamentsTab() {
           consolation_double_limit: form.consolation_double_limit,
           consolation: form.consolation,
           track_special_visits: form.track_special_visits,
+          advertisements_enabled: advertisementForm.get("advertisements_enabled") === "true",
+          advertisements: JSON.parse(String(advertisementForm.get("advertisements"))),
           location: location || undefined,
           description: form.description,
           helloasso_url: form.helloasso_url,
@@ -364,6 +373,7 @@ function TournamentsTab() {
             />
           </div>
         </div>
+        <AdvertisementEditor key={editId ?? "new"} enabled={form.advertisements_enabled} advertisements={form.advertisements} />
         <fieldset className="space-y-3 border-y border-border py-4">
           <legend className="text-sm font-medium">Parties du tournoi</legend>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.track_special_visits} onChange={e => setForm({...form, track_special_visits:e.target.checked})}/> Comptabiliser les 180 et les 26 (20 + 5 + 1)</label>

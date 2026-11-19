@@ -4,6 +4,7 @@ import { roundLabels } from "@/lib/round-settings";
 import { specialLeaders } from "@/lib/special-visits";
 import { GuestRegistrationsList } from "@/components/guest-registration";
 import { ManualPlayerForm } from "@/components/manual-player-form";
+import { AdvertisementStrip } from "./tournament-advertisements";
 import { FitToScreen } from "@/components/fit-to-screen";
 import { QrImage } from "@/components/qr-image";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -78,6 +79,7 @@ export function TournamentBoard({
   const { data } = useQuery({
     queryKey: ["board", tournamentId],
     queryFn: () => getTournamentBoard({ data: { id: tournamentId } }),
+    refetchInterval: 60_000,
   });
   const [admin, setAdmin] = useState(false);
   const payments = useQuery({
@@ -638,6 +640,7 @@ list.map(({ i, ms, rows }) => {
 
       {screenOpen && (
         <TournamentScreen
+          footer={<AdvertisementStrip enabled={data.settings?.advertisements_enabled ?? false} advertisements={data.advertisements ?? []} />}
           options={screenOptions}
           selected={screenViews}
           onToggle={(v) => setScreenViews((cur) => (cur.includes(v) ? (cur.length > 1 ? cur.filter((x) => x !== v) : cur) : [...cur, v]))}
@@ -851,7 +854,8 @@ function MatchRow({
 
 type ScreenView = "pools" | "final" | "consolation";
 
-function TournamentScreen({ options, selected, onToggle, onClose, render }: {
+function TournamentScreen({ options, selected, onToggle, onClose, render, footer }: {
+  footer?: ReactNode;
   options: readonly (readonly [ScreenView, string])[];
   selected: ScreenView[];
   onToggle: (v: ScreenView) => void;
@@ -893,6 +897,7 @@ function TournamentScreen({ options, selected, onToggle, onClose, render }: {
           </div>
         ))}
       </div>
+      {footer}
     </div>
   );
 }

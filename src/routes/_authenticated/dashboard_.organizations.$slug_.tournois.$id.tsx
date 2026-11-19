@@ -8,6 +8,7 @@ import { adminSyncHelloAsso } from "@/lib/admin.functions";
 import { getOrganizationSpace } from "@/lib/organizations.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { TournamentSettingsForm } from "@/components/tournament-settings-form";
+import { AdvertisementSettings } from "@/components/tournament-advertisements";
 import { TournamentBoard } from "@/components/tournament-board";
 import { Button } from "@/components/ui/button";
 
@@ -80,7 +81,7 @@ function TournamentManagement() {
       <Button asChild variant="outline"><Link to="/tournois/$id" params={{ id }}><ExternalLink className="h-4 w-4" />Page du tournoi</Link></Button>
     </header>
     <nav aria-label="Gestion du tournoi" className="my-6 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">{tabs.map(({ key, label, icon: Icon }) => <Button key={key} asChild variant={tab === key ? "default" : "outline"} className="h-auto min-h-10 whitespace-normal"><Link to="/dashboard/organizations/$slug/tournois/$id" params={{ slug, id }} search={{ tab: key }} aria-current={tab === key ? "page" : undefined}><Icon className="h-4 w-4 shrink-0" />{label}</Link></Button>)}</nav>
-    {tab === "settings" ? editable ? <TournamentSettingsForm data={data} tournament={tournament} onSaved={async () => { await router.invalidate({ sync: true }); }} /> : <section><h2 className="text-xl">Paramètres du tournoi</h2><p className="my-4 text-muted-foreground">Les paramètres ne sont plus modifiables après le lancement du tournoi.</p><dl className="grid gap-4 sm:grid-cols-2">{[["Lieu", tournament.location || "Non renseigné"], ["Horaires", `${tournament.start_time?.slice(0,5) || "—"} – ${tournament.end_time?.slice(0,5) || "—"}`], ["Tarif", tournament.price_cents ? `${tournament.price_cents / 100} €` : "Gratuit"], ["HelloAsso", tournament.helloasso_url || "Non utilisé"]].map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-sm text-muted-foreground">{label}</dt><dd className="break-words">{value}</dd></div>)}</dl></section> : <>
+    {tab === "settings" ? editable ? <TournamentSettingsForm data={data} tournament={tournament} onSaved={async () => { await router.invalidate({ sync: true }); }} /> : <><section><h2 className="text-xl">Paramètres du tournoi</h2><p className="my-4 text-muted-foreground">Les paramètres ne sont plus modifiables après le lancement du tournoi.</p><dl className="grid gap-4 sm:grid-cols-2">{[["Lieu", tournament.location || "Non renseigné"], ["Horaires", `${tournament.start_time?.slice(0,5) || "—"} – ${tournament.end_time?.slice(0,5) || "—"}`], ["Tarif", tournament.price_cents ? `${tournament.price_cents / 100} €` : "Gratuit"], ["HelloAsso", tournament.helloasso_url || "Non utilisé"]].map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-sm text-muted-foreground">{label}</dt><dd className="break-words">{value}</dd></div>)}</dl></section><AdvertisementSettings tournament={tournament} onSaved={async () => { await queryClient.invalidateQueries({queryKey:["board",id]}); await router.invalidate({sync:true}); }}/></> : <>
       {tab === "participants" && tournament.helloasso_url && data.org.slug === "foxes-darts" && <div className="mb-6 flex flex-wrap justify-end gap-3">
         <Button variant="outline" disabled={syncing} onClick={async () => {
           setSyncing(true);

@@ -1207,6 +1207,8 @@ export type Database = {
       }
       tournaments: {
         Row: {
+          advertisements: Json
+          advertisements_enabled: boolean
           consolation: boolean
           consolation_double_limit: boolean | null
           consolation_double_out: boolean | null
@@ -1239,6 +1241,8 @@ export type Database = {
           track_special_visits: boolean
         }
         Insert: {
+          advertisements?: Json
+          advertisements_enabled?: boolean
           consolation?: boolean
           consolation_double_limit?: boolean | null
           consolation_double_out?: boolean | null
@@ -1271,6 +1275,8 @@ export type Database = {
           track_special_visits?: boolean
         }
         Update: {
+          advertisements?: Json
+          advertisements_enabled?: boolean
           consolation?: boolean
           consolation_double_limit?: boolean | null
           consolation_double_out?: boolean | null

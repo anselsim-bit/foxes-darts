@@ -1,0 +1,5 @@
+ALTER TABLE public.tournaments ADD COLUMN advertisements_enabled boolean NOT NULL DEFAULT false;
+ALTER TABLE public.tournaments ADD COLUMN advertisements jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.tournaments ADD CONSTRAINT tournament_advertisements_array CHECK (jsonb_typeof(advertisements) = 'array');
+CREATE POLICY advertisements_upload ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'tournament-advertisements' AND name ~ '^organizations/[0-9a-f-]{36}/[0-9a-f-]{36}\.png$' AND (public.can_manage_organization(public.media_organization_id(name)) OR EXISTS (SELECT 1 FROM public.organization_members m WHERE m.organization_id = public.media_organization_id(name) AND m.user_id = auth.uid() AND m.role = 'TOURNAMENT_MANAGER')));
+CREATE POLICY advertisements_manager_read ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'tournament-advertisements' AND (public.can_manage_organization(public.media_organization_id(name)) OR EXISTS (SELECT 1 FROM public.organization_members m WHERE m.organization_id = public.media_organization_id(name) AND m.user_id = auth.uid() AND m.role = 'TOURNAMENT_MANAGER')));
