@@ -645,7 +645,7 @@ list.map(({ i, ms, rows }) => {
           selected={screenViews}
           onToggle={(v) => setScreenViews((cur) => (cur.includes(v) ? (cur.length > 1 ? cur.filter((x) => x !== v) : cur) : [...cur, v]))}
           onClose={closeScreen}
-          render={(v) => <>{v === "pools" ? <div><h2 className="text-2xl">Poules</h2><div className={`mt-4 grid gap-4 ${poolData.length > 1 ? (screenViews.length === 1 ? "grid-cols-2 xl:grid-cols-4" : "grid-cols-2") : ""}`}>{renderPools(poolData, false)}</div></div> : v === "final" ? renderFinal(false) : renderConsolation(false)}{specialSummary}</>}
+          render={(v) => <>{v === "pools" ? <div><h2 className="text-2xl">Poules</h2><div className={`mt-4 grid gap-4 ${poolData.length > 1 ? (screenViews.length === 1 ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-4" : "grid-cols-1 sm:grid-cols-2") : ""}`}>{renderPools(poolData, false)}</div></div> : v === "final" ? renderFinal(false) : renderConsolation(false)}{specialSummary}</>}
         />
       )}
 
