@@ -2,31 +2,433 @@ import { themeColorFields } from "@/lib/organization-theme";
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { useQuery,useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { deleteOrganization,getOrganizationSpace,saveOrganization,inviteCollaborator,cancelInvitation,changeCollaborator } from "@/lib/organizations.functions";
+import {
+  deleteOrganization,
+  getOrganizationSpace,
+  saveOrganization,
+  inviteCollaborator,
+  cancelInvitation,
+  changeCollaborator,
+} from "@/lib/organizations.functions";
 import { adminDeleteTournament } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "./ui/button";
-import { Field,PageHeading,Metric,fieldClass,AsyncButton } from "./platform-ui";
+import { Field, PageHeading, Metric, fieldClass, AsyncButton } from "./platform-ui";
 import { OrganizationColors } from "./organization-colors";
 import { TournamentSettingsForm } from "./tournament-settings-form";
 
-export function OrganizationManager({slug}:{slug:string}) {
- const qc=useQueryClient();const query=useQuery({queryKey:['organization-space',slug],queryFn:()=>getOrganizationSpace({data:{slug}})});const [tab,setTab]=useState('overview');const [busy,setBusy]=useState(false);const [preview,setPreview]=useState('');const [editing,setEditing]=useState<string|null>(null);const [creating,setCreating]=useState(false);
- const reload=()=>qc.invalidateQueries({queryKey:['organization-space',slug]});
- const action=async(fn:()=>Promise<unknown>)=>{try{await fn();toast.success('Enregistré.');await reload()}catch(e){toast.error(e instanceof Error?e.message:'Action refusée')}};
- if(query.isLoading)return <div className="p-10 text-muted-foreground">Chargement…</div>;
- if(query.error||!query.data)return <div className="p-10">Accès indisponible.</div>;
- const d=query.data;const manager=d.role==='TOURNAMENT_MANAGER';const s=d.settings;const tabs: string[][]=manager?[['overview',"Vue d’ensemble"],['tournaments','Tournois']]:[['overview',"Vue d’ensemble"],['tournaments','Tournois'],['players','Joueurs'],['collaborators','Collaborateurs'],['stats','Statistiques'],['settings','Paramètres']];
- const ROLE_LABELS:Record<string,string>={ORGANIZATION_OWNER:'Propriétaire',ORGANIZATION_ADMIN:'Administrateur',TOURNAMENT_MANAGER:'Organisateur'};const STATUS_LABELS:Record<string,string>={draft:'À venir',upcoming:'À venir',registration:'Inscriptions',open:'Inscriptions ouvertes',started:'En cours',finished:'Terminé',pending:'En attente',accepted:'Acceptée',declined:'Refusée',cancelled:'Annulée',expired:'Expirée'};const ed=d.tournaments.find(t=>t.id===editing);const social=(s?.social_links??{}) as Record<string,string>;
- const save=async(e:React.FormEvent<HTMLFormElement>)=>{e.preventDefault();setBusy(true);const f=new FormData(e.currentTarget);const settings=Object.fromEntries([...f.entries()].map(([k,v])=>[k,String(v)]));try{await saveOrganization({data:{id:d.org.id,name:settings["name"]??"",description:settings["description"]??"",settings}});toast.success('Organisation mise à jour.');await reload()}catch(e){toast.error(e instanceof Error?e.message:'Enregistrement impossible')}finally{setBusy(false)}};
- return <div className="mx-auto max-w-6xl px-4 py-10"><PageHeading title={d.org.name}><Button asChild variant="outline"><Link to="/dashboard">Changer d’organisation</Link></Button><Button asChild variant="outline"><Link to="/$slug" params={{slug}}>Page publique</Link></Button></PageHeading><nav className="mb-8 flex flex-wrap gap-2">{tabs.map(([key,label])=><Button key={key} variant={tab===key?'default':'outline'} onClick={()=>setTab(key??"overview")}>{label}</Button>)}</nav>
- {tab==='overview'&&<><div className="grid grid-cols-2 gap-6 md:grid-cols-4"><Metric label="Tournois" value={d.tournaments.length}/><Metric label="En cours" value={d.tournaments.filter(t=>t.status==='started').length}/><Metric label="Terminés" value={d.tournaments.filter(t=>t.status==='finished').length}/><Metric label="Joueurs" value={d.players.length}/></div><h2 className="mt-10 text-xl">Activité récente</h2>{d.audit.map(a=><p key={a.id} className="border-b border-border py-3 text-sm"><span className="text-muted-foreground">{new Date(a.created_at).toLocaleString('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span> · {a.label}</p>)}</>}
- {tab==='tournaments'&&<>{!creating&&!ed&&<Button className="mb-6" onClick={()=>setCreating(true)}><Plus className="h-4 w-4" />Nouveau Tournoi</Button>}{(creating||ed)&&<TournamentSettingsForm data={d} tournament={ed} onSaved={async()=>{setEditing(null);setCreating(false);await reload()}} onCancel={()=>{setEditing(null);setCreating(false)}}/>}{d.tournaments.map(t=><div key={t.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-border py-4"><div><h3>{t.title}</h3><p className="text-sm text-muted-foreground">{t.event_date} · {STATUS_LABELS[t.status]??t.status}</p></div><Button asChild><Link to="/dashboard/organizations/$slug/tournois/$id" params={{slug,id:t.id}}>Gérer le tournoi</Link></Button>{!manager&&<AsyncButton variant="outline" action={async()=>{if(!window.confirm(`Supprimer définitivement le tournoi « ${t.title} » ? Les inscriptions et résultats seront perdus.`))return;await action(()=>adminDeleteTournament({data:{id:t.id}}))}}>Supprimer</AsyncButton>}<Button asChild variant="outline"><Link to="/tournois/$id" params={{id:t.id}}>Voir</Link></Button></div>)}</>}
- {tab==='players'&&<><h2 className="mb-4 text-xl">Joueurs de l’organisation</h2>{d.players.map(p=><div className="border-b border-border py-4" key={p.user_id}><p>{p.profiles?.display_name??'Joueur'}</p><p className="text-sm text-muted-foreground">{p.category??''} {p.membership_status??''}</p></div>)}</>}
- {tab==='stats'&&<><div className="grid grid-cols-2 gap-6"><Metric label="Joueurs uniques" value={d.players.length}/><Metric label="Matchs terminés (derniers 50)" value={d.results.length}/></div><h2 className="mt-8 text-xl">Résultats récents</h2>{d.results.map(r=><p key={r.id} className="border-b border-border py-3">{r.stage} · {r.score_a} / {r.score_b}</p>)}</>}
- {tab==='collaborators'&&<><form className="mb-8 flex flex-wrap items-end gap-3" onSubmit={async e=>{e.preventDefault();const f=new FormData(e.currentTarget);await action(async()=>{const r=await inviteCollaborator({data:{organizationId:d.org.id,email:String(f.get('email')),role:String(f.get('role'))}});if(!r.emailSent)toast.warning('Invitation créée, mais l’e-mail n’a pas été envoyé. Utilisez Renvoyer.')})}}><Field label="Adresse e-mail" name="email" type="email" required/><label className="text-sm">Rôle<select name="role" className={fieldClass}><option value="TOURNAMENT_MANAGER">Organisateur</option><option value="ORGANIZATION_ADMIN">Administrateur</option></select></label><Button type="submit">Inviter</Button></form>{d.members.map(m=><div key={m.user_id} className="flex flex-wrap items-center gap-3 border-b border-border py-4"><span className="flex-1">{m.profiles?.display_name??'Collaborateur'} · {ROLE_LABELS[m.role]??m.role}</span>{m.role!=='ORGANIZATION_OWNER'&&m.user_id!==d.userId&&<><AsyncButton variant="outline" action={()=>action(()=>changeCollaborator({data:{organizationId:d.org.id,userId:m.user_id,role:m.role==='ORGANIZATION_ADMIN'?'TOURNAMENT_MANAGER':'ORGANIZATION_ADMIN'}}))}>Changer le rôle</AsyncButton><AsyncButton variant="outline" action={()=>action(()=>changeCollaborator({data:{organizationId:d.org.id,userId:m.user_id,role:null}}))}>Retirer</AsyncButton>{['ORGANIZATION_OWNER','SUPER_ADMIN'].includes(d.role)&&<AsyncButton variant="outline" action={async()=>{if(window.confirm('Transférer définitivement la propriété à ce collaborateur ?'))await action(()=>changeCollaborator({data:{organizationId:d.org.id,userId:m.user_id,role:null,transfer:true}}))}}>Transférer la propriété</AsyncButton>}</>}</div>)}<h2 className="mt-8 text-xl">Invitations</h2>{d.invitations.map(i=><div key={i.id} className="flex flex-wrap items-center gap-3 border-b border-border py-3"><span className="flex-1">{i.email} · {STATUS_LABELS[i.status]??i.status} · expire le {new Date(i.expires_at).toLocaleDateString('fr-FR')}</span>{i.status==='pending'&&<><AsyncButton variant="outline" action={()=>action(()=>cancelInvitation({data:{id:i.id,organizationId:d.org.id}}))}>Annuler</AsyncButton><AsyncButton variant="outline" action={()=>action(()=>inviteCollaborator({data:{organizationId:d.org.id,email:i.email,role:i.role}}))}>Renvoyer</AsyncButton></>}</div>)}</>}
- {tab==='settings'&&<form key={tab} className="grid gap-5 sm:grid-cols-2" onSubmit={save}><Field label="Nom" name="name" defaultValue={d.org.name} onChange={e=>setPreview(e.target.value)}/><Field label="Description" name="description" defaultValue={d.org.description??''}/><Field label="Type" name="type" defaultValue={s?.organization_type??''}/><Field label="Responsable" name="responsible_name" defaultValue={s?.responsible_name??''}/><Field label="E-mail public" name="email" type="email" defaultValue={s?.contact_email??''}/><Field label="Téléphone" name="phone" defaultValue={s?.phone??''}/><Field label="Adresse" name="address" defaultValue={s?.address??''}/><Field label="Code postal" name="postal_code" defaultValue={s?.postal_code??''}/><Field label="Ville" name="city" defaultValue={s?.city??''}/><Field label="Lieu" name="location" defaultValue={s?.location??''}/><label className="text-sm">Visibilité<select name="visibility" className={fieldClass} defaultValue={(d.org as {visibility?:string}).visibility??"public"}><option value="public">Publique — page visible par tous</option><option value="private">Privée — visible uniquement par l’équipe</option></select></label><Field label="Site web (https://…)" name="website" defaultValue={social["website"]??""}/><Field label="Facebook (https://…)" name="facebook" defaultValue={social["facebook"]??""}/><Field label="Instagram (https://…)" name="instagram" defaultValue={social["instagram"]??""}/><OrganizationColors initial={{primary:s?.primary_color,secondary:s?.secondary_color,theme:(s as {theme_colors?:Record<string,string>}|null)?.theme_colors??{}}}/>{['logo_path','cover_path'].map(k=><label key={k} className="text-sm">{k==='logo_path'?'Logo':'Couverture'}<input name={k} className={fieldClass} defaultValue={s?.[k as 'logo_path']??''} readOnly/><input type="file" accept="image/*" onChange={async e=>{const file=e.target.files?.[0];if(!file)return;const path=`organizations/${d.org.id}/${k==='logo_path'?'logos':'covers'}/${crypto.randomUUID()}.${file.name.split('.').pop()?.replace(/[^a-z0-9]/gi,'')??'jpg'}`;const {error}=await supabase.storage.from('tournament-photos').upload(path,file);if(error){toast.error('Envoi impossible.');return}const input=e.target.parentElement?.querySelector(`input[name=${k}]`);if(input instanceof HTMLInputElement)input.value=path;toast.success('Image envoyée. Enregistrez les modifications.') }}/></label>)}<div className="sm:col-span-2 border-l-2 border-primary pl-4"><h2>{preview||d.org.name}</h2><p className="text-sm text-muted-foreground">{d.org.description}</p></div><Button type="submit" disabled={busy}>Enregistrer</Button></form>}{tab==='settings'&&['ORGANIZATION_OWNER','SUPER_ADMIN'].includes(d.role)&&d.org.slug!=='foxes-darts'&&<section className="mt-12 rounded-lg border border-destructive/50 p-4"><h2 className="text-lg text-destructive">Supprimer l’organisation</h2><p className="my-2 text-sm text-muted-foreground">L’organisation, sa page publique et ses tournois ne seront plus visibles. Cette action est irréversible.</p><AsyncButton variant="destructive" action={async()=>{const typed=window.prompt(`Pour confirmer, tapez le nom de l’organisation : ${d.org.name}`);if(typed===null)return;try{await deleteOrganization({data:{id:d.org.id,confirmName:typed}});toast.success('Organisation supprimée.');window.location.assign('/dashboard')}catch(e){toast.error(e instanceof Error?e.message:'Suppression impossible')}}}>Supprimer l’organisation</AsyncButton></section>}
- </div>;
+export function OrganizationManager({ slug }: { slug: string }) {
+  const qc = useQueryClient();
+  const query = useQuery({
+    queryKey: ["organization-space", slug],
+    queryFn: () => getOrganizationSpace({ data: { slug } }),
+  });
+  const [tab, setTab] = useState("overview");
+  const [busy, setBusy] = useState(false);
+  const [preview, setPreview] = useState("");
+  const [editing, setEditing] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const reload = () => qc.invalidateQueries({ queryKey: ["organization-space", slug] });
+  const action = async (fn: () => Promise<unknown>) => {
+    try {
+      await fn();
+      toast.success("Enregistré.");
+      await reload();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Action refusée");
+    }
+  };
+  if (query.isLoading) return <div className="p-10 text-muted-foreground">Chargement…</div>;
+  if (query.error || !query.data) return <div className="p-10">Accès indisponible.</div>;
+  const d = query.data;
+  const manager = d.role === "TOURNAMENT_MANAGER";
+  const s = d.settings;
+  const tabs: string[][] = manager
+    ? [
+        ["overview", "Vue d’ensemble"],
+        ["tournaments", "Tournois"],
+      ]
+    : [
+        ["overview", "Vue d’ensemble"],
+        ["tournaments", "Tournois"],
+        ["players", "Joueurs"],
+        ["collaborators", "Collaborateurs"],
+        ["stats", "Statistiques"],
+        ["settings", "Paramètres"],
+      ];
+  const ROLE_LABELS: Record<string, string> = {
+    ORGANIZATION_OWNER: "Propriétaire",
+    ORGANIZATION_ADMIN: "Administrateur",
+    TOURNAMENT_MANAGER: "Organisateur",
+  };
+  const STATUS_LABELS: Record<string, string> = {
+    draft: "À venir",
+    upcoming: "À venir",
+    registration: "Inscriptions",
+    open: "Inscriptions ouvertes",
+    started: "En cours",
+    finished: "Terminé",
+    pending: "En attente",
+    accepted: "Acceptée",
+    declined: "Refusée",
+    cancelled: "Annulée",
+    expired: "Expirée",
+  };
+  const ed = d.tournaments.find((t) => t.id === editing);
+  const social = (s?.social_links ?? {}) as Record<string, string>;
+  const save = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setBusy(true);
+    const f = new FormData(e.currentTarget);
+    const settings = Object.fromEntries([...f.entries()].map(([k, v]) => [k, String(v)]));
+    try {
+      await saveOrganization({
+        data: { id: d.org.id, name: settings["name"] ?? "", description: settings["description"] ?? "", settings },
+      });
+      toast.success("Organisation mise à jour.");
+      await reload();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Enregistrement impossible");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="mx-auto max-w-6xl px-4 py-10">
+      <PageHeading title={d.org.name}>
+        <Button asChild variant="outline">
+          <Link to="/dashboard">Changer d’organisation</Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link to="/$slug" params={{ slug }}>
+            Page publique
+          </Link>
+        </Button>
+      </PageHeading>
+      <nav className="mb-8 flex flex-wrap gap-2">
+        {tabs.map(([key, label]) => (
+          <Button key={key} variant={tab === key ? "default" : "outline"} onClick={() => setTab(key ?? "overview")}>
+            {label}
+          </Button>
+        ))}
+      </nav>
+      {tab === "overview" && (
+        <>
+          <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
+            <Metric label="Tournois" value={d.tournaments.length} />
+            <Metric label="En cours" value={d.tournaments.filter((t) => t.status === "started").length} />
+            <Metric label="Terminés" value={d.tournaments.filter((t) => t.status === "finished").length} />
+            <Metric label="Joueurs" value={d.players.length} />
+          </div>
+          <h2 className="mt-10 text-xl">Activité récente</h2>
+          {d.audit.map((a) => (
+            <p key={a.id} className="border-b border-border py-3 text-sm">
+              <span className="text-muted-foreground">
+                {new Date(a.created_at).toLocaleString("fr-FR", {
+                  day: "numeric",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>{" "}
+              · {a.label}
+            </p>
+          ))}
+        </>
+      )}
+      {tab === "tournaments" && (
+        <>
+          {!creating && !ed && (
+            <Button className="mb-6" onClick={() => setCreating(true)}>
+              <Plus className="h-4 w-4" />
+              Nouveau Tournoi
+            </Button>
+          )}
+          {(creating || ed) && (
+            <TournamentSettingsForm
+              data={d}
+              tournament={ed}
+              onSaved={async () => {
+                setEditing(null);
+                setCreating(false);
+                await reload();
+              }}
+              onCancel={() => {
+                setEditing(null);
+                setCreating(false);
+              }}
+            />
+          )}
+          {d.tournaments.map((t) => (
+            <div key={t.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-border py-4">
+              <div>
+                <h3>{t.title}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {t.event_date} · {STATUS_LABELS[t.status] ?? t.status}
+                </p>
+              </div>
+              <Button asChild>
+                <Link to="/dashboard/organizations/$slug/tournois/$id" params={{ slug, id: t.id }}>
+                  Gérer le tournoi
+                </Link>
+              </Button>
+              {!manager && (
+                <AsyncButton
+                  variant="outline"
+                  action={async () => {
+                    if (
+                      !window.confirm(
+                        `Supprimer définitivement le tournoi « ${t.title} » ? Les inscriptions et résultats seront perdus.`,
+                      )
+                    )
+                      return;
+                    await action(() => adminDeleteTournament({ data: { id: t.id } }));
+                  }}
+                >
+                  Supprimer
+                </AsyncButton>
+              )}
+              <Button asChild variant="outline">
+                <Link to="/tournois/$id" params={{ id: t.id }}>
+                  Voir
+                </Link>
+              </Button>
+            </div>
+          ))}
+        </>
+      )}
+      {tab === "players" && (
+        <>
+          <h2 className="mb-4 text-xl">Joueurs de l’organisation</h2>
+          {d.players.map((p) => (
+            <div className="border-b border-border py-4" key={p.user_id}>
+              <p>{p.profiles?.display_name ?? "Joueur"}</p>
+              <p className="text-sm text-muted-foreground">
+                {p.category ?? ""} {p.membership_status ?? ""}
+              </p>
+            </div>
+          ))}
+        </>
+      )}
+      {tab === "stats" && (
+        <>
+          <div className="grid grid-cols-2 gap-6">
+            <Metric label="Joueurs uniques" value={d.players.length} />
+            <Metric label="Matchs terminés (derniers 50)" value={d.results.length} />
+          </div>
+          <h2 className="mt-8 text-xl">Résultats récents</h2>
+          {d.results.map((r) => (
+            <p key={r.id} className="border-b border-border py-3">
+              {r.stage} · {r.score_a} / {r.score_b}
+            </p>
+          ))}
+        </>
+      )}
+      {tab === "collaborators" && (
+        <>
+          <form
+            className="mb-8 flex flex-wrap items-end gap-3"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const f = new FormData(e.currentTarget);
+              await action(async () => {
+                const r = await inviteCollaborator({
+                  data: { organizationId: d.org.id, email: String(f.get("email")), role: String(f.get("role")) },
+                });
+                if (!r.emailSent)
+                  toast.warning("Invitation créée, mais l’e-mail n’a pas été envoyé. Utilisez Renvoyer.");
+              });
+            }}
+          >
+            <Field label="Adresse e-mail" name="email" type="email" required />
+            <label className="text-sm">
+              Rôle
+              <select name="role" className={fieldClass}>
+                <option value="TOURNAMENT_MANAGER">Organisateur</option>
+                <option value="ORGANIZATION_ADMIN">Administrateur</option>
+              </select>
+            </label>
+            <Button type="submit">Inviter</Button>
+          </form>
+          {d.members.map((m) => (
+            <div key={m.user_id} className="flex flex-wrap items-center gap-3 border-b border-border py-4">
+              <span className="flex-1">
+                {m.profiles?.display_name ?? "Collaborateur"} · {ROLE_LABELS[m.role] ?? m.role}
+              </span>
+              {m.role !== "ORGANIZATION_OWNER" && m.user_id !== d.userId && (
+                <>
+                  <AsyncButton
+                    variant="outline"
+                    action={() =>
+                      action(() =>
+                        changeCollaborator({
+                          data: {
+                            organizationId: d.org.id,
+                            userId: m.user_id,
+                            role: m.role === "ORGANIZATION_ADMIN" ? "TOURNAMENT_MANAGER" : "ORGANIZATION_ADMIN",
+                          },
+                        }),
+                      )
+                    }
+                  >
+                    Changer le rôle
+                  </AsyncButton>
+                  <AsyncButton
+                    variant="outline"
+                    action={() =>
+                      action(() =>
+                        changeCollaborator({ data: { organizationId: d.org.id, userId: m.user_id, role: null } }),
+                      )
+                    }
+                  >
+                    Retirer
+                  </AsyncButton>
+                  {["ORGANIZATION_OWNER", "SUPER_ADMIN"].includes(d.role) && (
+                    <AsyncButton
+                      variant="outline"
+                      action={async () => {
+                        if (window.confirm("Transférer définitivement la propriété à ce collaborateur ?"))
+                          await action(() =>
+                            changeCollaborator({
+                              data: { organizationId: d.org.id, userId: m.user_id, role: null, transfer: true },
+                            }),
+                          );
+                      }}
+                    >
+                      Transférer la propriété
+                    </AsyncButton>
+                  )}
+                </>
+              )}
+            </div>
+          ))}
+          <h2 className="mt-8 text-xl">Invitations</h2>
+          {d.invitations.map((i) => (
+            <div key={i.id} className="flex flex-wrap items-center gap-3 border-b border-border py-3">
+              <span className="flex-1">
+                {i.email} · {STATUS_LABELS[i.status] ?? i.status} · expire le{" "}
+                {new Date(i.expires_at).toLocaleDateString("fr-FR")}
+              </span>
+              {i.status === "pending" && (
+                <>
+                  <AsyncButton
+                    variant="outline"
+                    action={() => action(() => cancelInvitation({ data: { id: i.id, organizationId: d.org.id } }))}
+                  >
+                    Annuler
+                  </AsyncButton>
+                  <AsyncButton
+                    variant="outline"
+                    action={() =>
+                      action(() =>
+                        inviteCollaborator({ data: { organizationId: d.org.id, email: i.email, role: i.role } }),
+                      )
+                    }
+                  >
+                    Renvoyer
+                  </AsyncButton>
+                </>
+              )}
+            </div>
+          ))}
+        </>
+      )}
+      {tab === "settings" && (
+        <form key={tab} className="grid gap-5 sm:grid-cols-2" onSubmit={save}>
+          <Field label="Nom" name="name" defaultValue={d.org.name} onChange={(e) => setPreview(e.target.value)} />
+          <Field label="Description" name="description" defaultValue={d.org.description ?? ""} />
+          <Field label="Type" name="type" defaultValue={s?.organization_type ?? ""} />
+          <Field label="Responsable" name="responsible_name" defaultValue={s?.responsible_name ?? ""} />
+          <Field label="E-mail public" name="email" type="email" defaultValue={s?.contact_email ?? ""} />
+          <Field label="Téléphone" name="phone" defaultValue={s?.phone ?? ""} />
+          <Field label="Adresse" name="address" defaultValue={s?.address ?? ""} />
+          <Field label="Code postal" name="postal_code" defaultValue={s?.postal_code ?? ""} />
+          <Field label="Ville" name="city" defaultValue={s?.city ?? ""} />
+          <Field label="Lieu" name="location" defaultValue={s?.location ?? ""} />
+          <label className="text-sm">
+            Visibilité
+            <select
+              name="visibility"
+              className={fieldClass}
+              defaultValue={(d.org as { visibility?: string }).visibility ?? "public"}
+            >
+              <option value="public">Publique — page visible par tous</option>
+              <option value="private">Privée — visible uniquement par l’équipe</option>
+            </select>
+          </label>
+          <Field label="Site web (https://…)" name="website" defaultValue={social["website"] ?? ""} />
+          <Field label="Facebook (https://…)" name="facebook" defaultValue={social["facebook"] ?? ""} />
+          <Field label="Instagram (https://…)" name="instagram" defaultValue={social["instagram"] ?? ""} />
+          <OrganizationColors
+            initial={{
+              primary: s?.primary_color,
+              secondary: s?.secondary_color,
+              theme: (s as { theme_colors?: Record<string, string> } | null)?.theme_colors ?? {},
+            }}
+          />
+          {["logo_path", "cover_path"].map((k) => (
+            <label key={k} className="text-sm">
+              {k === "logo_path" ? "Logo" : "Couverture"}
+              <input name={k} className={fieldClass} defaultValue={s?.[k as "logo_path"] ?? ""} readOnly />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const path = `organizations/${d.org.id}/${k === "logo_path" ? "logos" : "covers"}/${crypto.randomUUID()}.${
+                    file.name
+                      .split(".")
+                      .pop()
+                      ?.replace(/[^a-z0-9]/gi, "") ?? "jpg"
+                  }`;
+                  const { error } = await supabase.storage.from("tournament-photos").upload(path, file);
+                  if (error) {
+                    toast.error("Envoi impossible.");
+                    return;
+                  }
+                  const input = e.target.parentElement?.querySelector(`input[name=${k}]`);
+                  if (input instanceof HTMLInputElement) input.value = path;
+                  toast.success("Image envoyée. Enregistrez les modifications.");
+                }}
+              />
+            </label>
+          ))}
+          <div className="sm:col-span-2 border-l-2 border-primary pl-4">
+            <h2>{preview || d.org.name}</h2>
+            <p className="text-sm text-muted-foreground">{d.org.description}</p>
+          </div>
+          <Button type="submit" disabled={busy}>
+            Enregistrer
+          </Button>
+        </form>
+      )}
+      {tab === "settings" && ["ORGANIZATION_OWNER", "SUPER_ADMIN"].includes(d.role) && d.org.slug !== "foxes-darts" && (
+        <section className="mt-12 rounded-lg border border-destructive/50 p-4">
+          <h2 className="text-lg text-destructive">Supprimer l’organisation</h2>
+          <p className="my-2 text-sm text-muted-foreground">
+            L’organisation, sa page publique et ses tournois ne seront plus visibles. Cette action est irréversible.
+          </p>
+          <AsyncButton
+            variant="destructive"
+            action={async () => {
+              const typed = window.prompt(`Pour confirmer, tapez le nom de l’organisation : ${d.org.name}`);
+              if (typed === null) return;
+              try {
+                await deleteOrganization({ data: { id: d.org.id, confirmName: typed } });
+                toast.success("Organisation supprimée.");
+                window.location.assign("/dashboard");
+              } catch (e) {
+                toast.error(e instanceof Error ? e.message : "Suppression impossible");
+              }
+            }}
+          >
+            Supprimer l’organisation
+          </AsyncButton>
+        </section>
+      )}
+    </div>
+  );
 }
