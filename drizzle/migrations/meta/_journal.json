@@ -400,6 +400,13 @@
       "when": 1795093440922,
       "tag": "0056_tournament_advertisements",
       "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1795093940367,
+      "tag": "0057_advertisement_logo_path_policies",
+      "breakpoints": true
     }
   ]
 }

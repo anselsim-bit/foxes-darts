@@ -1,9 +1,9 @@
 # Foxes Darts — Tâches
 
 ## Publicités de tournoi — 19 novembre 2026
-- [ ] Ajouter activation et plusieurs publicités avec logos dans les formulaires de création/modification, sans restriction de statut.
-- [ ] Afficher les publicités en pied de l’affichage plein écran, avec accès limité aux organisateurs pour les modifications.
-- [ ] Vérifier les règles, l’enregistrement et l’affichage sur ordinateur et téléphone sans modifier les tournois existants.
+- [x] Ajouter activation et plusieurs publicités avec logos dans les formulaires de création/modification, sans restriction de statut.
+- [x] Afficher les publicités en pied de l’affichage plein écran, avec accès limité aux organisateurs pour les modifications.
+- [x] 26 tests réussis ; création réelle avec deux logos, relecture et modification pendant/après le tournoi, désactivation et plein écran ordinateur/téléphone vérifiés sur un tournoi fictif ; aucune erreur navigateur, aucun tournoi existant modifié.
 
 ## Volées spéciales — 17 novembre 2026
 - [x] Option désactivée par défaut dans les deux formulaires ; compter les 180 et les simples 20 + 5 + 1 dans tous les ordres, par équipe et sur toutes les manches.

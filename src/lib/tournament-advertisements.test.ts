@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { validateAdvertisements, visibleAdvertisements } from "./tournament-advertisements";
 const org = "11111111-1111-4111-8111-111111111111";
-const ad = { name: "Partenaire", logo_path: `organizations/${org}/22222222-2222-4222-8222-222222222222.png` };
+const ad = { name: "Partenaire", logo_path: `organizations/${org}/logos/22222222-2222-4222-8222-222222222222.png` };
 describe("tournament advertisements", () => {
   it("keeps multiple logos in their chosen order", () => {
     expect(validateAdvertisements([ad, { ...ad, name: "Second partenaire" }], org).map(i => i.name)).toEqual(["Partenaire", "Second partenaire"]);

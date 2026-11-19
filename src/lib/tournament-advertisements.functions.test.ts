@@ -6,7 +6,7 @@ vi.mock("@tanstack/react-start", () => ({ createServerFn: () => {
 vi.mock("@/integrations/supabase/auth-middleware", () => ({ requireSupabaseAuth: {} }));
 vi.mock("./organization-access", () => ({ requireTournamentManager: mocks.authorize }));
 import { saveTournamentAdvertisements } from "./tournament-advertisements.functions";
-beforeEach(() => mocks.authorize.mockReset());
+beforeEach(() => { mocks.authorize.mockReset(); });
 describe("advertising settings access and lifecycle", () => {
   for (const status of ["open", "started", "finished"]) it(`allows an organizer to activate advertisements when ${status}`, async () => {
     const update = vi.fn(() => ({ eq: async () => ({ error: null }) }));

@@ -10,7 +10,7 @@ import { Button } from "./ui/button";
 import { Checkbox } from "./ui/checkbox";
 import { fieldClass } from "./platform-ui";
 
-export function AdvertisementEditor({ organizationId, enabled = false, advertisements = [] }: { organizationId?: string; enabled?: boolean; advertisements?: unknown }) {
+export function AdvertisementEditor({ organizationId, enabled = false, advertisements = [] }: { organizationId?: string | undefined; enabled?: boolean; advertisements?: unknown }) {
   const [active, setActive] = useState(enabled);
   const [items, setItems] = useState<TournamentAdvertisement[]>(Array.isArray(advertisements) ? advertisements : []);
   const [uploading, setUploading] = useState(false);
@@ -42,7 +42,6 @@ export function AdvertisementEditor({ organizationId, enabled = false, advertise
       try {
         if (items.length + files.length > 30) throw new Error("30 publicités maximum.");
         const id = organizationId ?? (await getAdminOrganization()).id;
-        const added: TournamentAdvertisement[] = [];
         for (const file of files) {
           if (!["image/png", "image/jpeg", "image/webp"].includes(file.type) || file.size > 3 * 1024 * 1024) throw new Error("Choisissez un logo JPG, PNG ou WebP de 3 Mo maximum.");
           const bitmap = await createImageBitmap(file);
@@ -51,11 +50,10 @@ export function AdvertisementEditor({ organizationId, enabled = false, advertise
           const ctx = canvas.getContext("2d"); if (!ctx) { bitmap.close(); throw new Error("Lecture du logo impossible."); }
           ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height); bitmap.close();
           const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error("Lecture du logo impossible.")), "image/png"));
-          const path = `organizations/${id}/${crypto.randomUUID()}.png`;
+          const path = `organizations/${id}/logos/${crypto.randomUUID()}.png`;
           const { error } = await supabase.storage.from("tournament-advertisements").upload(path, blob, { contentType: "image/png" });
           if (error) throw new Error("Envoi du logo impossible.");
-          added.push({ name: file.name.replace(/\.[^.]+$/, ""), logo_path: path });
-          setItems(current => [...current, added[added.length - 1] as TournamentAdvertisement]);
+          setItems(current => [...current, { name: file.name.replace(/\.[^.]+$/, ""), logo_path: path }]);
         }
       } catch (error) { toast.error(error instanceof Error ? error.message : "Envoi impossible."); }
       finally { setUploading(false); }
@@ -78,9 +76,23 @@ export function AdvertisementSettings({ tournament, onSaved }: { tournament: { i
 
 export function AdvertisementStrip({ enabled, advertisements }: { enabled: boolean; advertisements: (TournamentAdvertisement & { logo_url: string | null })[] }) {
   const items = visibleAdvertisements(enabled, advertisements) as typeof advertisements;
+  const [page, setPage] = useState(0);
+  const [perPage, setPerPage] = useState(5);
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 640px)");
+    const update = () => setPerPage(query.matches ? 2 : 5);
+    update(); query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+  const pages = Math.max(1, Math.ceil(items.length / perPage));
+  useEffect(() => {
+    if (pages < 2) return;
+    const timer = window.setInterval(() => setPage(p => (p + 1) % pages), 8000);
+    return () => window.clearInterval(timer);
+  }, [pages]);
   if (!items.length) return null;
-  return <footer aria-label="Publicités du tournoi" className="mt-3 flex shrink-0 items-center justify-evenly gap-4 overflow-x-auto border-t border-border pt-3">
-    {items.map((item, index) => <div key={item.logo_path + index} className="flex w-36 min-w-28 shrink-0 flex-col items-center gap-1">
+  return <footer aria-label="Publicités du tournoi" className="mt-3 flex h-24 shrink-0 items-center justify-evenly gap-4 overflow-hidden border-t border-border pt-3 sm:h-28">
+    {items.slice((page % pages) * perPage, (page % pages + 1) * perPage).map((item, index) => <div key={item.logo_path + index} className="flex w-36 min-w-0 flex-col items-center gap-1">
       {item.logo_url && <img src={item.logo_url} alt={item.name || "Partenaire"} className="h-12 w-full object-contain sm:h-16" />}
       {item.name && <span className="line-clamp-2 text-center text-xs text-muted-foreground">{item.name}</span>}
     </div>)}
