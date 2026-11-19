@@ -94,7 +94,6 @@ export function AdvertisementStrip({ enabled, advertisements }: { enabled: boole
   return <footer aria-label="Publicités du tournoi" className="mt-3 flex h-24 shrink-0 items-center justify-evenly gap-4 overflow-hidden border-t border-border pt-3 sm:h-28">
     {items.slice((page % pages) * perPage, (page % pages + 1) * perPage).map((item, index) => <div key={item.logo_path + index} className="flex w-36 min-w-0 flex-col items-center gap-1">
       {item.logo_url && <img src={item.logo_url} alt={item.name || "Partenaire"} className="h-12 w-full object-contain sm:h-16" />}
-      {item.name && <span className="line-clamp-2 text-center text-xs text-muted-foreground">{item.name}</span>}
     </div>)}
   </footer>;
 }
