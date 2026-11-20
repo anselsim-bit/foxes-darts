@@ -372,28 +372,35 @@ export function OrganizationManager({ slug }: { slug: string }) {
             <label key={k} className="text-sm">
               {k === "logo_path" ? "Logo" : "Couverture"}
               <input name={k} className={fieldClass} defaultValue={s?.[k as "logo_path"] ?? ""} readOnly />
-              <input
-                type="file"
-                accept="image/*"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  const path = `organizations/${d.org.id}/${k === "logo_path" ? "logos" : "covers"}/${crypto.randomUUID()}.${
-                    file.name
-                      .split(".")
-                      .pop()
-                      ?.replace(/[^a-z0-9]/gi, "") ?? "jpg"
-                  }`;
-                  const { error } = await supabase.storage.from("tournament-photos").upload(path, file);
-                  if (error) {
-                    toast.error("Envoi impossible.");
-                    return;
-                  }
-                  const input = e.target.parentElement?.querySelector(`input[name=${k}]`);
-                  if (input instanceof HTMLInputElement) input.value = path;
-                  toast.success("Image envoyée. Enregistrez les modifications.");
-                }}
-              />
+              <label className="cursor-pointer">
+                <span className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors">
+                  <Upload className="h-4 w-4" />
+                  Choisir une image
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const path = `organizations/${d.org.id}/${k === "logo_path" ? "logos" : "covers"}/${crypto.randomUUID()}.${
+                      file.name
+                        .split(".")
+                        .pop()
+                        ?.replace(/[^a-z0-9]/gi, "") ?? "jpg"
+                    }`;
+                    const { error } = await supabase.storage.from("tournament-photos").upload(path, file);
+                    if (error) {
+                      toast.error("Envoi impossible.");
+                      return;
+                    }
+                    const input = e.target.parentElement?.querySelector(`input[name=${k}]`);
+                    if (input instanceof HTMLInputElement) input.value = path;
+                    toast.success("Image envoyée. Enregistrez les modifications.");
+                  }}
+                />
+              </label>
             </label>
           ))}
           <div className="sm:col-span-2 border-l-2 border-primary pl-4">
