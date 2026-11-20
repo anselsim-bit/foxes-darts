@@ -90,7 +90,7 @@ export function PlatformAdmin() {
       />
       <h2 className="text-xl">Organisations</h2>
       {data.organizations.map((o) => (
-        <div key={o.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-border py-4">
+        <div key={o.id} className="grid grid-cols-[2fr_1fr_auto_auto] items-center gap-3 border-b border-border py-4">
           <span>
             {o.name} · {o.status} · {new Date(o.created_at).toLocaleDateString("fr-FR")}
           </span>
