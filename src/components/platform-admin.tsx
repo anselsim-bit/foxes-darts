@@ -94,7 +94,7 @@ export function PlatformAdmin() {
           <span>
             {o.name} · {o.status} · {new Date(o.created_at).toLocaleDateString("fr-FR")}
           </span>
-          <TournamentLimit id={o.id} value={(o as { tournament_limit?: number | 1 }).tournament_limit ?? 1} />
+          <TournamentLimit id={o.id} value={(o as { tournament_limit?: number | null }).tournament_limit ?? null} />
           <Button asChild variant="outline">
             <Link to="/dashboard/organizations/$slug" params={{ slug: o.slug }}>
               Consulter
