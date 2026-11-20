@@ -251,8 +251,8 @@ export function OrganizationColors({
         />
       </div>
     </div>
-  ))}
-</div>
+          ))}
+        </div>
       </details>
     </div>
   );
