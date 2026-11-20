@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { RoundSettingsEditor } from "./round-settings-editor";
+import { fieldClass } from "./platform-ui";
 import { themeColorFields, organizationThemeStyle } from "@/lib/organization-theme";
 
 type Colors = { primary: string; secondary: string; theme: Record<string, string> };
