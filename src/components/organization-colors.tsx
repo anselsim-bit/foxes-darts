@@ -207,59 +207,52 @@ export function OrganizationColors({
       <details className="text-sm">
         <summary className="cursor-pointer text-muted-foreground">Réglages avancés (fond, texte, bordures…)</summary>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          {themeColorFields.map(([k, label]) => (
-            <div key={k} className="flex items-end gap-3">
-              <div className="flex-1 min-w-0">
-                {swatch(
-                  label,
-                  c.theme[k] ?? base[k]!,
-                  (v) =>
-                    setC({
-                      ...c,
-                      theme: { ...c.theme, [k]: v },
-                    }),
-                  `theme_${k}`,
-                )}
-              </div>
+  {themeColorFields.map(([k, label]) => (
+    <div key={k} className="flex items-end gap-3">
+      <div className="flex-1 min-w-0">
+        {swatch(
+          label,
+          c.theme[k] ?? base[k]!,
+          (v) => setC({
+            ...c,
+            theme: { ...c.theme, [k]: v },
+          }),
+          `theme_${k}`,
+        )}
+      </div>
 
-              <div className="w-32 shrink-0">
-                <label className="text-xs text-muted-foreground">Code HEX</label>
-
-                <input
-                  type="text"
-                  value={c.theme[k] ?? base[k]!}
-                  onChange={(e) => {
-                    const v = e.target.value;
-
-                    if (/^#?[0-9a-fA-F]{0,6}$/.test(v)) {
-                      setC({
-                        ...c,
-                        theme: { ...c.theme, [k]: v },
-                      });
-                    }
-                  }}
-                  onBlur={() => {
-                    const v = (c.theme[k] ?? base[k]!).replace("#", "");
-
-                    if (/^[0-9a-fA-F]{6}$/.test(v)) {
-                      setC({
-                        ...c,
-                        theme: {
-                          ...c.theme,
-                          [k]: `#${v.toUpperCase()}`,
-                        },
-                      });
-                    }
-                  }}
-                  placeholder="#000000"
-                  className={fieldClass}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </details>
+      <div className="w-32 shrink-0">
+        <label className="text-xs text-muted-foreground">
+          Code HEX
+        </label>
+        <input
+          type="text"
+          value={c.theme[k] ?? base[k]!}
+          onChange={(e) => {
+            const v = e.target.value;
+            if (/^#?[0-9a-fA-F]{0,6}$/.test(v)) {
+              setC({
+                ...c,
+                theme: { ...c.theme, [k]: v },
+              });
+            }
+          }}
+          onBlur={(e) => {
+            const v = e.target.value.replace("#", "");
+            if (/^[0-9a-fA-F]{6}$/.test(v)) {
+              setC({
+                ...c,
+                theme: { ...c.theme, [k]: `#${v.toUpperCase()}` },
+              });
+            }
+          }}
+          placeholder="#000000"
+          className={fieldClass}
+        />
+      </div>
     </div>
+  ))}
+</div>
   );
 }
 
