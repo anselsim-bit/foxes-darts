@@ -1,24 +1,102 @@
 import { useState } from "react";
 import { RoundSettingsEditor } from "./round-settings-editor";
+import { fieldClass } from "./platform-ui";
 import { themeColorFields, organizationThemeStyle } from "@/lib/organization-theme";
 
 type Colors = { primary: string; secondary: string; theme: Record<string, string> };
 const base = Object.fromEntries(themeColorFields.map(([k, , d]) => [k, d])) as Record<string, string>;
 const PRESETS: { name: string; c: Colors }[] = [
   { name: "Braise (Foxes)", c: { primary: "#e85d3a", secondary: "#1a1a1a", theme: base } },
-  { name: "Océan", c: { primary: "#2f8fd8", secondary: "#13202c", theme: { background: "#0f1a24", card: "#172634", foreground: "#e8f1f8", muted_foreground: "#8ea4b6", border: "#27394a", accent: "#1d3346" } } },
-  { name: "Forêt", c: { primary: "#3fae6a", secondary: "#14211a", theme: { background: "#111a15", card: "#1a261f", foreground: "#e9f3ec", muted_foreground: "#93a89a", border: "#2a3b31", accent: "#203a2b" } } },
-  { name: "Royal", c: { primary: "#d4a72c", secondary: "#1c1530", theme: { background: "#151026", card: "#211936", foreground: "#f1ecfa", muted_foreground: "#a49bb8", border: "#352b4f", accent: "#2d2348" } } },
-  { name: "Clair", c: { primary: "#d94a2b", secondary: "#e9e5e0", theme: { background: "#f7f5f2", card: "#ffffff", foreground: "#1f1f1f", muted_foreground: "#6b6560", border: "#ddd7d0", accent: "#f1e4de" } } },
+  {
+    name: "Océan",
+    c: {
+      primary: "#2f8fd8",
+      secondary: "#13202c",
+      theme: {
+        background: "#0f1a24",
+        card: "#172634",
+        foreground: "#e8f1f8",
+        muted_foreground: "#8ea4b6",
+        border: "#27394a",
+        accent: "#1d3346",
+      },
+    },
+  },
+  {
+    name: "Forêt",
+    c: {
+      primary: "#3fae6a",
+      secondary: "#14211a",
+      theme: {
+        background: "#111a15",
+        card: "#1a261f",
+        foreground: "#e9f3ec",
+        muted_foreground: "#93a89a",
+        border: "#2a3b31",
+        accent: "#203a2b",
+      },
+    },
+  },
+  {
+    name: "Royal",
+    c: {
+      primary: "#d4a72c",
+      secondary: "#1c1530",
+      theme: {
+        background: "#151026",
+        card: "#211936",
+        foreground: "#f1ecfa",
+        muted_foreground: "#a49bb8",
+        border: "#352b4f",
+        accent: "#2d2348",
+      },
+    },
+  },
+  {
+    name: "Clair",
+    c: {
+      primary: "#d94a2b",
+      secondary: "#e9e5e0",
+      theme: {
+        background: "#f7f5f2",
+        card: "#ffffff",
+        foreground: "#1f1f1f",
+        muted_foreground: "#6b6560",
+        border: "#ddd7d0",
+        accent: "#f1e4de",
+      },
+    },
+  },
 ];
 
 /** Palette picker: ready-made themes, live preview, and optional fine-tuning; submits the same form fields as before. */
-export function OrganizationColors({ initial }: { initial: { primary?: string | null | undefined; secondary?: string | null | undefined; theme?: Record<string, string> | undefined } }) {
-  const [c, setC] = useState<Colors>({ primary: initial.primary ?? "#e85d3a", secondary: initial.secondary ?? "#1a1a1a", theme: { ...base, ...(initial.theme ?? {}) } });
-  const same = (p: Colors) => p.primary === c.primary && p.secondary === c.secondary && themeColorFields.every(([k]) => p.theme[k] === c.theme[k]);
+export function OrganizationColors({
+  initial,
+}: {
+  initial: {
+    primary?: string | null | undefined;
+    secondary?: string | null | undefined;
+    theme?: Record<string, string> | undefined;
+  };
+}) {
+  const [c, setC] = useState<Colors>({
+    primary: initial.primary ?? "#e85d3a",
+    secondary: initial.secondary ?? "#1a1a1a",
+    theme: { ...base, ...(initial.theme ?? {}) },
+  });
+  const same = (p: Colors) =>
+    p.primary === c.primary &&
+    p.secondary === c.secondary &&
+    themeColorFields.every(([k]) => p.theme[k] === c.theme[k]);
   const swatch = (label: string, value: string, onChange: (v: string) => void, name: string) => (
     <label key={name} className="flex items-center gap-3 text-sm">
-      <input type="color" name={name} value={value} onChange={(e) => onChange(e.target.value)} className="h-9 w-12 cursor-pointer rounded border border-border bg-transparent" />
+      <input
+        type="color"
+        name={name}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-9 w-12 cursor-pointer rounded border border-border bg-transparent"
+      />
       {label}
     </label>
   );
@@ -30,32 +108,150 @@ export function OrganizationColors({ initial }: { initial: { primary?: string | 
       </div>
       <div className="flex flex-wrap gap-3">
         {PRESETS.map((p) => (
-          <button type="button" key={p.name} onClick={() => setC({ ...p.c, theme: { ...p.c.theme } })} className={`flex items-center gap-2 rounded-md border px-3 py-2 text-sm ${same(p.c) ? "border-primary ring-2 ring-primary" : "border-border"}`}>
+          <button
+            type="button"
+            key={p.name}
+            onClick={() => setC({ ...p.c, theme: { ...p.c.theme } })}
+            className={`flex items-center gap-2 rounded-md border px-3 py-2 text-sm ${same(p.c) ? "border-primary ring-2 ring-primary" : "border-border"}`}
+          >
             <span className="flex overflow-hidden rounded-sm border border-border">
-              {[p.c.theme["background"], p.c.theme["card"], p.c.primary].map((x, i) => <span key={i} className="h-5 w-4" style={{ background: x }} />)}
+              {[p.c.theme["background"], p.c.theme["card"], p.c.primary].map((x, i) => (
+                <span key={i} className="h-5 w-4" style={{ background: x }} />
+              ))}
             </span>
             {p.name}
           </button>
         ))}
       </div>
-      <div style={organizationThemeStyle({ primary_color: c.primary, secondary_color: c.secondary, theme_colors: c.theme })} className="rounded-lg border border-border bg-background p-4 text-foreground">
+      <div
+        style={organizationThemeStyle({
+          primary_color: c.primary,
+          secondary_color: c.secondary,
+          theme_colors: c.theme,
+        })}
+        className="rounded-lg border border-border bg-background p-4 text-foreground"
+      >
         <div className="rounded-md border border-border bg-card p-4">
           <p className="font-display text-lg">Aperçu · Tournoi du samedi</p>
           <p className="text-sm text-muted-foreground">12 équipes inscrites · Salle des fêtes</p>
           <div className="mt-3 flex gap-2">
             <span className="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground">Bouton principal</span>
-            <span className="rounded-md bg-secondary px-3 py-1.5 text-sm text-secondary-foreground">Bouton secondaire</span>
+            <span className="rounded-md bg-secondary px-3 py-1.5 text-sm text-secondary-foreground">
+              Bouton secondaire
+            </span>
           </div>
         </div>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        {swatch("Couleur principale (boutons, liens)", c.primary, (v) => setC({ ...c, primary: v }), "primary_color")}
-        {swatch("Boutons secondaires", c.secondary, (v) => setC({ ...c, secondary: v }), "secondary_color")}
+        <div className="flex items-end gap-3">
+          <div className="flex-1 min-w-0">
+            {swatch(
+              "Couleur principale (boutons, liens)",
+              c.primary,
+              (v) => setC({ ...c, primary: v }),
+              "primary_color",
+            )}
+          </div>
+
+          <div className="w-32 shrink-0">
+            <label className="text-xs text-muted-foreground">Code HEX</label>
+            <input
+              type="text"
+              value={c.primary}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (/^#?[0-9a-fA-F]{0,6}$/.test(v)) {
+                  setC({ ...c, primary: v });
+                }
+              }}
+              onBlur={() => {
+                const v = c.primary.replace("#", "");
+                if (/^[0-9a-fA-F]{6}$/.test(v)) {
+                  setC({ ...c, primary: `#${v.toUpperCase()}` });
+                }
+              }}
+              placeholder="#000000"
+              className={fieldClass}
+            />
+          </div>
+        </div>
+
+        <div className="flex items-end gap-3">
+          <div className="flex-1 min-w-0">
+            {swatch("Boutons secondaires", c.secondary, (v) => setC({ ...c, secondary: v }), "secondary_color")}
+          </div>
+
+          <div className="w-32 shrink-0">
+            <label className="text-xs text-muted-foreground">Code HEX</label>
+            <input
+              type="text"
+              value={c.secondary}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (/^#?[0-9a-fA-F]{0,6}$/.test(v)) {
+                  setC({ ...c, secondary: v });
+                }
+              }}
+              onBlur={() => {
+                const v = c.secondary.replace("#", "");
+                if (/^[0-9a-fA-F]{6}$/.test(v)) {
+                  setC({ ...c, secondary: `#${v.toUpperCase()}` });
+                }
+              }}
+              placeholder="#000000"
+              className={fieldClass}
+            />
+          </div>
+        </div>
       </div>
       <details className="text-sm">
         <summary className="cursor-pointer text-muted-foreground">Réglages avancés (fond, texte, bordures…)</summary>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          {themeColorFields.map(([k, label]) => swatch(label, c.theme[k] ?? base[k]!, (v) => setC({ ...c, theme: { ...c.theme, [k]: v } }), `theme_${k}`))}
+  {themeColorFields.map(([k, label]) => (
+    <div key={k} className="flex items-end gap-3">
+      <div className="flex-1 min-w-0">
+        {swatch(
+          label,
+          c.theme[k] ?? base[k]!,
+          (v) => setC({
+            ...c,
+            theme: { ...c.theme, [k]: v },
+          }),
+          `theme_${k}`,
+        )}
+      </div>
+
+      <div className="w-32 shrink-0">
+        <label className="text-xs text-muted-foreground">
+          Code HEX
+        </label>
+        <input
+          type="text"
+          value={c.theme[k] ?? base[k]!}
+          onChange={(e) => {
+            const v = e.target.value;
+            if (/^#?[0-9a-fA-F]{0,6}$/.test(v)) {
+              setC({
+                ...c,
+                theme: { ...c.theme, [k]: v },
+              });
+            }
+          }}
+          onBlur={(e) => {
+            const v = e.target.value.replace("#", "");
+            if (/^[0-9a-fA-F]{6}$/.test(v)) {
+              setC({
+                ...c,
+                theme: { ...c.theme, [k]: `#${v.toUpperCase()}` },
+              });
+            }
+          }}
+          placeholder="#000000"
+          className={fieldClass}
+        />
+      </div>
+    </div>
+          ))}
         </div>
       </details>
     </div>
@@ -63,24 +259,89 @@ export function OrganizationColors({ initial }: { initial: { primary?: string | 
 }
 
 /** Pool / consolation choices as checkboxes; each phase's game format is shown only when that phase is enabled. */
-export function PoolOptions({ poolCount, consolation, tournament }: { poolCount?: number | null | undefined; consolation?: boolean | null | undefined; tournament?: Record<string, unknown> | undefined }) {
+export function PoolOptions({
+  poolCount,
+  consolation,
+  tournament,
+}: {
+  poolCount?: number | null | undefined;
+  consolation?: boolean | null | undefined;
+  tournament?: Record<string, unknown> | undefined;
+}) {
   const [pools, setPools] = useState((poolCount ?? 4) > 0);
   const [conso, setConso] = useState(consolation ?? true);
   const val = (prefix: string, k: string) => tournament?.[`${prefix}${k}`] ?? tournament?.[k];
   return (
     <div className="space-y-3 text-sm sm:col-span-2">
-      <label className="block"><input type="checkbox" checked={pools} onChange={(e) => setPools(e.target.checked)} /> Phase de poules</label>
+      <label className="block">
+        <input type="checkbox" checked={pools} onChange={(e) => setPools(e.target.checked)} /> Phase de poules
+      </label>
       {pools ? (
         <div className="space-y-2 pl-6">
-          <label className="block">Nombre de poules<input name="pools" type="number" min={1} defaultValue={(poolCount ?? 0) > 0 ? poolCount! : 4} className="ml-2 w-20 rounded-md border border-input bg-background px-2 py-1" /></label>
-          
-          <label className="block"><input type="checkbox" name="pool_double_limit" defaultChecked={(tournament?.["pool_double_limit"] as boolean | undefined) ?? true} /> Limite de cinq tours de double en poules</label>
+          <label className="block">
+            Nombre de poules
+            <input
+              name="pools"
+              type="number"
+              min={1}
+              defaultValue={(poolCount ?? 0) > 0 ? poolCount! : 4}
+              className="ml-2 w-20 rounded-md border border-input bg-background px-2 py-1"
+            />
+          </label>
+
+          <label className="block">
+            <input
+              type="checkbox"
+              name="pool_double_limit"
+              defaultChecked={(tournament?.["pool_double_limit"] as boolean | undefined) ?? true}
+            />{" "}
+            Limite de cinq tours de double en poules
+          </label>
         </div>
-      ) : <><input type="hidden" name="pools" value="0" /></>}
-      
-      <label className="block"><input type="checkbox" name="consolation" checked={conso} onChange={(e) => setConso(e.target.checked)} /> Phase de consolante</label>
-      {pools && conso ? <div className="pl-6"><label className="mt-2 block"><input type="checkbox" name="consolation_double_limit" defaultChecked={(tournament?.["consolation_double_limit"] as boolean | undefined) ?? true} /> Limite de cinq tours de double en consolante</label></div> : null}
-      <RoundSettingsEditor initial={tournament?.["game_settings"]} pools={pools} consolation={conso} defaults={{ pool: {start: Number(val("", "start_score") ?? 501), doubleOut: Boolean(val("", "double_out")), legsToWin: 1}, bracket: {start: Number(val("final_", "start_score") ?? 501), doubleOut: Boolean(val("final_", "double_out")), legsToWin: 2}, consolation: {start: Number(val("consolation_", "start_score") ?? 501), doubleOut: Boolean(val("consolation_", "double_out")), legsToWin: 2} }} />
+      ) : (
+        <>
+          <input type="hidden" name="pools" value="0" />
+        </>
+      )}
+
+      <label className="block">
+        <input type="checkbox" name="consolation" checked={conso} onChange={(e) => setConso(e.target.checked)} /> Phase
+        de consolante
+      </label>
+      {pools && conso ? (
+        <div className="pl-6">
+          <label className="mt-2 block">
+            <input
+              type="checkbox"
+              name="consolation_double_limit"
+              defaultChecked={(tournament?.["consolation_double_limit"] as boolean | undefined) ?? true}
+            />{" "}
+            Limite de cinq tours de double en consolante
+          </label>
+        </div>
+      ) : null}
+      <RoundSettingsEditor
+        initial={tournament?.["game_settings"]}
+        pools={pools}
+        consolation={conso}
+        defaults={{
+          pool: {
+            start: Number(val("", "start_score") ?? 501),
+            doubleOut: Boolean(val("", "double_out")),
+            legsToWin: 1,
+          },
+          bracket: {
+            start: Number(val("final_", "start_score") ?? 501),
+            doubleOut: Boolean(val("final_", "double_out")),
+            legsToWin: 2,
+          },
+          consolation: {
+            start: Number(val("consolation_", "start_score") ?? 501),
+            doubleOut: Boolean(val("consolation_", "double_out")),
+            legsToWin: 2,
+          },
+        }}
+      />
     </div>
   );
 }
