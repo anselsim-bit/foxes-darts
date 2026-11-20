@@ -389,7 +389,7 @@ export function OrganizationManager({ slug }: { slug: string }) {
                     toast.error("Envoi impossible.");
                     return;
                   }
-                  const input = e.target.parentElement?.querySelector(input[name=${k}]);
+                  const input = e.target.parentElement?.querySelector(`input[name="${k}"]`);
                   if (input instanceof HTMLInputElement) input.value = path;
                   toast.success("Image envoyée. Enregistrez les modifications.");
                 }}
