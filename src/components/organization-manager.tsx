@@ -377,48 +377,52 @@ export function OrganizationManager({ slug }: { slug: string }) {
                 <input name={k} className={fieldClass} defaultValue={s?.[k as "logo_path"] ?? ""} readOnly />
               </label>
 
-              <div className="flex items-center">
-                <label
-                  htmlFor={`upload-${k}`}
-                  className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors"
-                >
-                  <Upload className="h-4 w-4" />
-                  Choisir une image
-                </label>
+              <label
+                htmlFor={`upload-${k}`}
+                className="inline-flex items-center justify-center gap-2
+        rounded-md border border-border
+        bg-background px-4 py-2
+        text-sm font-medium
+        cursor-pointer
+        hover:bg-accent hover:text-accent-foreground
+        transition-colors"
+              >
+                <span>↑</span>
+                Choisir une image
+              </label>
 
-                <input
-                  id={`upload-${k}`}
-                  type="file"
-                  accept="image/*"
-                  className="sr-only"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
+              <input
+                id={`upload-${k}`}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
 
-                    const path = `organizations/${d.org.id}/${k === "logo_path" ? "logos" : "covers"}/${crypto.randomUUID()}.${
-                      file.name
-                        .split(".")
-                        .pop()
-                        ?.replace(/[^a-z0-9]/gi, "") ?? "jpg"
-                    }`;
+                  const path = `organizations/${d.org.id}/${k === "logo_path" ? "logos" : "covers"}/${crypto.randomUUID()}.${
+                    file.name
+                      .split(".")
+                      .pop()
+                      ?.replace(/[^a-z0-9]/gi, "") ?? "jpg"
+                  }`;
 
-                    const { error } = await supabase.storage.from("tournament-photos").upload(path, file);
+                  const { error } = await supabase.storage.from("tournament-photos").upload(path, file);
 
-                    if (error) {
-                      toast.error("Envoi impossible.");
-                      return;
-                    }
+                  if (error) {
+                    toast.error("Envoi impossible.");
+                    return;
+                  }
 
-                    const input = document.querySelector(`input[name="${k}"]`);
+                  const input = document.querySelector(`input[name="${k}"]`);
 
-                    if (input instanceof HTMLInputElement) {
-                      input.value = path;
-                    }
+                  if (input instanceof HTMLInputElement) {
+                    input.value = path;
+                  }
 
-                    toast.success("Image envoyée. Enregistrez les modifications.");
-                  }}
-                />
-              </div>
+                  toast.success("Image envoyée. Enregistrez les modifications.");
+                }}
+              />
             </div>
           ))}
           <div className="sm:col-span-2 border-l-2 border-primary pl-4">
